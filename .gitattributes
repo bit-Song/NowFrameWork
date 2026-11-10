@@ -1,0 +1,30 @@
+# 归一化：让 Git 自己判断文本/二进制
+* text=auto
+
+# ---- 大二进制：交给 Git LFS（对应 docs/06 第 5.3 节）----
+# 首次使用前在仓库根执行一次： git lfs install
+*.psd   filter=lfs diff=lfs merge=lfs -text
+*.psb   filter=lfs diff=lfs merge=lfs -text
+*.tga   filter=lfs diff=lfs merge=lfs -text
+*.exr   filter=lfs diff=lfs merge=lfs -text
+*.fbx   filter=lfs diff=lfs merge=lfs -text
+*.wav   filter=lfs diff=lfs merge=lfs -text
+*.mp4   filter=lfs diff=lfs merge=lfs -text
+*.mov   filter=lfs diff=lfs merge=lfs -text
+
+# ---- 常规二进制：别让 Git 尝试做换行/差异 ----
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.tif  binary
+*.ttf  binary
+*.otf  binary
+*.assetbundle binary
+*.bundle binary
+
+# ---- Unity / 团结 文本资产 ----
+*.cs    text diff=csharp
+*.asmdef text
+*.asmref text
+*.json  text
+*.meta  text
