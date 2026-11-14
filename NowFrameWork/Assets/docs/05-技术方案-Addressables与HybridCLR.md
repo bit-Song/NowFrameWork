@@ -56,6 +56,20 @@ Boot 常驻，场景数量上限由项目配置，不写死仅两个场景。低
 
 运行时先选定完整兼容发布集，初始化资源 Provider，加载匹配的 AOT 元数据，再按依赖序加载程序集并取得 IGameEntry。Unity 对象创建和入口初始化在主线程进行；不默认用后台 Assembly.Load 优化。释放字节资源租约不代表程序集自身占用随之回收。
 
+**热更构建的四条硬基线**（2026-11-14 实测得出，缺一条都会出现"Editor 里能跑、真包加载失败"）：
+
+| 配置 / 流程 | 值 | 不满足时的表现 |
+|---|---|---|
+| Api Compatibility Level | **.NET Framework** | `TypeLoadException: Could not load type … from assembly 'netstandard'` |
+| Managed Stripping Level | **Minimal** 或更保守 | `TypeLoadException … from assembly 'mscorlib'`（类型被裁掉） |
+| link.xml | 热更代码每新增/删除一次对 AOT 类型的引用，都要重跑 `HybridCLR/Generate/All` | 运行时找不到被裁剪的类型（实例：`AsyncTaskMethodBuilder`） |
+| 程序集划分 | 热更 asmdef 关闭 `Auto Referenced`、登记进 Hot Update Assemblies、AOT 侧不引用 | 热更 dll 被当 AOT 编进包，补丁永远不生效 |
+| AOT 补充元数据 | 取自当前 Player 的 `AssembliesPostIl2CppStrip`，与包严格同源；必须在 `Assembly.Load` **之前**逐个 `LoadMetadataForAOTAssembly` | AOT 泛型/反射入口报 `MissingMethodException: AOT generic method not instantiated in <程序集>` |
+
+补充事实（2026-11-14 实测）：普通 IL2CPP Player 里**不存在** `Assembly.Load(byte[])` 对应的内部调用（`AppDomain::LoadAssemblyRaw`），调用会抛 `NotSupportedException`。也就是说"热更"不是配一个开关，而是必须安装 HybridCLR 运行时；这同时证明普通模式与热更模式的产物确实是两套。
+
+判定原则：**热更代码里用到、而 AOT 侧没用到的类型和方法，都会在 IL2CPP 裁剪阶段被删除。** 每次热更代码变更后都要"重跑 `Generate/All` → 重出 Player"；只在 Editor Play Mode 里通过不能作为验收证据。
+
 iOS 默认保留普通模式；技术能力与发布策略分开记录，代码更新启用前按渠道要求评估，参见 [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)。
 
 ## 6 发布集与回退
