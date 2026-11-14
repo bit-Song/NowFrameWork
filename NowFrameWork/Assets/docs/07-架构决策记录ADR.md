@@ -401,4 +401,17 @@
 - **参考核对记录（2026-11-14）**：
   - `UnityEngine.Pool` 源码（UnityCsReference）：`ObjectPool<T>` 用 `List<T>` + `m_FreshlyReleased` 单元素快取，`Release` 中 `m_CollectionCheck` 做引用扫描并抛 `InvalidOperationException`；**无条件编译**，因此玩家包也生效。
   - `MessagePipe` 的 `MessageBrokerCore<T>`：`Publish` 取 `handlers.GetValues()` 快照数组后遍历（与我们的快照派发同构）；`Subscribe/Dispose` 加锁（多线程支持），本框架单线程故不加锁。其 `MessagePipeDiagnosticsInfo` 做订阅泄漏统计，对应我们的 T05 Roslyn 分析器。
+
+#### C06 追加结论：官方池可复用，但不原样交付
+
+核对 `ObjectPool<T>` 源码后确认以下缺口（行号对应 UnityCsReference `Runtime/Export/ObjectPool/ObjectPools.cs`）：
+
+| 缺口 | 源码证据 | 后果 | 我们的补法 |
+|---|---|---|---|
+| `collectionCheck` 每次 Release 做 O(n) 引用扫描 | `Release` 中 for 循环（116–126 行） | 池大且频繁归还时是热路径开销；关掉就丢了重复释放检测 | 关掉 `collectionCheck`，用 `HashSet<T>` 做 O(1) 租约判定 |
+| 超过 `maxSize` 时**静默销毁** | `CountAll--; m_ActionOnDestroy?.Invoke(element)`（141–145 行） | 对象在池满时被销毁且无任何提示，表现为"复用对象莫名失效" | `actionOnDestroy` 中计数并在达到阈值时记 Warn 日志 |
+| 不追踪已借出对象 | 只有 inactive 列表（`m_List`） | 忘记 Release 的泄漏无法检测 | 自维护 `_active` 集合，暴露 `ActiveCount` 与超阈值告警 |
+| 无生命周期接口 | 只有 `Action<T>` 回调 | 容易忘记重置状态，"对象带着上次数据复活" | 定义 `IPoolable { OnSpawn / OnDespawn / OnDestroy }`，由包装层调用 |
+
+因此 C06 采用 **包装而非直接交付**：底层仍是 `UnityEngine.Pool.ObjectPool<T>`（负责创建/销毁/容量），包装层补齐上表四项。若包装层复杂度超过 150 行，则改为自研空闲栈——这是可度量的退出条件。
 - **验证**：C06 验收包含「重复释放必须报错（Development 与 Release 都生效）」「租约与对象销毁一致」「池的 Get/Release 在稳态下不分配（Profiler 人工核对）」。
