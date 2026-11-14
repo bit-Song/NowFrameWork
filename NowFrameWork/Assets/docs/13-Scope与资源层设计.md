@@ -1,297 +1,91 @@
 # 13 Scope 与资源层设计
 
-> 对应缺口 **G-05**（[12](12-框架缺口清单.md)）。本文只定契约与时序，不含实现；实现排在资源里程碑。
-> 已定前提：[05 §2 租约语义](05-技术方案-Addressables与HybridCLR.md)、[ADR-004](07-架构决策记录ADR.md)（封装 Addressables）、[ADR-025](07-架构决策记录ADR.md)（独立租约与共享加载取消）、[11](11-对象池与资源租约.md)（池级保活租约）。
-
-> **评审状态（2026-11-15）**：已评审。发现 3 处硬伤（§4 `Dispose` 签名、§4.2 跨 Scope 解析、§8.3 与 §1 策略冲突）与 5 处契约缺件。全部结论、修订后的契约与待补用例见 [§9](#9-评审意见2026-11-15)；§2 / §4 的契约建议直接按 §9.6 替换。
+> 对应缺口 **G-05**（[12](12-框架缺口清单.md)）。本文定契约与时序，不含实现；实现排在资源里程碑。
+> 已定前提：[05 §2 租约语义](05-技术方案-Addressables与HybridCLR.md)、[ADR-004](07-架构决策记录ADR.md)、[ADR-025](07-架构决策记录ADR.md)、[11](11-对象池与资源租约.md)。
+> 评审记录与处理对照见 [§10](#10-评审意见处理对照2026-11-15)。
 
 ## 1 要解决什么
 
 | 问题 | 现状 | 本文的答案 |
 |---|---|---|
 | 场景级服务无处安放 | 所有模块都是全局单例 | `Scope` 树：每个 Scope 拥有自己的模块与池 |
-| 切场景无法逆序释放 | 只能靠手写 | Scope 关闭顺序固定：模块 → 池 → 租约 |
-| 资源何时能卸载说不清 | 只有租约计数，没有归属 | 租约归属到 Scope，Scope 关闭才允许卸载 |
-| 池里残留已卸载资源的实例 | 无约束 | 池的保活租约挂在 Scope 上，Scope 先清池再放租约 |
+| 切场景无法逆序释放 | 只能靠手写 | 关闭顺序固定：子 → 模块 → 池 → 租约 |
+| 资源何时能卸载说不清 | 只有计数，没有归属 | 租约归属到 Scope，关闭才允许卸载 |
+| 池里残留已卸载资源的实例 | 无约束 | 池级保活租约挂在 Scope 上，先清池再放租约 |
+| 场景 Scope 拿不到根服务 | 未定义 | **构造注入**：依赖写在构造函数上，组合根负责装配（§4.3） |
 
-## 2 资源层契约（草案）
-
-```csharp
-public interface IAssetService
-{
-    // 申请一个独立租约；同址并发请求共享底层加载，但各自拿到租约
-    UniTask<AssetLease<T>> AcquireAsync<T>(string address, CancellationToken ct) where T : UnityEngine.Object;
-
-    // 缓存保留：不参与业务引用计数，用于池/常驻资源保活
-    UniTask<AssetLease<UnityEngine.Object>> AcquireCacheAsync(string address, CancellationToken ct);
-
-    // 诊断
-    int PendingRequests { get; }
-    int ActiveLeases { get; }
-}
-
-public sealed class AssetLease<T> : IDisposable where T : UnityEngine.Object
-{
-    public T Asset { get; }
-    public string Address { get; }
-    public bool IsReleased { get; }
-    public void Dispose();   // 幂等；计数归零且无人等待时才允许卸载
-}
-```
-
-三个必须遵守的语义（来自 [05 §2](05-技术方案-Addressables与HybridCLR.md)）：
-
-1. **同址双请求 = 两个租约**：释放 A 不使 B 失效，重复释放 A 不改变 B 的计数；
-2. **取消只结束该等待者**：其余等待者继续；即使底层操作最终完成，也不交付给已取消者；
-3. **失败也要回收底层句柄**：不允许"加载失败但句柄泄漏"。
-
-> ⚠️ **评审（§2）**
-> ① `AcquireCacheAsync` 返回 `AssetLease<UnityEngine.Object>` **丢失类型**——池要 `Instantiate` prefab，拿到 `Object` 每次都得 cast，cast 失败只能运行时发现。建议泛型化。
-> ② 只接受 `string address`，**`AssetReference` 用不了**——SO 配置里是 `AssetReferenceGameObject` 时，调用处得先取 `.RuntimeKey` 拼字符串，把类型安全又丢了。建议改为 `object key`。
-> ③ **缺 `InitializeAsync` 与整条热更链路**（`CheckForUpdates` / `UpdateCatalogs` / `Download` / `GetDownloadSize`）。不补，业务只剩两条路：违反 §3 硬规则直接调 Addressables，或者热更永远没人写。
-> ④ `AssetLease` 释放后 `Asset` 仍返回旧引用，建议 getter 在 `IsReleased` 时抛异常（开发期），否则"释放后继续用"极难排查。
-> 详见 §9.3 / §9.4，修订版见 §9.6。
-
-## 3 Provider 边界
-
-```csharp
-public interface IAssetProvider
-{
-    UniTask<ProviderHandle> LoadAsync(string address, CancellationToken ct);
-    void Release(ProviderHandle handle);
-    UniTask<long> GetDownloadSizeAsync(string address);
-}
-```
-
-- `AddressablesProvider` 是首个实现；业务与框架其它模块**只依赖 `IAssetService`**，不直接调 Addressables（[06 §2](06-工程规范-测试与验收.md) 已有硬规则）；
-- 换 Provider（YooAsset、裸 AB）只替换这一层，不改 Scope 与池。
-
-> ⚠️ **评审（§3）**：`ProviderHandle` 未定义——是 class 还是 struct、能否重复 `Release`、谁负责回收，契约缺这层定义就无法实现。另 `Release` 是同步方法，而 Addressables 卸载 bundle 是异步的，需要说明"调用 `Release` 到资源真正卸载之间"的语义（这段时间内存尚未回落）。
-
-## 4 Scope
-
-```csharp
-public sealed class Scope : IDisposable
-{
-    public string Name { get; }
-    public Scope Parent { get; }
-    public ModuleHub Modules { get; }      // 每个 Scope 一个容器
-    public PoolService Pools { get; }      // 池归属该 Scope
-
-    public Scope CreateChild(string name);
-    public UniTask StartupAsync(CancellationToken ct, IStartupProgress progress = null);
-    public void Dispose();                 // 逆序：子 Scope → 模块 → 池 → 租约
-}
-```
-
-> ⚠️ **评审（§4，硬伤）**
-> **`Dispose()` 返回 `void`，但 §4.1 第 2 步要等 `ShutdownAsync()`** —— 异步关闭无法在同步 `Dispose` 里正确完成：`.Wait()` 会阻塞主线程，fire-and-forget 则关闭还没结束就返回。应改为 `UniTask DisposeAsync(bool purgeAssets = false)`，`IDisposable` 只留同步兜底（断言 + 记 Error）。
-> **另缺状态机**：重复 `Dispose()` 是否幂等、`StartupAsync` 进行中被 `Dispose` 会怎样、`StartupAsync` 之后还能否 `Modules.Register`（应当冻结）。这三条不定，Scope 就是个不设防的容器。修订版见 §9.6。
-
-### 4.1 关闭顺序（唯一正确顺序）
-
-```
-1. 子 Scope.Dispose()          ← 先关子级，避免父级释放后子级还在用
-2. 模块 ShutdownAsync()       ← 业务停止使用资源
-3. 池 Dispose(force: true)     ← 销毁实例，归还池级保活租约
-4. 其余租约 Dispose()          ← 计数归零
-5. 资源层允许卸载             ← 由租约计数驱动，不是 Scope 主动调
-```
-
-**为什么池必须在租约之前**：池持有保活租约，若先放租约再清池，池在销毁实例期间资源可能已被卸载。
-
-### 4.2 与现有容器/池的关系
-
-| 现有组件 | 变化 |
-|---|---|
-| `ModuleHub` | 不变；每个 Scope 各持一个实例（根 Scope 承载全局服务） |
-| `PoolService` | 不变；由 Scope 持有，Scope 关闭时 `Dispose()` |
-| `ObjectPool<T>` | 不变；资源相关部分由 `AssetPool` 组合 |
-| `App` | 增加 `RootScope`，`Hub` 改为 `RootScope.Modules` 的转发（保持兼容） |
-
-> ⚠️ **评审（§4.2，硬伤）**：既然"每个 Scope 各持一个 `ModuleHub`、隔离干净"，就必须回答一个问题：**场景 Scope 里的模块怎么拿到根 Scope 的全局服务**（`IAudioService` / `ILogService` / `IInputService`）？三选一并写死：
-> ① 子 Scope 创建时把全局服务显式再注册一遍（实现简单，但两套 Hub 指向同一批实例）；
-> ② `ModuleHub` 支持 parent 链查找（先查自己 → 再查父 → 到根为止）；
-> ③ 全部构造注入，禁止查 Hub（最干净，但与现有 Hub 并存会显得不一致）。
-> 不定这条，本表里"`ModuleHub` 不变"就成立不了——② 是要改 `ModuleHub` 的。
-
-## 5 关键时序
-
-### 5.1 进入场景
-
-```
-scope = root.CreateChild("Level01")
-await scope.StartupAsync(ct, progress)
-  → 模块 Initialize（其中 AssetPool 预热：AcquireCacheAsync + 预创建实例）
-  → 模块 Start
-```
-
-### 5.2 切场景
-
-```
-newScope = root.CreateChild("Level02")
-await newScope.StartupAsync(ct)        // 新场景加载完成
-oldScope.Dispose()                     // 逆序释放旧场景
-```
-
-先加载后释放：避免"黑屏期"，代价是峰值内存高。低内存设备可改为先释放后加载——这是策略，不是框架强制。
-
-> ⚠️ **评审（§5.2）**：**缺失败回滚**。`await newScope.StartupAsync(ct)` 抛异常时，`oldScope.Dispose()` 根本不会执行 → 旧场景存续、新 Scope 泄漏、玩家卡在两个状态之间。需明确：新 Scope 启动**成功**才关旧的；**失败**则保留旧的、逆序清理新的。补用例 S-03。
-
-> 另注：两个 Scope 同时存在期间，若共享同一张图集，底层加载靠"同址共享"只做一份，但**池是每个 Scope 一份**，各自预热会各建一批实例——这部分实例内存不会共享，切换时要注意峰值。
-
-### 5.3 运行时借用
-
-```
-pool.Rent()            → 命中闲置：同步返回
-pool.RentAsync(ct)     → 未命中：名额检查 → 异步创建
-```
-
-资源是否还在内存由池的保活租约保证，`RentAsync` 不触发加载。
-
-> ⚠️ **评审（§5.3）**
-> ① **`Rent()` 未命中时干什么没写**：抛异常 / 返回 null / 内部同步创建？三者对调用方完全不同，必须明确（建议抛异常，强制走 `RentAsync`，避免同步创建造成卡顿且无进度）。
-> ② 需明确写一句"**`Rent` 不产生新租约**"——否则每颗子弹一次 `AssetLease` 分配，与零分配目标冲突。
-> ③ §5 全节没提**场景本身怎么加载**：用 `Addressables.LoadSceneAsync` 还是 `SceneManager`？场景 bundle 的租约占谁的账（Scope 还是资源层）？这是 Scope 的核心用例，目前是空的。
-
-## 6 失败矩阵
-
-| 情况 | 必须的行为 |
-|---|---|
-| 资源加载失败 | 租约不产生；等待者收到异常；底层句柄回收 |
-| 等待中取消 | 只移除该等待者；其余继续；不产生租约 |
-| 全部等待者取消 | 按 Provider 能力取消底层操作，或登记完成后立即释放 |
-| Scope 启动失败 | 逆序清理：池 → 已启动模块 → 子 Scope |
-| Scope 关闭中仍有对象借用 | 池 `Dispose(force: true)` 强杀，记 Error（通过 ErrorBudget 聚合） |
-| 资源已卸载仍被使用 | **不该发生**（保活租约挡住）；若发生则由池的 `isValid` 兜底并记 Error |
-| 同帧销毁实例并释放租约 | **禁止**（见 §10 实测）：`Object.Destroy` 延迟生效，而 `Unload(true)` 立即失效 → 必须跨一帧再释放租约 |
-
-## 7 验收用例（实现时按此写）
-
-| 编号 | 场景 | 断言 |
-|---|---|---|
-| A-01 | 同址并发两次 Acquire | 两个不同租约；释放其一另一个仍可用 |
-| A-02 | 重复释放同一租约 | 幂等，不改变其它租约计数 |
-| A-03 | 等待中取消 | 只有该等待者失败，其它成功 |
-| A-04 | 加载失败 | 不产生租约，计数归零 |
-| S-01 | Scope 关闭 | 顺序为 子 → 模块 → 池 → 租约，且池销毁后租约才归零 |
-| S-02 | Scope 启动失败 | 逆序清理，无残留池与租约 |
-| P-01 | 池持有保活租约时卸载请求 | 资源不会被卸载 |
-| P-02 | 池 Dispose 后 | 租约计数归零，资源可卸载 |
-| **P-05** | 销毁实例与释放租约的时序 | 释放租约前至少跨一帧；期间对象仍可安全访问 |
-
-## 8 待拍板
-
-| # | 问题 | 建议 |
-|---|---|---|
-| 1 | Scope 是否各持一个 `ModuleHub` | **是**。隔离干净；根 Scope 承载全局服务，切换场景互不影响 |
-| 2 | 池键是否强制 `asset:<地址>` 前缀 | **是**。便于"按资源键整池释放"，也便于诊断 |
-| 3 | 租约归零后立即卸载还是延迟 | **延迟**（缓存保留 + 可配置淘汰），由资源层策略控制；Scope 只负责归还 |
-| 4 | UI/音频是否纳入 Scope | **分层**：UI 根与音频服务在根 Scope 常驻；场景级 UI（HUD）随场景 Scope |
-
-> ⚠️ **评审（§8，硬伤）**
-> **第 3 条与 §1 冲突**：§1 承诺"Scope 关闭才允许卸载"，§8.3 又说"租约归零后延迟卸载（缓存保留）"。两者叠加的实际结果是——**切完场景，旧场景资源仍缓存在内存里**，玩家体感就是"内存不回落"。建议拆成两条策略：租约归零 → 缓存保留（LRU + 上限）；`Scope.DisposeAsync(purgeAssets: true)` → 强制卸载本 Scope 独占的资源。
-> **第 2 条**：池键 `asset:<地址>` 意味着同一 prefab 只能有一个池。需要两套不同配置（不同父节点 / 不同初始状态）时就不够用了，建议键做成 `(地址, 变体)`。
-> **第 4 条**：HUD 若正在播淡出动画时被强杀，观感很差，需要"播完再 Dispose"的能力。
-
----
-
-## 9 评审意见（2026-11-15）
-
-> 结论：契约骨架成立，租约语义与关闭顺序的思路是对的。问题集中在三处——**异步关闭的签名、跨 Scope 的解析规则、缓存保留与 Scope 卸载的策略冲突**。前两处决定 `ModuleHub` 要不要改，第三处决定"切场景内存能不能回落"。
-
-### 9.1 硬伤（改签名 / 补规则，越晚越贵）
-
-| 编号 | 位置 | 问题 | 处理 |
-|---|---|---|---|
-| H-01 | §4 `Scope.Dispose()` | 返回 `void`，但 §4.1 第 2 步要等 `ShutdownAsync()`。`.Wait()` 阻塞主线程；fire-and-forget 会让关闭提前返回 | 改 `UniTask DisposeAsync(bool purgeAssets = false)`；`IDisposable` 仅同步兜底 |
-| H-02 | §4.2 | 未定义场景 Scope 如何取得根 Scope 的全局服务 | 定死一种解析规则（§9.6 建议 parent 链） |
-| H-03 | §8.3 vs §1 | "延迟卸载"与"Scope 关闭才允许卸载"叠加 → 切场景后旧资源仍占内存 | 拆为"缓存保留"与"`purgeAssets` 强制卸载"两条策略 |
-
-### 9.2 契约缺件（不补就会被绕过）
-
-| 编号 | 缺什么 | 后果 |
-|---|---|---|
-| M-01 | 热更链路：`CheckForUpdatesAsync` / `UpdateCatalogsAsync` / `DownloadAsync` / `GetDownloadSizeAsync` | 业务被迫直接调 Addressables，**违反 §3 自己的硬规则** |
-| M-02 | `InitializeAsync(ct)` | Addressables 读 catalog 的时机没有归属；初始化顺序无法排进拓扑 |
-| M-03 | `AcquireCacheAsync` 丢失 `T` | 池实例化要 cast，失败只能运行时暴露 |
-| M-04 | 只接受 `string address` | `AssetReference` 用不了，SO 配置的类型安全被抹平 |
-| M-05 | `ProviderHandle` 未定义 | class/struct、幂等性、回收责任都没写，Provider 无法实现 |
-
-### 9.3 语义漏洞（实现时会咬人）
-
-| 编号 | 位置 | 问题 |
-|---|---|---|
-| G-01 | §5.2 | 缺失败回滚：新 Scope 启动抛异常时旧 Scope 不会被关，且新 Scope 泄漏 |
-| G-02 | §5.3 | `Rent()` 未命中行为未定义（抛异常 / null / 同步创建） |
-| G-03 | §4 | 缺状态机：重复 `Dispose`、`StartupAsync` 中 `Dispose`、`StartupAsync` 后 `Register` |
-| G-04 | §5 | 未提场景本身如何加载，场景 bundle 的租约归属不明 |
-| G-05 | §2 | 释放后 `Asset` 仍返回旧引用，建议 getter 抛异常 |
-| G-06 | §6 | `isValid` 的定义与检查点未写；资源卸载后访问引用本身即可能拿到 fake-null |
-| G-07 | §8.2 | 池键单变体，同 prefab 多套配置的场景覆盖不到 |
-| G-08 | §5.1 | 预热部分失败时，已建实例与已申请租约的回滚未定义 |
-
-### 9.4 建议补充的验收用例
-
-| 编号 | 场景 | 断言 |
-|---|---|---|
-| S-03 | 切场景时新 Scope 启动失败 | 旧 Scope 完好可继续用；新 Scope 无残留池与租约 |
-| S-04 | `Dispose` 中调 `CreateChild`；`StartupAsync` 中调 `Dispose` | 明确抛错，不产生半关闭状态 |
-| S-05 | `StartupAsync` 完成后 `Modules.Register` | 抛出"容器已冻结"异常 |
-| P-03 | 池实例被场景卸载带走 | `Rent()` 不返回 fake-null；`Created == Destroyed` 仍对账 |
-| P-04 | `DisposeAsync(purgeAssets: true)` | 本 Scope 独占资源被卸载，`ActiveLeases` 归零，内存回落 |
-| A-05 | 同址 `AcquireAsync` + `AcquireCacheAsync` 混用 | 底层只加载一次；两种租约各自独立计数 |
-| A-06 | `ct` 已取消时 `AcquireAsync` | 立即失败，不产生底层请求，`PendingRequests` 不变 |
-| A-07 | 全部等待者取消 | 底层句柄被回收，计数归零，允许卸载 |
-
-### 9.5 修改顺序
-
-1. **改 `Dispose` 为 `DisposeAsync`**（签名问题，改动最便宜）
-2. **补热更链路与 `InitializeAsync` 到 `IAssetService`**（不补，硬规则第一天就破）
-3. **把"缓存保留 / 强制卸载"拆成两条策略**（不拆，切场景内存不回落的问题会原样重现）
-4. 其余（H-02、G-01、G-02）在写实现前补进 §4 / §5，因为它们决定 `ModuleHub` 与 `PoolService` 是否需要改动——而这两个在 §4.2 里写的是"不变"。
-
-### 9.6 修订后的契约（供对照替换）
-
-**§2 资源层**
+## 2 资源层契约
 
 ```csharp
 public interface IAssetService
 {
-    // 生命周期：由 App 在启动链路中显式调用，且必须先于依赖资源的模块
+    // 生命周期：由 App 在启动链路显式调用，必须先于依赖资源的模块
     UniTask InitializeAsync(CancellationToken ct);
 
-    // 加载：key 用 object，以同时接受 string address 与 AssetReference
-    // 同址并发请求共享底层加载，但各自拿到独立租约（语义见 §2）
+    // key 用 object：同时接受 string address 与 AssetReference.RuntimeKey
+    // 同址并发共享底层加载，但各自得到独立租约（语义见 §2.1）
     UniTask<AssetLease<T>> AcquireAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object;
 
     // 缓存保留：不参与业务引用计数，用于池/常驻资源保活
     UniTask<AssetLease<T>> AcquireCacheAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object;
 
-    // 热更（原契约缺失，业务不得绕过本层直接调 Addressables）
-    UniTask<bool> CheckForUpdatesAsync(CancellationToken ct);              // true = 有新 catalog
-    UniTask<int>  UpdateCatalogsAsync(CancellationToken ct);               // 返回更新的 catalog 数
+    // 热更：业务不得绕过本层直接调 Addressables
+    UniTask<bool> CheckForUpdatesAsync(CancellationToken ct);
+    UniTask<int> UpdateCatalogsAsync(CancellationToken ct);
     UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct);
     UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct);
 
     // 诊断
     int PendingRequests { get; }
     int ActiveLeases { get; }
-    IReadOnlyList<LeaseInfo> DumpLeases(object key = null);                 // 按 key 过滤，null = 全部
+    IReadOnlyList<LeaseInfo> DumpLeases(object key = null);
 }
 
 public sealed class AssetLease<T> : IDisposable where T : UnityEngine.Object
 {
-    public T Asset { get; }        // IsReleased 时 getter 抛 InvalidOperationException（开发期）
+    public T Asset { get; }     // IsReleased 时：Editor/Development 抛异常，Release 返回 null
     public string Address { get; }
     public bool IsReleased { get; }
-    public void Dispose();         // 幂等；重复释放不改变其它租约计数
+    public long Version { get; }   // 诊断用：同一个 key 的多次申请可区分
+    public void Dispose();         // 幂等；不影响其它租约的计数
 }
 ```
 
-> **为什么 `AssetLease` 保持 `class` 而不是改成 `struct`**：`struct` 被复制后任意一份 `Dispose` 都会归还，直接造成重复归还 → 计数错乱；`class` 的"多份引用同一对象 + 幂等 Dispose"才是正确的所有权语义。所以"每次 Rent 一次分配"不能靠改 struct 解决，而应靠 **`Rent` 不产生新租约**（池级保活租约只在预热时拿一次）。
+### 2.1 三条租约语义（来自 [05 §2](05-技术方案-Addressables与HybridCLR.md)）
 
-**§4 Scope**
+1. **同址双请求 = 两个租约**：释放 A 不使 B 失效，重复释放 A 不改变 B 的计数；
+2. **取消只结束该等待者**：其余等待者继续；底层最终完成也不交付给已取消者；
+3. **失败也要回收底层句柄**：不允许"加载失败但句柄泄漏"。
+
+### 2.2 为什么 `AssetLease` 是 class 不是 struct
+
+struct 被复制后任意一份 `Dispose` 都会归还，直接造成重复归还 → 计数错乱。 class 的"多引用 + 幂等 Dispose"才是正确的所有权语义。
+
+因此"每次租用一次分配"不能靠改 struct 解决，而靠 **`Rent` 不产生新租约**：池级保活租约只在预热时拿一次（见 [11 §8](11-对象池与资源租约.md)）。
+
+## 3 Provider 边界
+
+```csharp
+public interface IAssetProvider
+{
+    UniTask<ProviderHandle> LoadAsync(object key, CancellationToken ct);
+    void Release(ProviderHandle handle);        // 幂等
+    UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct);
+}
+
+public sealed class ProviderHandle : IDisposable
+{
+    public UnityEngine.Object Asset { get; }
+    public bool IsValid { get; }
+    public void Dispose();                      // 等价于 Provider.Release
+}
+```
+
+- `AddressablesProvider` 是首个实现；其它模块**只依赖 `IAssetService`**（[06 §2](06-工程规范-测试与验收.md) 硬规则）；
+- **`Release` 返回后资源可能已不可用**：Addressables 1.22.4-t1 在 `AssetBundleProvider.Unload()` 中调用 `AssetBundle.Unload(true)`（实测见 §9），资源立即失效。
+  "Release 到 bundle 真正卸载"之间还有内存未回落的窗口，诊断面板不应把 `ActiveLeases == 0` 当作"内存已回收"。
+
+## 4 Scope
 
 ```csharp
 public enum ScopeState { Created, Starting, Running, Stopping, Stopped, Faulted }
@@ -301,41 +95,218 @@ public sealed class Scope : IDisposable
     public string Name { get; }
     public Scope Parent { get; }
     public ScopeState State { get; }
-    public ModuleHub Modules { get; }    // 仅 Created / Starting 阶段可 Register，进入 Running 后冻结
+    public ModuleHub Modules { get; }   // 仅 Created/Starting 可 Register，进入 Running 后冻结
     public PoolService Pools { get; }
+    public AssetLease<SceneAsset> SceneLease { get; }   // 场景以 Scope 为单位持有
 
-    public Scope CreateChild(string name);   // 仅 Running 状态允许；否则抛异常
-
+    public Scope CreateChild(string name);              // 仅 Running 允许，否则抛异常
     public UniTask StartupAsync(CancellationToken ct, IStartupProgress progress = null);
-    public UniTask DisposeAsync(bool purgeAssets = false);   // 逆序：子 → 模块 → 池 → 租约
+    public UniTask DisposeAsync(bool purgeAssets = false);
 
-    void IDisposable.Dispose();   // 同步兜底：已 Stopped 则幂等；否则记 Error 并强制释放
+    void IDisposable.Dispose();   // 同步兜底：已 Stopped 幂等；否则记 Error 并强制释放
 }
 ```
 
-**关闭顺序（含 purge）**
+状态机约束：
+
+| 调用 | 允许的状态 | 违反时 |
+|---|---|---|
+| `CreateChild` | Running | 抛 `InvalidOperationException` |
+| `StartupAsync` | Created | 抛异常 |
+| `DisposeAsync` | 任意（幂等） | 已 Stopped 直接返回 |
+| `Modules.Register` | Created / Starting | 由 `ModuleHub` 抛"容器已冻结" |
+
+### 4.1 关闭顺序
 
 ```
 1. 子 Scope.DisposeAsync()
-2. 模块 ShutdownAsync()               ← 业务停止使用资源
-3. 池 DisposeAsync(force: true)        ← 销毁实例，归还池级保活租约
-4. 其余租约 Dispose()                  ← 计数归零
-5. purgeAssets ? 资源层强制卸载本 Scope 独占资源
-               : 交给缓存策略（LRU + 上限）
+2. 模块 ShutdownAsync()            ← 业务停止使用资源
+3. 池 Dispose(force: true)          ← 销毁实例（同步）
+4. await NextFrame()                ← 等 Object.Destroy 生效（硬规则 R-1，见 §9）
+5. 释放池级保活租约 + 其余租约
+6. 卸载场景（SceneLease.Dispose）
+7. purgeAssets ? 资源层强制卸载本 Scope 独占资源
+                : 交给缓存策略（LRU + 上限）
 ```
 
-**跨 Scope 解析规则（H-02 的答案，建议取 ②）**
+**为什么池必须先于租约**：池持有保活租约，先放租约再清池，销毁实例期间资源可能已被卸载。
+**为什么第 4 步不能省**：`Object.Destroy` 延迟到帧末，而 `Unload(true)` 立即失效（§9 实测）。
+
+### 4.2 与现有组件的关系
+
+| 组件 | 变化 |
+|---|---|
+| `ModuleHub` | **不改**；每个 Scope 各持一个实例 |
+| `PoolService` / `ObjectPool` | **不改**；由 Scope 持有，关闭时同步 `Dispose(force: true)` |
+| `AssetPool`（资源包） | 新增：持有保活租约 + 一个 `ObjectPool<T>`，负责第 4 步的跨帧释放 |
+| `App` | 增加 `RootScope`，`Hub` 改为 `RootScope.Modules` 的转发（保持兼容） |
+
+### 4.3 跨 Scope 解析：构造注入（H-02 的答案）
+
+**规则：模块的依赖全部写在构造函数上；`Get<T>()` 只允许出现在装配代码里。**
+
+```csharp
+public sealed class LevelDirector : IAppModule
+{
+    readonly IAudioService _audio;   // 根 Scope 的全局服务
+    readonly PoolService _pools;     // 本 Scope 的池
+
+    public LevelDirector(IAudioService audio, PoolService pools)   // 依赖清单 = 签名
+    {
+        _audio = audio;
+        _pools = pools;
+    }
+
+    public string Id => "LevelDirector";
+    public IReadOnlyList<string> DependsOn => System.Array.Empty<string>();
+    public UniTask InitializeAsync(CancellationToken ct) { _audio.PlayBgm("level_01"); return UniTask.CompletedTask; }
+    public UniTask StartAsync(CancellationToken ct) => UniTask.CompletedTask;
+    public UniTask ShutdownAsync(CancellationToken ct) => UniTask.CompletedTask;
+}
+```
+
+装配代码（全工程唯一查容器的地方）：
+
+```csharp
+public static class LevelScopeFactory
+{
+    public static async UniTask<Scope> CreateAsync(Scope root, string levelId, CancellationToken ct)
+    {
+        var scope = root.CreateChild("Level:" + levelId);
+
+        var audio  = root.Modules.Get<IAudioService>();     // ← 组合根
+        var assets = root.Modules.Get<IAssetService>();
+
+        scope.Modules.Register(new LevelDirector(audio, scope.Pools));
+        scope.Modules.Register(new EnemySpawner(assets, scope.Pools));
+
+        await scope.StartupAsync(ct);
+        return scope;
+    }
+}
+```
+
+依赖过多时收敛成上下文对象（仍是构造注入）：
+
+```csharp
+public readonly struct RootServices
+{
+    public readonly IAudioService Audio;
+    public readonly IAssetService Assets;
+    public readonly IEventBus Events;
+}
+```
+
+| 对比项 | ParentHub 查找 | **构造注入（选定）** |
+|---|---|---|
+| 依赖可见性 | 藏在方法体 | 就是签名 |
+| 忘注册 | 运行时才报错 | 装配代码编译不过 |
+| 单测 | 要建真 Hub | `new Module(fakeA, fakeB)` |
+| `ModuleHub` | 要加 ParentHub 与解析链 | 不改 |
+
+> 强制手段：先靠 Review（[06 §2](06-工程规范-测试与验收.md) 规则表），T05 的 Roslyn 分析器可把"模块类里调用 `Get<T>()`"变成构建期错误。
+
+## 5 关键时序
+
+### 5.1 进入场景
 
 ```
-ModuleHub 增加 ParentHub。解析顺序：先查自己 → 再查父级 → 直到根 Scope 停止。
-约束：
-  · 只在 Running 状态允许解析（Starting 阶段解析会拿到未初始化实例）
-  · 解析结果缓存到模块字段，不每帧查
-  · 禁止反向：父 Scope 不得解析子 Scope 的模块
+scope = root.CreateChild("Level01")
+await scope.StartupAsync(ct, progress)
+  → 模块 Initialize（AssetPool 预热：AcquireCacheAsync + 预创建实例）
+  → 模块 Start
+```
 
----
+### 5.2 切换场景（含失败回滚）
 
-## 10 实测：AssetBundle 卸载语义（2026-11-15）
+```
+newScope = root.CreateChild("Level02")
+try
+{
+    await newScope.StartupAsync(ct)      // 新场景加载完成
+    await oldScope.DisposeAsync()        // 成功才释放旧的
+}
+catch
+{
+    await newScope.DisposeAsync(force)   // 失败：逆序清理新的
+    // 旧 Scope 保持 Running，玩家不卡在中间态
+}
+```
+
+先加载后释放：避免黑屏期，代价是峰值内存高。低内存设备可改为先释放后加载——策略由项目决定，框架不强制。
+
+**注意峰值**：两个 Scope 同时存在期间，共享资源靠同址共享只加载一份，但**池是每个 Scope 一份**，各自预热会各建一批实例。
+
+### 5.3 运行时借用
+
+```
+pool.Get()            → 有闲置：同步返回；无闲置且未达上限：同步创建；达上限：抛 PoolExhaustedException
+pool.TryGet(out item) → 只取闲置，不创建
+pool.RentAsync(ct)    → 有闲置：同步返回；否则名额预留 + 异步创建
+```
+
+两条必须写死：
+
+1. **`Rent` 不产生新租约**——资源由池级保活租约保证，每次借用都申请租约会让计数抖动；
+2. **`Get()` 在达上限时抛异常**，不返回 null，避免空引用在业务深处爆掉。
+
+### 5.4 场景加载与租约归属
+
+| 场景来源 | 加载方式 | 租约归属 |
+|---|---|---|
+| 本地场景（Build Settings 内） | `SceneManager.LoadSceneAsync` | 无资源租约（随 Build 打包） |
+| 远端/分包场景 | `IAssetService.AcquireSceneAsync`（内部走 Addressables SceneProvider） | **`Scope.SceneLease`** |
+
+- 场景实例化的物体随场景卸载销毁，**不进入对象池**；
+- `SceneLease.Dispose()` 在 Scope 关闭流程的第 6 步，必须晚于模块与池；
+- 同址共享：两个 Scope 加载同一场景（少见）时各自持有租约。
+
+## 6 失败矩阵
+
+| 情况 | 必须的行为 |
+|---|---|
+| 资源加载失败 | 租约不产生；等待者收到异常；底层句柄回收 |
+| 等待中取消 | 只移除该等待者；其余继续；不产生租约 |
+| 全部等待者取消 | 按 Provider 能力取消底层操作，或登记完成后立即释放 |
+| Scope 启动失败 | 逆序清理：池 → 已启动模块 → 子 Scope |
+| Scope 切换时新 Scope 失败 | 旧 Scope 保持可用；新 Scope 逆序清理 |
+| Scope 关闭中仍有对象借用 | 池 `Dispose(force: true)` 强杀，记 Error（经 ErrorBudget 聚合） |
+| 资源已卸载仍被使用 | **不该发生**（保活租约挡住）；若发生由池的 `isValid` 兜底并记 Error |
+| 同帧销毁实例并释放租约 | **禁止**（规则 R-1）：必须跨一帧 |
+| 预热部分失败 | 已创建实例全部销毁、已申请租约全部释放，再抛出 |
+
+## 7 验收用例
+
+| 编号 | 场景 | 断言 |
+|---|---|---|
+| A-01 | 同址并发两次 Acquire | 两个不同租约；释放其一另一个仍可用 |
+| A-02 | 重复释放同一租约 | 幂等，不改变其它租约计数 |
+| A-03 | 等待中取消 | 只有该等待者失败，其它成功 |
+| A-04 | 加载失败 | 不产生租约，计数归零 |
+| A-05 | `AcquireAsync` 与 `AcquireCacheAsync` 混用同址 | 底层只加载一次；两种租约各自独立计数 |
+| A-06 | `ct` 已取消时 Acquire | 立即失败，不产生底层请求，`PendingRequests` 不变 |
+| A-07 | 全部等待者取消 | 底层句柄回收，计数归零，允许卸载 |
+| S-01 | Scope 关闭 | 顺序为 子 → 模块 → 池 → 租约，且池销毁后租约才归零 |
+| S-02 | Scope 启动失败 | 逆序清理，无残留池与租约 |
+| S-03 | 切场景时新 Scope 启动失败 | 旧 Scope 完好可用；新 Scope 无残留 |
+| S-04 | `Dispose` 中 `CreateChild`；`StartupAsync` 中 `Dispose` | 明确抛错，不产生半关闭状态 |
+| S-05 | `StartupAsync` 完成后 `Register` | 抛"容器已冻结"异常 |
+| P-01 | 池持有保活租约时请求卸载 | 资源不会被卸载 |
+| P-02 | 池 Dispose 后 | 租约计数归零，资源可卸载 |
+| P-03 | 池实例被场景卸载带走 | `Rent` 不返回 fake-null；`Created == Destroyed` 仍对账 |
+| P-04 | `DisposeAsync(purgeAssets: true)` | 本 Scope 独占资源被卸载，`ActiveLeases` 归零 |
+| P-05 | 销毁实例与释放租约的时序 | 释放前至少跨一帧；期间对象仍可安全访问 |
+
+## 8 待拍板（剩余）
+
+| # | 问题 | 建议 |
+||---|---|---|
+| 1 | 池键是否需要变体维度 | 需要。同一 prefab 可能有不同父节点/初始状态，键做成 `(地址, 变体)` |
+| 2 | 缓存淘汰策略 | LRU + 容量上限，由资源层配置；`purgeAssets` 只用于强制场景 |
+| 3 | UI/音频是否纳入 Scope | 分层：UI 根与音频常驻根 Scope，场景级 HUD 随场景 Scope |
+| 4 | HUD 淡出时被强杀 | **业务策略**，框架不内置"等动画"；提供 `HudController` 自行延迟到动画结束再让 Scope 关闭 |
+
+## 9 实测：AssetBundle 卸载语义（2026-11-15）
 
 **探针**：`Assets/Aot/Editor/BundleUnloadProbe.cs`（`-executeMethod NowFrameWork.Probe.BundleUnloadProbe.Run`）
 **报告**：`EXE/_evidence/ab-unload-probe.txt`
@@ -344,30 +315,42 @@ ModuleHub 增加 ParentHub。解析顺序：先查自己 → 再查父级 → �
 |---|---|
 | `Unload(false)` 后立即 | 资源**仍可用** |
 | `Unload(false)` + `UnloadUnusedAssets` | 仍可用（探针持有托管引用） |
-| `Unload(true)` 后立即 | 资源**立即不可用**：`InstanceIDToObject` 返回 null，托管引用变 fake-null |
+| `Unload(true)` 后立即 | 资源**立即不可用**：`InstanceIDToObject` 为 null，托管引用变 fake-null |
 
-**源码对照**：Addressables 1.22.4-t1 的 `AssetBundleProvider.Unload()` 调用 `m_AssetBundle.Unload(true)`
-（`Runtime/ResourceManager/ResourceProviders/AssetBundleProvider.cs:885`，注释原文："Releases the asset bundle via AssetBundle.Unload(true)"）。
+**源码对照**：Addressables 1.22.4-t1 `AssetBundleProvider.Unload()` → `m_AssetBundle.Unload(true)`（`Runtime/ResourceManager/ResourceProviders/AssetBundleProvider.cs:885`）。
 
-### 10.1 由此得到的硬规则 R-1
+### 9.1 硬规则 R-1
 
 > **禁止在销毁实例的同一帧释放租约。**
 
-原因链：
-
 ```
-Object.Destroy(go)        → 延迟到帧末才真正销毁
-lease.Dispose()           → 计数归零 → Addressables 立即 Unload(true)
-                          → 本帧剩余时间里，对象还在，但它的资源已经没了
+Object.Destroy(go)  → 延迟到帧末
+lease.Dispose()     → 计数归零 → Addressables 立即 Unload(true)
+                    → 本帧剩余时间：对象还在，资源已死
 ```
 
-正确做法（`Scope.DisposeAsync` / 池整池释放）：
+闲置回收不受影响：自动回收只销毁实例，不动池级保活租约。
 
-```csharp
-DestroyAllInstances();          // 同步调用 Object.Destroy
-await UniTask.NextFrame();      // 等 Destroy 在本帧末生效
-ReleaseKeepAliveLease();        // 再释放池级保活租约
-```
+## 10 评审意见处理对照（2026-11-15）
 
-**闲置回收不受影响**：自动回收只销毁实例，不动池级保活租约，资源不会被卸载。
-```
+| 编号 | 评审意见 | 处理 |
+|---|---|---|
+| H-01 | `Dispose` 同步无法等 `ShutdownAsync` | ✅ 已改 `DisposeAsync(bool purgeAssets)` + `IDisposable` 同步兜底 |
+| H-02 | 跨 Scope 拿根服务未定义 | ✅ 定为**构造注入**，见 §4.3 |
+| H-03 | 缓存保留与"关闭才允许卸载"冲突 | ✅ 拆成两条：缓存策略 + `purgeAssets` 强制卸载（§4.1 第 7 步） |
+| M-01 | 缺热更链路 | ✅ 已补 `CheckForUpdates/UpdateCatalogs/GetDownloadSize/Download` |
+| M-02 | 缺 `InitializeAsync` | ✅ 已补 |
+| M-03 | `AcquireCacheAsync` 丢类型 | ✅ 改为泛型 `AcquireCacheAsync<T>` |
+| M-04 | 只收 `string address` | ✅ 改为 `object key`（兼容 `AssetReference.RuntimeKey`） |
+| M-05 | `ProviderHandle` 未定义 | ✅ 已定义（§3），含幂等 `Release` 与"立即失效"语义 |
+| G-01 | 切场景失败无回滚 | ✅ §5.2 补失败回滚 |
+| G-02 | `Rent()` 未命中行为未定义 | ✅ §5.3 写死：不创建 / 达上限抛异常 |
+| G-03 | Scope 缺状态机 | ✅ §4 补 `ScopeState` 与状态-操作表 |
+| G-04 | 场景加载归属不明 | ✅ §5.4 补表 |
+| G-05 | 释放后 `Asset` 仍可访问 | ✅ 改为 Editor/Development 抛异常 |
+| G-06 | `isValid` 定义与检查点 | ✅ 池取出前检查 + fake-null 判定（[11 §7](11-对象池与资源租约.md)） |
+| G-07 | 池键单变体 | ✅ §8 待拍板第 1 条，倾向 `(地址, 变体)` |
+| G-08 | 预热部分失败回滚 | ✅ §6 失败矩阵补一行 |
+| — | `PoolService.DisposeAsync` 建议 | ❌ 不采纳：池销毁是同步的，跨帧等待属于租约持有者（`AssetPool`） |
+| — | HUD 淡出被强杀 | ❌ 框架不内置：业务策略（§8 第 4 条） |
+| **R-1** | （评审未提，实测发现）同帧销毁+释放租约 | ✅ §4.1 第 4 步 + §9 实测 + §7 用例 P-05 |
