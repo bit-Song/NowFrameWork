@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using NowFrameWork.Core.Logging;
 using NowFrameWork.Core.Events;
@@ -366,6 +368,105 @@ namespace NowFrameWork.Core.Tests
 
             Assert.AreEqual(0, service.PoolCount);
             Assert.AreEqual(2, counter.Destroyed, "Dispose 必须强制销毁所有池的活跃对象，否则资源租约不会归还");
+        }
+
+        // ---- G-04 异步租用 ----
+
+        sealed class TestAsyncFactory : IAsyncPoolItemFactory<Item>
+        {
+            public readonly Counter Counter = new Counter();
+            public Func<CancellationToken, UniTask<Item>> CreateFunc;
+
+            public UniTask<Item> CreateAsync(CancellationToken ct) => CreateFunc(ct);
+            public void Destroy(Item item) => Counter.Destroyed++;
+        }
+
+        [Test]
+        public void RentAsync_CreatesItem_WhenEmpty()
+        {
+            var factory = new TestAsyncFactory { CreateFunc = _ => UniTask.FromResult(new Item()) };
+            var pool = new ObjectPool<Item>(new TestFactory(), asyncFactory: factory);
+
+            var awaiter = pool.RentAsync(default).GetAwaiter();
+            Item item = awaiter.GetResult();
+
+            Assert.IsNotNull(item);
+            Assert.AreEqual(1, pool.ActiveCount);
+        }
+
+        [Test]
+        public void RentAsync_PrefersIdleObjects()
+        {
+            var factory = new TestAsyncFactory { CreateFunc = _ => UniTask.FromResult(new Item()) };
+            var pool = new ObjectPool<Item>(new TestFactory(), asyncFactory: factory);
+
+            Item first = pool.Get();
+            pool.Release(first);
+
+            Item again = pool.RentAsync(default).GetAwaiter().GetResult();
+
+            Assert.AreSame(first, again, "有闲置时应走同步快路径，不调用异步工厂");
+        }
+
+        [Test]
+        public void RentAsync_Concurrent_CannotExceedMaxSize()
+        {
+            var pending = new List<UniTaskCompletionSource<Item>>();
+            var factory = new TestAsyncFactory();
+            factory.CreateFunc = _ =>
+            {
+                var source = new UniTaskCompletionSource<Item>();
+                pending.Add(source);
+                return source.Task;
+            };
+
+            var pool = new ObjectPool<Item>(new TestFactory(), maxSize: 2, asyncFactory: factory);
+
+            UniTask first = pool.RentAsync(default);
+            UniTask second = pool.RentAsync(default);
+            UniTask third = pool.RentAsync(default);
+
+            Assert.AreEqual(2, pool.Stats.Reserved, "两个在创建中应占住名额");
+            Assert.Throws<PoolExhaustedException>(() => third.GetAwaiter().GetResult(),
+                "并发租用不得超过上限");
+
+            pending[0].TrySetResult(new Item());
+            pending[1].TrySetResult(new Item());
+
+            Assert.IsTrue(first.GetAwaiter().IsCompleted);
+            Assert.IsTrue(second.GetAwaiter().IsCompleted);
+            Assert.AreEqual(2, pool.ActiveCount);
+            Assert.AreEqual(0, pool.Stats.Reserved);
+        }
+
+        [Test]
+        public void RentAsync_CreateFails_ReleasesReservation()
+        {
+            var factory = new TestAsyncFactory();
+            int attempt = 0;
+            factory.CreateFunc = _ =>
+            {
+                attempt++;
+                throw new InvalidOperationException("load failed");
+            };
+
+            var pool = new ObjectPool<Item>(new TestFactory(), maxSize: 1, asyncFactory: factory);
+
+            var awaiter = pool.RentAsync(default).GetAwaiter();
+            Assert.Throws<InvalidOperationException>(() => awaiter.GetResult());
+            Assert.AreEqual(0, pool.Stats.Reserved, "失败后名额必须归还");
+
+            // 名额已归还，第二次仍应尝试创建（而不是直接 PoolExhausted）
+            Assert.Throws<InvalidOperationException>(() => pool.RentAsync(default).GetAwaiter().GetResult());
+            Assert.AreEqual(2, attempt);
+        }
+
+        [Test]
+        public void RentAsync_WithoutAsyncFactory_Throws()
+        {
+            var pool = new ObjectPool<Item>(new TestFactory());
+
+            Assert.Throws<PoolUsageException>(() => pool.RentAsync(default).GetAwaiter().GetResult());
         }
     }
 }

@@ -7,12 +7,13 @@ namespace NowFrameWork.Core.Pooling
     /// <summary>池的运行时统计。Created 与 Destroyed 用于**对账**：池释放后两者必须相等。</summary>
     public readonly struct PoolStats
     {
-        public PoolStats(int created, int destroyed, int active, int inactive, int maxSize)
+        public PoolStats(int created, int destroyed, int active, int inactive, int reserved, int maxSize)
         {
             Created = created;
             Destroyed = destroyed;
             Active = active;
             Inactive = inactive;
+            Reserved = reserved;
             MaxSize = maxSize;
         }
 
@@ -24,6 +25,9 @@ namespace NowFrameWork.Core.Pooling
 
         public int Active { get; }
         public int Inactive { get; }
+
+        /// <summary>正在异步创建中（已占名额、尚未交付）的数量。</summary>
+        public int Reserved { get; }
 
         /// <summary>0 表示不限。</summary>
         public int MaxSize { get; }

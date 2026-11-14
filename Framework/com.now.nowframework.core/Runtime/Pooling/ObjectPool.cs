@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 using NowFrameWork.Core;
 using NowFrameWork.Core.Logging;
@@ -53,16 +55,19 @@ namespace NowFrameWork.Core.Pooling
         readonly int _maxSize;               // 0 表示不限
         readonly double _autoRecycleSeconds; // <= 0 表示不自动回收
         readonly IClock _clock;
+        readonly IAsyncPoolItemFactory<T> _asyncFactory;
         readonly ILog _log;
 
         int _live;      // 创建 - 销毁
         int _created;   // 累计
         int _destroyed; // 累计
+        int _reserved;  // 异步创建中
         bool _disposed;
 
         public ObjectPool(Func<T> create, Action<T> destroy = null, int maxSize = 0,
-            double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null)
-            : this(new DelegateFactory(create, destroy), maxSize, autoRecycleSeconds, prewarm, isValid, clock, log)
+            double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null,
+            IAsyncPoolItemFactory<T> asyncFactory = null)
+            : this(new DelegateFactory(create, destroy), maxSize, autoRecycleSeconds, prewarm, isValid, clock, log, asyncFactory)
         {
         }
 
@@ -73,12 +78,14 @@ namespace NowFrameWork.Core.Pooling
         /// <param name="isValid">取出前校验对象仍有效（Unity 对象被外部销毁时用）；为空表示总是有效。</param>
         /// <param name="clock">自动回收所需时钟；启用回收时必填。</param>
         public ObjectPool(IPoolItemFactory<T> factory, int maxSize = 0,
-            double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null)
+            double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null,
+            IAsyncPoolItemFactory<T> asyncFactory = null)
         {
             if (autoRecycleSeconds > 0d && clock == null)
                 throw new ArgumentNullException(nameof(clock), "启用自动回收必须提供时钟");
 
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _asyncFactory = asyncFactory;
             _maxSize = maxSize < 0 ? 0 : maxSize;
             _autoRecycleSeconds = autoRecycleSeconds;
             _isValid = isValid;
@@ -93,7 +100,7 @@ namespace NowFrameWork.Core.Pooling
         public int TotalCount => _live;
         public bool IsDisposed => _disposed;
 
-        public PoolStats Stats => new PoolStats(_created, _destroyed, _active.Count, _idleCount, _maxSize);
+        public PoolStats Stats => new PoolStats(_created, _destroyed, _active.Count, _idleCount, _reserved, _maxSize);
 
         public T Get()
         {
@@ -134,6 +141,49 @@ namespace NowFrameWork.Core.Pooling
 
             item = null;
             return false;
+        }
+
+        /// <summary>
+        /// 异步租用：先复用闲置（同步），没有闲置且有名额时走异步工厂。
+        ///
+        /// 并发安全：先检查 _live + _reserved，再 _reserved++，保证并发调用不会超过 maxSize。
+        /// 取消语义：取消后若对象已创建完，立即销毁——不占名额外泄。
+        /// </summary>
+        public async UniTask<T> RentAsync(CancellationToken ct)
+        {
+            ThrowIfDisposed();
+
+            if (TryGet(out T idle)) return idle;
+
+            if (_asyncFactory == null)
+                throw new PoolUsageException("该池未配置异步工厂，无法异步租用，类型: " + typeof(T).Name);
+
+            if (_maxSize > 0 && _live + _reserved >= _maxSize)
+                throw new PoolExhaustedException("异步租用超出上限 " + _maxSize + "，类型: " + typeof(T).Name);
+
+            _reserved++;
+            try
+            {
+                T created = await _asyncFactory.CreateAsync(ct);
+
+                if (ct.IsCancellationRequested)
+                {
+                    // 创建完成但调用方已取消：立刻销毁，不占用名额与租约
+                    if (created != null) _asyncFactory.Destroy(created);
+                    ct.ThrowIfCancellationRequested();
+                }
+
+                if (created == null) throw new PoolUsageException("异步创建返回 null，类型: " + typeof(T).Name);
+
+                _created++;
+                _live++;
+                Spawn(created);
+                return created;
+            }
+            finally
+            {
+                _reserved--;
+            }
         }
 
         public void Release(T item)
