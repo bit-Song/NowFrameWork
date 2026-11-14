@@ -85,6 +85,28 @@ namespace NowFrameWork.Unity
             App.FixedTick(UnityEngine.Time.fixedDeltaTime);
         }
 
+        void OnApplicationPause(bool paused)
+        {
+            if (App == null) return;
+
+            if (paused) App.Lifecycle.NotifyPause();
+            else App.Lifecycle.NotifyResume();
+        }
+
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (App == null) return;
+
+            // 桌面端只有 focus 信号；移动端会与 pause 叠加，AppLifecycle 负责去重
+            if (hasFocus) App.Lifecycle.NotifyResume();
+            else App.Lifecycle.NotifyPause();
+        }
+
+        void OnApplicationQuit()
+        {
+            App?.Lifecycle.NotifyQuit();
+        }
+
         void OnDestroy()
         {
             if (App == null) return;
