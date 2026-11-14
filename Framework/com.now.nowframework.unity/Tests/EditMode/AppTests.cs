@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading;
 using NUnit.Framework;
 using NowFrameWork.Core;
 using UnityEngine;
@@ -74,6 +76,44 @@ namespace NowFrameWork.Unity.Tests
 
             Assert.Greater(collector.PhaseCount, 0, "App 必须把阶段上报给接收者");
             Assert.AreEqual(1f, collector.LastProgress, "完成时进度必须是 1");
+        }
+
+        sealed class ShutdownProbeModule : IAppModule
+        {
+            readonly PoolService _pools;
+            public bool PoolUsableOnShutdown;
+
+            public ShutdownProbeModule(PoolService pools) => _pools = pools;
+
+            public string Id => "ShutdownProbe";
+            public IReadOnlyList<string> DependsOn => System.Array.Empty<string>();
+
+            public Cysharp.Threading.Tasks.UniTask InitializeAsync(CancellationToken ct)
+                => Cysharp.Threading.Tasks.UniTask.CompletedTask;
+
+            public Cysharp.Threading.Tasks.UniTask StartAsync(CancellationToken ct)
+                => Cysharp.Threading.Tasks.UniTask.CompletedTask;
+
+            public Cysharp.Threading.Tasks.UniTask ShutdownAsync(CancellationToken ct)
+            {
+                // 模块关闭时池必须仍然可用
+                var pool = _pools.GetOrCreate("probe", () => new object());
+                PoolUsableOnShutdown = pool.Get() != null;
+                return Cysharp.Threading.Tasks.UniTask.CompletedTask;
+            }
+        }
+
+        [Test]
+        public void Shutdown_RunsModulesBeforeDisposingPools()
+        {
+            App app = App.Create(LogLevel.Error, 0);
+            var module = new ShutdownProbeModule(app.Pools);
+            app.Hub.Register(module);
+
+            app.StartupAsync().GetAwaiter().GetResult();
+            Assert.DoesNotThrow(() => app.ShutdownAsync().GetAwaiter().GetResult(),
+                "模块关闭时池应仍可用；顺序反了会抛 PoolUsageException");
+            Assert.IsTrue(module.PoolUsableOnShutdown);
         }
 
         [Test]

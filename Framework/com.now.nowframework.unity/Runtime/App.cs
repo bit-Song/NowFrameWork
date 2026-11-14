@@ -72,12 +72,18 @@ namespace NowFrameWork.Unity
         public UniTask StartupAsync(CancellationToken ct = default, IStartupProgress progress = null)
             => Hub.StartupAsync(ct, progress);
 
-        public UniTask ShutdownAsync()
+        /// <summary>
+        /// 关闭：**先关模块**，再清事件/计时器/池。
+        /// 反过来的话，模块在 ShutdownAsync 里还会用到这些服务，会拿到已释放的对象。
+        /// 顺序与 [13 §4.1] 一致：模块 → 池 → （资源层）租约。
+        /// </summary>
+        public async UniTask ShutdownAsync()
         {
+            await Hub.ShutdownAsync();
+
             Events.Clear();
             Timers.Clear();
             Pools.Dispose();
-            return Hub.ShutdownAsync();
         }
 
         /// <summary>每帧驱动（对应 Update）。</summary>
