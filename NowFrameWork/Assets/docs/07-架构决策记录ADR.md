@@ -395,7 +395,10 @@
 | 风险 | 缓解 |
 |---|---|
 | `UnityEngine.Pool` 非线程安全 | 约定只在主线程使用，写入包 README |
-| 官方池的 `collectionCheck` 仅编辑器/开发版生效，Release 无法检测重复释放 | C06 自研薄封装（租约集合）补上运行时检测，这是唯一需要自研的部分 |
+| ~~`collectionCheck` 仅编辑器生效~~ **（已核对源码，此说法错误）** | `collectionCheck` 是普通运行时字段（UnityCsReference `ObjectPools.cs:116`），Release 同样检测；代价是每次 Release 做 O(n) 扫描 —— 小池直接用，热路径/大池改 `collectionCheck: false` + 自研 O(1) 租约集合 |
 | 池的 `actionOnGet/Release` 传 lambda 会分配 | 按 [06 §4.2](06-工程规范-测试与验收.md) R3 传静态方法或缓存委托 |
 
+- **参考核对记录（2026-11-14）**：
+  - `UnityEngine.Pool` 源码（UnityCsReference）：`ObjectPool<T>` 用 `List<T>` + `m_FreshlyReleased` 单元素快取，`Release` 中 `m_CollectionCheck` 做引用扫描并抛 `InvalidOperationException`；**无条件编译**，因此玩家包也生效。
+  - `MessagePipe` 的 `MessageBrokerCore<T>`：`Publish` 取 `handlers.GetValues()` 快照数组后遍历（与我们的快照派发同构）；`Subscribe/Dispose` 加锁（多线程支持），本框架单线程故不加锁。其 `MessagePipeDiagnosticsInfo` 做订阅泄漏统计，对应我们的 T05 Roslyn 分析器。
 - **验证**：C06 验收包含「重复释放必须报错（Development 与 Release 都生效）」「租约与对象销毁一致」「池的 Get/Release 在稳态下不分配（Profiler 人工核对）」。
