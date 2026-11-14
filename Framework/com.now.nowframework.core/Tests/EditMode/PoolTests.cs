@@ -350,13 +350,16 @@ namespace NowFrameWork.Core.Tests
             var service = new PoolService(clock);
             var counter = new Counter();
 
-            service.GetOrCreate("a", () => { counter.Created++; return new Item(); }, _ => counter.Destroyed++);
-            service.GetOrCreate("b", () => { counter.Created++; return new Item(); }, _ => counter.Destroyed++);
+            ObjectPool<Item> a = service.GetOrCreate("a", () => { counter.Created++; return new Item(); }, _ => counter.Destroyed++);
+            ObjectPool<Item> b = service.GetOrCreate("b", () => { counter.Created++; return new Item(); }, _ => counter.Destroyed++);
+
+            a.Get();   // 两个池各留一个活跃对象，验证 Dispose 会强制销毁
+            b.Get();
 
             service.Dispose();
 
             Assert.AreEqual(0, service.PoolCount);
-            Assert.AreEqual(2, counter.Destroyed);
+            Assert.AreEqual(2, counter.Destroyed, "Dispose 必须强制销毁所有池的活跃对象，否则资源租约不会归还");
         }
     }
 }
