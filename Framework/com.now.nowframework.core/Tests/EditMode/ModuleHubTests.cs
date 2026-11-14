@@ -284,5 +284,40 @@ namespace NowFrameWork.Core.Tests
             Assert.AreEqual(0, a.LateTickCount);
             Assert.AreEqual(0, a.FixedTickCount);
         }
+
+        sealed class RecordingSink : ILogSink
+        {
+            public int Count;
+            public LogLevel LastLevel;
+            public string LastMessage;
+
+            public bool IsEnabled(LogLevel level) => true;
+
+            public void Write(in LogEntry entry)
+            {
+                Count++;
+                LastLevel = entry.Level;
+                LastMessage = entry.Message;
+            }
+        }
+
+        [Test]
+        public void Shutdown_ModuleThrows_LogsErrorWithModuleId()
+        {
+            var log = new List<string>();
+            var sink = new RecordingSink();
+            var logger = new Logger(LogLevel.Trace, 0);
+            logger.AddSink(sink);
+
+            var hub = new ModuleHub(logger);
+            hub.Register(new RecordModule("A", log) { ThrowOnShutdown = true });
+
+            RunSync(hub.StartupAsync());
+            RunSync(hub.ShutdownAsync());
+
+            Assert.AreEqual(1, sink.Count, "清理失败必须记录一条 Error");
+            Assert.AreEqual(LogLevel.Error, sink.LastLevel);
+            StringAssert.Contains("A", sink.LastMessage);
+        }
     }
 }

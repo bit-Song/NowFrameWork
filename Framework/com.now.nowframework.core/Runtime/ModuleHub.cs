@@ -38,8 +38,14 @@ namespace NowFrameWork.Core
 
         bool _hasStarted;
 
-        public ModuleHub()
+        readonly ILog _log;
+
+        const string C01Tag = "C01";
+
+        /// <param name="log">可选日志；为空时使用 <see cref="Logs.Null"/>，不产生任何开销。</param>
+        public ModuleHub(ILog log = null)
         {
+            _log = log ?? Logs.Null;
             _modulesView = _modules.AsReadOnly();   // 构造一次，之后每次访问都复用
         }
 
@@ -111,9 +117,12 @@ namespace NowFrameWork.Core
                     // 每个模块的清理都用 None：取消只该影响业务，不该打断关闭流程
                     await _started[i].ShutdownAsync(CancellationToken.None);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // TODO(C03): 接入日志后记录模块 Id 与异常；清理异常不阻断后续模块
+                    // 清理异常不阻断后续模块；先判断级别，关闭时不构造字符串（R1/R3）
+                    if (_log.IsEnabled(LogLevel.Error))
+                        _log.Write(LogLevel.Error, C01Tag,
+                            "模块关闭失败: " + _started[i].Id + " -> " + e.GetType().Name + ": " + e.Message);
                 }
             }
 
