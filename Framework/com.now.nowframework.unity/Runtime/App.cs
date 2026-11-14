@@ -25,6 +25,10 @@ namespace NowFrameWork.Unity
             Timers = new TimerService(_clock, log);
             Pools = new PoolService(_clock, log);
             Hub = new ModuleHub(log);
+
+            // 错误预算挂在日志上：所有 Error 及以上自动聚合，模块无需改动
+            Errors = new ErrorBudget(fatalThreshold: 50, maxBuckets: 128, clock: () => _clock.UnscaledNow);
+            log.AddSink(Errors);
         }
 
         public IClock Clock => _clock;
@@ -34,6 +38,9 @@ namespace NowFrameWork.Unity
 
         /// <summary>对象池注册表；资源卸载时用它整池释放。</summary>
         public PoolService Pools { get; }
+
+        /// <summary>错误预算：同类错误聚合计数，超阈值升级为 fatal。</summary>
+        public ErrorBudget Errors { get; }
         public ModuleHub Hub { get; }
 
         /// <summary>创建装配好的 App：控制台出口 + Unity 时钟。</summary>

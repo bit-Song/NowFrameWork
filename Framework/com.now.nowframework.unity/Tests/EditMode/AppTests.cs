@@ -17,6 +17,7 @@ namespace NowFrameWork.Unity.Tests
             Assert.IsNotNull(app.Events);
             Assert.IsNotNull(app.Timers);
             Assert.IsNotNull(app.Pools);
+            Assert.IsNotNull(app.Errors);
             Assert.IsNotNull(app.Hub);
         }
 
