@@ -86,3 +86,4 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.20 | 2026-11-15 | **G-03 事件递归派发保护**：`EventBus.MaxPublishDepth = 16`，超限丢弃并记 Error，正常嵌套不受影响；用例 90 → 93 全绿 |
 | v0.4.21 | 2026-11-15 | **G-04 池的异步租用**：`IAsyncPoolItemFactory` + `RentAsync`，`_reserved` 预留保证并发不超上限，取消即销毁不占名额；11 §8 记录「池级保活租约」设计与失败矩阵；用例 93 → 98 全绿 |
 | v0.4.22 | 2026-11-15 | **G-05 设计定稿**：新增 [13 Scope 与资源层设计](13-Scope与资源层设计.md)——`IAssetService`/`AssetLease`/`IAssetProvider` 契约、Scope 树与「子→模块→池→租约」关闭顺序、失败矩阵、8 条验收用例、4 个待拍板项 |
+| v0.4.23 | 2026-11-15 | **实测 AssetBundle 卸载语义**：`Unload(true)` 后资源**立即**不可用（fake-null），而 Addressables 1.22.4-t1 在 `AssetBundleProvider.cs:885` 正是调它 → 得出硬规则 R-1「禁止同帧销毁实例并释放租约」，写入 13 §10；新增探针 `BundleUnloadProbe` |
