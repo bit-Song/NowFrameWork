@@ -1,0 +1,19 @@
+{
+  "name": "com.now.nowframework.core",
+  "version": "0.1.0",
+  "displayName": "NowFrameWork Core",
+  "description": "NowFrameWork 核心层：模块容器与生命周期。纯逻辑，不依赖 Unity 表现类型。",
+  "unity": "2022.3",
+  "keywords": [
+    "framework",
+    "core",
+    "container",
+    "lifecycle"
+  ],
+  "dependencies": {
+    "com.cysharp.unitask": "2.5.11"
+  },
+  "author": {
+    "name": "NowFrameWork"
+  }
+}

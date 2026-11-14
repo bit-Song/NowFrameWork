@@ -1,8 +1,12 @@
 {
+  "testables": [
+    "com.now.nowframework.core"
+  ],
   "dependencies": {
     "cn.tuanjie.codely.bridge": "1.0.91",
     "com.code-philosophy.hybridclr": "https://gitee.com/focus-creative-games/hybridclr_unity.git#v9.1.0",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#a77a1b4a89824fb6df293099de3060daf2a432c1",
+    "com.now.nowframework.core": "file:../../Framework/com.now.nowframework.core",
     "com.unity.addressables": "1.22.4-t1",
     "com.unity.collab-proxy": "2.5.1",
     "com.unity.ide.rider": "3.0.36",
