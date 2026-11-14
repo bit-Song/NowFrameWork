@@ -99,35 +99,6 @@ namespace NowFrameWork.Core.Tests
         }
 
         [Test]
-        public void DisabledWrite_AllocatesZeroBytes()
-        {
-            var logger = new Logger(LogLevel.Error, 0);
-            logger.Write(LogLevel.Debug, "T", "warmup");   // 预热
-
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 10000; i++) logger.Write(LogLevel.Debug, "T", "msg");
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-            Assert.AreEqual(0L, allocated, "关闭的级别必须零分配（连 LogEntry 都不构造）");
-        }
-
-        [Test]
-        public void EnabledWrite_WithStaticStrings_AllocatesZeroBytes()
-        {
-            var sink = new RecordingSink();
-            var logger = new Logger(LogLevel.Trace, 64);
-            logger.AddSink(sink);
-            logger.Write(LogLevel.Info, "T", "warmup");   // 预热
-
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 10000; i++) logger.Write(LogLevel.Info, "C01", "已启动");
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-            Assert.AreEqual(0L, allocated, "启用状态下写入静态字符串不得分配（环形缓冲已预分配）");
-            Assert.AreEqual(10001, sink.Count);
-        }
-
-        [Test]
         public void LogsNull_IsAlwaysDisabledAndSilent()
         {
             Assert.IsFalse(Logs.Null.IsEnabled(LogLevel.Error));

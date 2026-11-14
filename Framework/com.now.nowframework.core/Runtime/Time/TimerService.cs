@@ -20,6 +20,7 @@ namespace NowFrameWork.Core
         int _freeCount;
         int _slotCount;
         int _activeCount;
+        int _frame;
 
         struct Slot
         {
@@ -27,6 +28,7 @@ namespace NowFrameWork.Core
             public double Interval;
             public Action Callback;
             public int Version;
+            public int Frame;
             public bool Active;
             public bool Unscaled;
             public bool Repeating;
@@ -71,6 +73,7 @@ namespace NowFrameWork.Core
             _slots[index].Repeating = repeating;
             _slots[index].Active = true;
             _slots[index].Version++;
+            _slots[index].Frame = _frame;   // 本帧内新注册的计时器最早下一帧触发
             _activeCount++;
 
             return new TimerHandle(index, _slots[index].Version);
@@ -108,15 +111,16 @@ namespace NowFrameWork.Core
 
             double now = _clock.Now;
             double unscaledNow = _clock.UnscaledNow;
+            int frame = ++_frame;
 
             for (int i = 0; i < _slotCount; i++)
             {
                 if (!_slots[i].Active) continue;
+                if (_slots[i].Frame == frame) continue;   // 本帧内新注册的，下一帧再处理
 
                 double currentNow = _slots[i].Unscaled ? unscaledNow : now;
                 if (_slots[i].Due > currentNow) continue;
 
-                int version = _slots[i].Version;
                 Action callback = _slots[i].Callback;
 
                 if (_slots[i].Repeating)
@@ -129,10 +133,9 @@ namespace NowFrameWork.Core
                     Release(i);
                 }
 
-                // 先改状态再回调：回调里取消自己是安全的；回调里新增的计时器可能复用本槽，但版本已变，本帧不再处理
+                // 先改状态再回调：回调里取消自己是安全的；
+                // 回调里新增的计时器带本帧标记，不会被这一轮二次处理（见循环开头的 Frame 判断）
                 callback?.Invoke();
-
-                if (i < _slotCount && _slots[i].Version != version) continue;
             }
         }
 

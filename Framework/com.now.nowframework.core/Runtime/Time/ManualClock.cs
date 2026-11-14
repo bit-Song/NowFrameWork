@@ -16,8 +16,14 @@ namespace NowFrameWork.Core
         public float DeltaTime => _delta;
         public float UnscaledDeltaTime => _unscaledDelta;
 
-        /// <summary>时间缩放；设为 0 可模拟暂停。</summary>
-        public float TimeScale { get; set; } = 1f;
+        float _timeScale = 1f;
+
+        /// <summary>时间缩放；设为 0 可模拟暂停，负值按 0 处理（时间不倒退）。</summary>
+        public float TimeScale
+        {
+            get => _timeScale;
+            set => _timeScale = value < 0f ? 0f : value;
+        }
 
         /// <summary>推进一帧：先更新增量，再累加两个时间轴。</summary>
         public void Advance(float unscaledDelta)

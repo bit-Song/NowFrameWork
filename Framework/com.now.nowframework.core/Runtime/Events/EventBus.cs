@@ -20,6 +20,9 @@ namespace NowFrameWork.Core
         readonly Dictionary<Type, IChannel> _channels = new Dictionary<Type, IChannel>(16);
         readonly ILog _log;
 
+        /// <summary>FlushDeferred 的键快照缓冲，复用以免每帧分配（R1）。</summary>
+        readonly List<Type> _flushKeys = new List<Type>(16);
+
         const string C04Tag = "C04";
 
         public EventBus(ILog log = null)
@@ -58,12 +61,14 @@ namespace NowFrameWork.Core
 
         public void FlushDeferred()
         {
-            // 遍历字典期间 handler 可能订阅新类型 → 用快照数组，避免 InvalidOperationException
-            var keys = new List<Type>(_channels.Count);
-            foreach (KeyValuePair<Type, IChannel> pair in _channels) keys.Add(pair.Key);
+            if (_channels.Count == 0) return;
 
-            for (int i = 0; i < keys.Count; i++)
-                if (_channels.TryGetValue(keys[i], out IChannel channel)) channel.FlushDeferred(_log);
+            // 遍历字典期间 handler 可能订阅新类型 → 先快照键；缓冲复用，避免每帧分配
+            _flushKeys.Clear();
+            foreach (KeyValuePair<Type, IChannel> pair in _channels) _flushKeys.Add(pair.Key);
+
+            for (int i = 0; i < _flushKeys.Count; i++)
+                if (_channels.TryGetValue(_flushKeys[i], out IChannel channel)) channel.FlushDeferred(_log);
         }
 
         public void Clear()

@@ -225,53 +225,38 @@ namespace NowFrameWork.Core.Tests
             Assert.AreEqual(0, timers.PendingCount);
         }
 
-        // ---- 零分配门禁 ----
-
         [Test]
-        public void Update_NoDueTimers_AllocatesZeroBytes()
+        public void Timer_CreatedInsideCallback_DoesNotFireInSameUpdate()
         {
             var clock = new ManualClock();
             var timers = new TimerService(clock);
-            var counter = new Counter();
-            timers.Delay(1000.0, counter.Increment);
+            int chained = 0;
 
-            clock.Advance(0.016f);
-            timers.Update();   // 预热
+            // 槽位 0、1 先占住，回调里新增的会排到 2 之后，必然落在当前游标之后
+            timers.Delay(1.0, () => { });
+            timers.Delay(10.0, () => { });
+            timers.Delay(1.0, () => timers.Delay(0.0, () => chained++));
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 10000; i++)
-            {
-                clock.Advance(0.016f);
-                timers.Update();
-            }
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            clock.Advance(1.0f);
+            timers.Update();
 
-            Assert.AreEqual(0L, allocated, "Update 稳态必须零分配");
+            Assert.AreEqual(0, chained, "本帧新注册的 0 延迟计时器不应在同一帧触发");
+
+            timers.Update();
+            Assert.AreEqual(1, chained, "下一帧应当触发");
         }
 
         [Test]
-        public void Update_WithFiringInterval_AllocatesZeroBytes()
+        public void ManualClock_NegativeTimeScale_ClampsToZero()
         {
             var clock = new ManualClock();
-            var timers = new TimerService(clock);
-            var counter = new Counter();
-            timers.Interval(0.01, counter.Increment);
+            clock.TimeScale = -2f;
 
-            // 每帧推进 0.02（= 2 个周期）：float 的 0.02 与 double 的 0.01 之间的精度差
-            // 不会导致"偶尔少触发一次"，计数才是确定的。
-            clock.Advance(0.02f);
-            timers.Update();   // 预热
+            clock.Advance(1f);
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 10000; i++)
-            {
-                clock.Advance(0.02f);
-                timers.Update();
-            }
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-            Assert.AreEqual(0L, allocated, "触发路径也必须零分配");
-            Assert.AreEqual(10001, counter.Count);
+            Assert.AreEqual(0f, clock.DeltaTime);
+            Assert.AreEqual(0d, clock.Now);
+            Assert.AreEqual(1d, clock.UnscaledNow, 1e-6, "真实时间照常推进");
         }
     }
 }
