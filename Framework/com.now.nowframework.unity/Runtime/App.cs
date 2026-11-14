@@ -46,7 +46,9 @@ namespace NowFrameWork.Unity
 
         static double ReadTime() => UnityEngine.Time.timeAsDouble;
 
-        public UniTask StartupAsync(CancellationToken ct = default) => Hub.StartupAsync(ct);
+        /// <summary>启动全部模块；progress 可为空（无加载界面时）。</summary>
+        public UniTask StartupAsync(CancellationToken ct = default, IStartupProgress progress = null)
+            => Hub.StartupAsync(ct, progress);
 
         public UniTask ShutdownAsync()
         {

@@ -26,6 +26,9 @@ namespace NowFrameWork.Unity
         /// <summary>启动失败后为 true，此时不再驱动帧回调。</summary>
         public bool StartupFailed { get; private set; }
 
+        /// <summary>启动进度接收者（加载条/日志）；为空则忽略。</summary>
+        public IStartupProgress StartupProgress { get; set; }
+
         void Awake() => Initialize();
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace NowFrameWork.Unity
         {
             try
             {
-                await App.StartupAsync(destroyCancellationToken);
+                await App.StartupAsync(destroyCancellationToken, StartupProgress);
             }
             catch (Exception e)
             {

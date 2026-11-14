@@ -62,33 +62,59 @@ namespace NowFrameWork.Core
             _byId.Add(module.Id, module);
         }
 
-        public async UniTask StartupAsync(CancellationToken ct = default)
+        public UniTask StartupAsync(CancellationToken ct = default) => StartupAsync(ct, null);
+
+        /// <summary>
+        /// 带进度上报的启动。进度按「Initialize 占 0–0.5、Start 占 0.5–1」划分，
+        /// 失败时回调 <see cref="IStartupProgress.Failed"/> 并带上阶段名与模块 Id。
+        /// </summary>
+        public async UniTask StartupAsync(CancellationToken ct, IStartupProgress progress)
         {
             if (_hasStarted) throw new InvalidOperationException("ModuleHub 已经 Startup 过");
 
             // 依赖图先算完：缺失/循环必须暴露在「任何模块被初始化」之前
             IReadOnlyList<IAppModule> order = SortByDependencies();
 
+            string phase = "Initialize";
+            string currentModule = null;
+            float count = order.Count;
+
             try
             {
-                for (int i = 0; i < order.Count; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    await order[i].InitializeAsync(ct);
-                    _started.Add(order[i]);   // 初始化成功即登记，后续失败也要被清理
-                }
+                progress?.Phase(phase);
 
                 for (int i = 0; i < order.Count; i++)
                 {
                     ct.ThrowIfCancellationRequested();
+
+                    currentModule = order[i].Id;
+                    progress?.Progress(count == 0f ? 0f : i / count * 0.5f);
+
+                    await order[i].InitializeAsync(ct);
+                    _started.Add(order[i]);   // 初始化成功即登记，后续失败也要被清理
+                }
+
+                phase = "Start";
+                progress?.Phase(phase);
+
+                for (int i = 0; i < order.Count; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    currentModule = order[i].Id;
+                    progress?.Progress(0.5f + (count == 0f ? 0f : i / count * 0.5f));
+
                     await order[i].StartAsync(ct);
                 }
 
                 CacheFrameCallbacks(order);
                 _hasStarted = true;
+
+                progress?.Progress(1f);
             }
             catch
             {
+                progress?.Failed(phase, currentModule);
                 await CleanupStartedAsync();
                 throw;
             }

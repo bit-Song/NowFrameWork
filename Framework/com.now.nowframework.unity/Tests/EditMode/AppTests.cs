@@ -46,6 +46,29 @@ namespace NowFrameWork.Unity.Tests
             Assert.DoesNotThrow(() => app.FixedTick(0.02f));
         }
 
+        sealed class ProgressCollector : IStartupProgress
+        {
+            public int PhaseCount;
+            public float LastProgress = -1f;
+
+            public void Phase(string name) => PhaseCount++;
+            public void Progress(float value01) => LastProgress = value01;
+            public void Failed(string phase, string moduleId) { }
+        }
+
+        [Test]
+        public void Startup_ForwardsProgressToReceiver()
+        {
+            App app = App.Create(LogLevel.Error, 0);
+            var collector = new ProgressCollector();
+
+            var awaiter = app.StartupAsync(default, collector).GetAwaiter();
+            awaiter.GetResult();
+
+            Assert.Greater(collector.PhaseCount, 0, "App 必须把阶段上报给接收者");
+            Assert.AreEqual(1f, collector.LastProgress, "完成时进度必须是 1");
+        }
+
         [Test]
         public void UnityClock_ReportsNonNegativeTime()
         {
