@@ -8,15 +8,42 @@ namespace NowFrameWork.Core
     /// <summary>
     /// C01 模块容器：显式依赖、拓扑排序、失败清理、逆序关闭。
     /// 不做反射扫描：启动顺序必须能从 Register 的调用顺序读出来。
+    ///
+    /// 性能约定：
+    /// - 每帧路径（Tick/LateTick/FixedTick）不产生分配：帧回调在 Startup 时缓存到三个列表；
+    /// - Modules 返回构造期缓存的只读包装，调用不分配；
+    /// - 拓扑排序复用三个临时缓冲，不捕获闭包；
+    /// - Startup/Shutdown 只在启动/退出时各执行一次，允许少量分配（异常消息、字符串拼接）。
+    ///
+    /// 线程：只允许主线程调用，内部不加锁。
     /// </summary>
     public sealed class ModuleHub : IModuleHub
     {
-        readonly List<IAppModule> _modules = new List<IAppModule>();
-        readonly Dictionary<string, IAppModule> _byId = new Dictionary<string, IAppModule>(StringComparer.Ordinal);
-        readonly List<IAppModule> _started = new List<IAppModule>();
+        readonly List<IAppModule> _modules = new List<IAppModule>(8);
+        readonly Dictionary<string, IAppModule> _byId = new Dictionary<string, IAppModule>(8, StringComparer.Ordinal);
+        readonly IReadOnlyList<IAppModule> _modulesView;
+
+        /// <summary>已成功初始化的模块，按初始化顺序；关闭时倒序遍历。</summary>
+        readonly List<IAppModule> _started = new List<IAppModule>(8);
+
+        /// <summary>帧回调缓存：Startup 成功后一次性填好，避免每帧对每个模块做接口检查。</summary>
+        readonly List<ITickable> _tickables = new List<ITickable>(8);
+        readonly List<ILateTickable> _lateTickables = new List<ILateTickable>(8);
+        readonly List<IFixedTickable> _fixedTickables = new List<IFixedTickable>(8);
+
+        /// <summary>拓扑排序的临时缓冲，复用以免每次 Startup 重新分配。</summary>
+        readonly Dictionary<string, int> _sortState = new Dictionary<string, int>(8, StringComparer.Ordinal);   // 0 未访问 / 1 访问中 / 2 完成
+        readonly List<string> _sortPath = new List<string>(8);
+        readonly List<IAppModule> _sortOrder = new List<IAppModule>(8);
+
         bool _hasStarted;
 
-        public IReadOnlyList<IAppModule> Modules => _modules;
+        public ModuleHub()
+        {
+            _modulesView = _modules.AsReadOnly();   // 构造一次，之后每次访问都复用
+        }
+
+        public IReadOnlyList<IAppModule> Modules => _modulesView;
 
         public void Register(IAppModule module)
         {
@@ -33,7 +60,7 @@ namespace NowFrameWork.Core
         {
             if (_hasStarted) throw new InvalidOperationException("ModuleHub 已经 Startup 过");
 
-            // 依赖图先算完：缺失/循环要暴露在「任何模块被初始化」之前
+            // 依赖图先算完：缺失/循环必须暴露在「任何模块被初始化」之前
             IReadOnlyList<IAppModule> order = SortByDependencies();
 
             try
@@ -51,6 +78,7 @@ namespace NowFrameWork.Core
                     await order[i].StartAsync(ct);
                 }
 
+                CacheFrameCallbacks(order);
                 _hasStarted = true;
             }
             catch
@@ -58,85 +86,115 @@ namespace NowFrameWork.Core
                 await CleanupStartedAsync();
                 throw;
             }
+            finally
+            {
+                // 排序缓冲用完即清，避免继续持有模块引用
+                _sortOrder.Clear();
+                _sortState.Clear();
+                _sortPath.Clear();
+            }
         }
 
         public async UniTask ShutdownAsync(CancellationToken ct = default)
         {
-            await CleanupStartedAsync(ct);
+            // ct 不参与清理：清理到一半比清理慢更糟。参数保留仅为与接口对称。
+            await CleanupStartedAsync();
             _hasStarted = false;
         }
 
-        async UniTask CleanupStartedAsync(CancellationToken ct = default)
+        async UniTask CleanupStartedAsync()
         {
             for (int i = _started.Count - 1; i >= 0; i--)
             {
-                IAppModule module = _started[i];
                 try
                 {
-                    // 清理不能被取消打断，否则会留下半关闭状态
-                    await module.ShutdownAsync(CancellationToken.None);
+                    // 每个模块的清理都用 None：取消只该影响业务，不该打断关闭流程
+                    await _started[i].ShutdownAsync(CancellationToken.None);
                 }
                 catch (Exception)
                 {
                     // TODO(C03): 接入日志后记录模块 Id 与异常；清理异常不阻断后续模块
                 }
             }
+
             _started.Clear();
+            _tickables.Clear();
+            _lateTickables.Clear();
+            _fixedTickables.Clear();
         }
 
-        /// <summary>深度优先拓扑排序，同时检出缺失依赖与循环依赖。</summary>
+        void CacheFrameCallbacks(IReadOnlyList<IAppModule> order)
+        {
+            _tickables.Clear();
+            _lateTickables.Clear();
+            _fixedTickables.Clear();
+
+            for (int i = 0; i < order.Count; i++)
+            {
+                IAppModule m = order[i];
+                if (m is ITickable t) _tickables.Add(t);
+                if (m is ILateTickable lt) _lateTickables.Add(lt);
+                if (m is IFixedTickable ft) _fixedTickables.Add(ft);
+            }
+        }
+
+        /// <summary>深度优先拓扑排序，同时检出缺失依赖与循环依赖。结果写入复用的 _sortOrder。</summary>
         IReadOnlyList<IAppModule> SortByDependencies()
         {
-            var order = new List<IAppModule>(_modules.Count);
-            var state = new Dictionary<string, int>(StringComparer.Ordinal);   // 0 未访问 / 1 访问中 / 2 完成
-            var path = new List<string>();
-
-            void Visit(IAppModule module)
-            {
-                state.TryGetValue(module.Id, out int s);
-                if (s == 2) return;
-                if (s == 1) throw new ModuleDependencyException("循环依赖: " + string.Join(" -> ", path) + " -> " + module.Id);
-
-                state[module.Id] = 1;
-                path.Add(module.Id);
-
-                IReadOnlyList<string> deps = module.DependsOn;
-                if (deps != null)
-                {
-                    for (int i = 0; i < deps.Count; i++)
-                    {
-                        string depId = deps[i];
-                        if (!_byId.TryGetValue(depId, out IAppModule dep))
-                            throw new ModuleDependencyException("模块 " + module.Id + " 依赖的 " + depId + " 未注册；链路: " + string.Join(" -> ", path) + " -> " + depId);
-                        Visit(dep);
-                    }
-                }
-
-                path.RemoveAt(path.Count - 1);
-                state[module.Id] = 2;
-                order.Add(module);
-            }
+            _sortOrder.Clear();
+            _sortState.Clear();
+            _sortPath.Clear();
 
             for (int i = 0; i < _modules.Count; i++) Visit(_modules[i]);
-            return order;
+            return _sortOrder;
+        }
+
+        void Visit(IAppModule module)
+        {
+            _sortState.TryGetValue(module.Id, out int s);
+            if (s == 2) return;
+            if (s == 1)
+                throw new ModuleDependencyException(ModuleDependencyKind.Cycle,
+                    "循环依赖: " + string.Join(" -> ", _sortPath) + " -> " + module.Id);
+
+            _sortState[module.Id] = 1;
+            _sortPath.Add(module.Id);
+
+            IReadOnlyList<string> deps = module.DependsOn;
+            if (deps != null)
+            {
+                for (int i = 0; i < deps.Count; i++)
+                {
+                    string depId = deps[i];
+                    if (!_byId.TryGetValue(depId, out IAppModule dep))
+                        throw new ModuleDependencyException(ModuleDependencyKind.Missing,
+                            "模块 " + module.Id + " 依赖的 " + depId + " 未注册；链路: " + string.Join(" -> ", _sortPath) + " -> " + depId);
+
+                    Visit(dep);
+                }
+            }
+
+            _sortPath.RemoveAt(_sortPath.Count - 1);
+            _sortState[module.Id] = 2;
+            _sortOrder.Add(module);
         }
 
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
-            for (int i = 0; i < _started.Count; i++)
-                if (_started[i] is ITickable t) t.Tick(deltaTime, unscaledDeltaTime);
+            List<ITickable> list = _tickables;
+            for (int i = 0; i < list.Count; i++) list[i].Tick(deltaTime, unscaledDeltaTime);
         }
 
         public void LateTick()
         {
-            for (int i = 0; i < _started.Count; i++)
-                if (_started[i] is ILateTickable t) t.LateTick();
+            List<ILateTickable> list = _lateTickables;
+            for (int i = 0; i < list.Count; i++) list[i].LateTick();
         }
 
         public void FixedTick(float fixedDeltaTime)
         {
-            for (int i = 0; i < _started.Count; i++)
-                if (_started[i] is IFixedTickable t) t.FixedTick(fixedDeltaTime);
+            List<IFixedTickable> list = _fixedTickables;
+            for (int i = 0; i < list.Count; i++) list[i].FixedTick(fixedDeltaTime);
         }
 
         public T Get<T>() where T : class
@@ -155,8 +213,20 @@ namespace NowFrameWork.Core
                     return true;
                 }
             }
+
             module = null;
             return false;
+        }
+
+        public int TryGetAll<T>(List<T> buffer) where T : class
+        {
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+
+            buffer.Clear();
+            for (int i = 0; i < _modules.Count; i++)
+                if (_modules[i] is T found) buffer.Add(found);
+
+            return buffer.Count;
         }
     }
 }

@@ -9,13 +9,12 @@ namespace NowFrameWork.Core.Tests
     /// <summary>
     /// C01 模块容器的 EditMode 用例。
     ///
-    /// 注意（NUnit 3.5 限制）：Unity 自带的 NUnit 是 3.5，既不支持 `async Task` 测试方法，
-    /// 也没有 Assert.ThrowsAsync。所以这里统一用 RunSync/ThrowsSync 同步驱动 UniTask，
-    /// 并且断言「任务必须已同步完成」——将来某个用例真的引入异步等待时，会明确失败而不是死锁。
+    /// NUnit 3.5 限制：Unity 自带 NUnit 不支持 `async Task` 测试方法，也没有 Assert.ThrowsAsync，
+    /// 因此统一用 RunSync/ThrowsSync 同步驱动，并断言任务必须已同步完成。
     /// </summary>
     public class ModuleHubTests
     {
-        sealed class RecordModule : IAppModule, ITickable
+        sealed class RecordModule : IAppModule, ITickable, ILateTickable, IFixedTickable
         {
             readonly List<string> _log;
             readonly string[] _deps;
@@ -29,9 +28,14 @@ namespace NowFrameWork.Core.Tests
 
             public string Id { get; }
             public IReadOnlyList<string> DependsOn => _deps;
+
             public bool ThrowOnInitialize { get; set; }
+            public bool ThrowOnStart { get; set; }
             public bool ThrowOnShutdown { get; set; }
+
             public int TickCount { get; private set; }
+            public int LateTickCount { get; private set; }
+            public int FixedTickCount { get; private set; }
 
             public UniTask InitializeAsync(CancellationToken ct)
             {
@@ -43,6 +47,7 @@ namespace NowFrameWork.Core.Tests
             public UniTask StartAsync(CancellationToken ct)
             {
                 _log.Add("start:" + Id);
+                if (ThrowOnStart) throw new InvalidOperationException("boom-start:" + Id);
                 return UniTask.CompletedTask;
             }
 
@@ -54,13 +59,14 @@ namespace NowFrameWork.Core.Tests
             }
 
             public void Tick(float deltaTime, float unscaledDeltaTime) => TickCount++;
+            public void LateTick() => LateTickCount++;
+            public void FixedTick(float fixedDeltaTime) => FixedTickCount++;
         }
 
         static string Join(List<string> log) => string.Join(",", log);
 
         const string SyncHint = "期望同步完成的 UniTask 变成了异步；该用例需改用 [UnityTest] + 协程等待";
 
-        /// <summary>同步等待一个必须已经完成的 UniTask，失败时把它内部的异常原样抛出。</summary>
         static void RunSync(UniTask task)
         {
             var awaiter = task.GetAwaiter();
@@ -68,7 +74,6 @@ namespace NowFrameWork.Core.Tests
             awaiter.GetResult();
         }
 
-        /// <summary>同步断言抛出指定异常类型；类型不符或没抛都判失败。</summary>
         static T ThrowsSync<T>(Func<UniTask> action) where T : Exception
         {
             var awaiter = action().GetAwaiter();
@@ -105,25 +110,33 @@ namespace NowFrameWork.Core.Tests
         }
 
         [Test]
-        public void Startup_MissingDependency_ThrowsWithChain()
+        public void Startup_MissingDependency_ThrowsAndInitializesNothing()
         {
+            var log = new List<string>();
             var hub = new ModuleHub();
-            hub.Register(new RecordModule("B", new List<string>(), "Missing"));
+            hub.Register(new RecordModule("B", log, "Missing"));
 
             var ex = ThrowsSync<ModuleDependencyException>(() => hub.StartupAsync());
+
+            Assert.AreEqual(ModuleDependencyKind.Missing, ex.Kind);
             StringAssert.Contains("B", ex.Message);
             StringAssert.Contains("Missing", ex.Message);
+            Assert.IsEmpty(log, "依赖校验必须发生在任何模块初始化之前");
         }
 
         [Test]
         public void Startup_CircularDependency_Throws()
         {
+            var log = new List<string>();
             var hub = new ModuleHub();
-            hub.Register(new RecordModule("A", new List<string>(), "B"));
-            hub.Register(new RecordModule("B", new List<string>(), "A"));
+            hub.Register(new RecordModule("A", log, "B"));
+            hub.Register(new RecordModule("B", log, "A"));
 
             var ex = ThrowsSync<ModuleDependencyException>(() => hub.StartupAsync());
+
+            Assert.AreEqual(ModuleDependencyKind.Cycle, ex.Kind);
             StringAssert.Contains("循环依赖", ex.Message);
+            Assert.IsEmpty(log);
         }
 
         [Test]
@@ -152,7 +165,7 @@ namespace NowFrameWork.Core.Tests
         }
 
         [Test]
-        public void Startup_PartialFailure_CleansUpInitializedModules()
+        public void Startup_InitializeThrows_CleansUpEarlierModules()
         {
             var log = new List<string>();
             var hub = new ModuleHub();
@@ -160,7 +173,34 @@ namespace NowFrameWork.Core.Tests
             hub.Register(new RecordModule("B", log, "A") { ThrowOnInitialize = true });
 
             ThrowsSync<InvalidOperationException>(() => hub.StartupAsync());
+
             StringAssert.Contains("shutdown:A", Join(log));
+        }
+
+        [Test]
+        public void Startup_StartThrows_CleansUpAllInitializedModules()
+        {
+            var log = new List<string>();
+            var hub = new ModuleHub();
+            hub.Register(new RecordModule("A", log));
+            hub.Register(new RecordModule("B", log, "A") { ThrowOnStart = true });
+
+            ThrowsSync<InvalidOperationException>(() => hub.StartupAsync());
+
+            // A 与 B 都已完成 Initialize，清理顺序必须逆序
+            StringAssert.Contains("shutdown:B,shutdown:A", Join(log));
+        }
+
+        [Test]
+        public void Startup_CancelledBeforeInit_InitializesNothing()
+        {
+            var log = new List<string>();
+            var hub = new ModuleHub();
+            hub.Register(new RecordModule("A", log));
+
+            ThrowsSync<OperationCanceledException>(() => hub.StartupAsync(new CancellationToken(true)));
+
+            Assert.IsEmpty(log);
         }
 
         [Test]
@@ -193,7 +233,24 @@ namespace NowFrameWork.Core.Tests
         }
 
         [Test]
-        public void Tick_OnlyCallsTickableModules()
+        public void TryGetAll_ReturnsAllMatchesInRegisterOrder()
+        {
+            var log = new List<string>();
+            var hub = new ModuleHub();
+            hub.Register(new RecordModule("A", log));
+            hub.Register(new RecordModule("B", log));
+            hub.Register(new RecordModule("C", log));
+            RunSync(hub.StartupAsync());
+
+            var buffer = new List<IAppModule>(4);
+            int count = hub.TryGetAll<IAppModule>(buffer);
+
+            Assert.AreEqual(3, count);
+            CollectionAssert.AreEqual(new[] { "A", "B", "C" }, buffer.ConvertAll(m => m.Id));
+        }
+
+        [Test]
+        public void Tick_LateTick_FixedTick_OnlyDispatchToMatchingModules()
         {
             var hub = new ModuleHub();
             var a = new RecordModule("A", new List<string>());
@@ -201,8 +258,31 @@ namespace NowFrameWork.Core.Tests
             RunSync(hub.StartupAsync());
 
             hub.Tick(0.016f, 0.016f);
+            hub.LateTick();
+            hub.FixedTick(0.02f);
             hub.Tick(0.016f, 0.016f);
+
             Assert.AreEqual(2, a.TickCount);
+            Assert.AreEqual(1, a.LateTickCount);
+            Assert.AreEqual(1, a.FixedTickCount);
+        }
+
+        [Test]
+        public void Tick_AfterShutdown_DoesNothing()
+        {
+            var hub = new ModuleHub();
+            var a = new RecordModule("A", new List<string>());
+            hub.Register(a);
+            RunSync(hub.StartupAsync());
+            RunSync(hub.ShutdownAsync());
+
+            hub.Tick(0.016f, 0.016f);
+            hub.LateTick();
+            hub.FixedTick(0.02f);
+
+            Assert.AreEqual(0, a.TickCount);
+            Assert.AreEqual(0, a.LateTickCount);
+            Assert.AreEqual(0, a.FixedTickCount);
         }
     }
 }

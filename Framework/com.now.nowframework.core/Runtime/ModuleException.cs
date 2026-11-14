@@ -8,9 +8,25 @@ namespace NowFrameWork.Core
         public ModuleRegistrationException(string message) : base(message) { }
     }
 
-    /// <summary>依赖图错误：缺失依赖、循环依赖。消息中带完整链路。</summary>
+    /// <summary>依赖图错误的分类。</summary>
+    public enum ModuleDependencyKind
+    {
+        /// <summary>DependsOn 里写了未注册的模块 Id。</summary>
+        Missing = 0,
+
+        /// <summary>依赖关系成环。</summary>
+        Cycle = 1,
+    }
+
+    /// <summary>依赖图错误：缺失依赖或循环依赖，消息中带完整链路。</summary>
     public sealed class ModuleDependencyException : Exception
     {
-        public ModuleDependencyException(string message) : base(message) { }
+        public ModuleDependencyException(ModuleDependencyKind kind, string message) : base(message)
+        {
+            Kind = kind;
+        }
+
+        /// <summary>调用方可以据此区分处理，不必解析消息文本。</summary>
+        public ModuleDependencyKind Kind { get; }
     }
 }
