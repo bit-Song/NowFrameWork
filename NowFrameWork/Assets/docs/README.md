@@ -88,3 +88,4 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.22 | 2026-11-15 | **G-05 设计定稿**：新增 [13 Scope 与资源层设计](13-Scope与资源层设计.md)——`IAssetService`/`AssetLease`/`IAssetProvider` 契约、Scope 树与「子→模块→池→租约」关闭顺序、失败矩阵、8 条验收用例、4 个待拍板项 |
 | v0.4.23 | 2026-11-15 | **实测 AssetBundle 卸载语义**：`Unload(true)` 后资源**立即**不可用（fake-null），而 Addressables 1.22.4-t1 在 `AssetBundleProvider.cs:885` 正是调它 → 得出硬规则 R-1「禁止同帧销毁实例并释放租约」，写入 13 §10；新增探针 `BundleUnloadProbe` |
 | v0.4.24 | 2026-11-15 | **13 号文档收敛为最终版**：采纳评审 H-01~H-03、M-01~M-05、G-01~G-08；跨 Scope 解析定为**构造注入**（Hub 不改）；补 `DisposeAsync` 状态机、场景租约归属、失败回滚、17 条验收用例；06 §2 新增两条硬规则（构造注入、跨帧释放租约） |
+| v0.4.25 | 2026-11-15 | **C07 异步落地**：`CancellationScope`（父子取消传播、Dispose 即取消、幂等）与 `TaskRunner`（预期取消不记 Error、真异常记 Error 并聚合到 ErrorBudget、`Running` 可观测）；用例 98 → 106 全绿 |
