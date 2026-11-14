@@ -22,7 +22,8 @@ namespace NowFrameWork.Unity
             Log = log ?? throw new ArgumentNullException(nameof(log));
             _clock = new UnityClock();
             Events = new EventBus(log);
-            Timers = new TimerService(_clock);
+            Timers = new TimerService(_clock, log);
+            Pools = new PoolService(_clock, log);
             Hub = new ModuleHub(log);
         }
 
@@ -30,6 +31,9 @@ namespace NowFrameWork.Unity
         public Logger Log { get; }
         public EventBus Events { get; }
         public TimerService Timers { get; }
+
+        /// <summary>对象池注册表；资源卸载时用它整池释放。</summary>
+        public PoolService Pools { get; }
         public ModuleHub Hub { get; }
 
         /// <summary>创建装配好的 App：控制台出口 + Unity 时钟。</summary>
@@ -48,6 +52,7 @@ namespace NowFrameWork.Unity
         {
             Events.Clear();
             Timers.Clear();
+            Pools.Dispose();
             return Hub.ShutdownAsync();
         }
 
@@ -55,6 +60,7 @@ namespace NowFrameWork.Unity
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
             Timers.Update();
+            Pools.Tick();
             Hub.Tick(deltaTime, unscaledDeltaTime);
             Events.FlushDeferred();
         }

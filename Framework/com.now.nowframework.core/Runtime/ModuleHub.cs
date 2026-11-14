@@ -191,19 +191,44 @@ namespace NowFrameWork.Core
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
             List<ITickable> list = _tickables;
-            for (int i = 0; i < list.Count; i++) list[i].Tick(deltaTime, unscaledDeltaTime);
+            for (int i = 0; i < list.Count; i++)
+            {
+                try { list[i].Tick(deltaTime, unscaledDeltaTime); }
+                catch (Exception e) { ReportCallbackFailure(list[i] as IAppModule, "Tick", e); }
+            }
         }
 
         public void LateTick()
         {
             List<ILateTickable> list = _lateTickables;
-            for (int i = 0; i < list.Count; i++) list[i].LateTick();
+            for (int i = 0; i < list.Count; i++)
+            {
+                try { list[i].LateTick(); }
+                catch (Exception e) { ReportCallbackFailure(list[i] as IAppModule, "LateTick", e); }
+            }
         }
 
         public void FixedTick(float fixedDeltaTime)
         {
             List<IFixedTickable> list = _fixedTickables;
-            for (int i = 0; i < list.Count; i++) list[i].FixedTick(fixedDeltaTime);
+            for (int i = 0; i < list.Count; i++)
+            {
+                try { list[i].FixedTick(fixedDeltaTime); }
+                catch (Exception e) { ReportCallbackFailure(list[i] as IAppModule, "FixedTick", e); }
+            }
+        }
+
+        /// <summary>
+        /// 帧回调的异常必须隔离：一个模块抛异常不能让同一帧里其它模块不被 Tick，
+        /// 否则表现是"某个功能忽然整帧停摆"，而且很难定位到具体模块。
+        /// </summary>
+        void ReportCallbackFailure(IAppModule module, string phase, Exception e)
+        {
+            if (!_log.IsEnabled(LogLevel.Error)) return;
+
+            string id = module != null ? module.Id : "?";
+            _log.Write(LogLevel.Error, C01Tag,
+                "模块回调失败(" + phase + "): " + id + " -> " + e.GetType().Name + ": " + e.Message);
         }
 
         public T Get<T>() where T : class

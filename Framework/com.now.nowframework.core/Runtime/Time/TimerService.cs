@@ -14,6 +14,7 @@ namespace NowFrameWork.Core
     public sealed class TimerService : ITimerService
     {
         readonly IClock _clock;
+        readonly ILog _log;
 
         Slot[] _slots;
         int[] _free;
@@ -34,9 +35,10 @@ namespace NowFrameWork.Core
             public bool Repeating;
         }
 
-        public TimerService(IClock clock, int initialCapacity = 16)
+        public TimerService(IClock clock, ILog log = null, int initialCapacity = 16)
         {
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _log = log ?? Logs.Null;
             if (initialCapacity < 4) initialCapacity = 4;
 
             _slots = new Slot[initialCapacity];
@@ -135,7 +137,16 @@ namespace NowFrameWork.Core
 
                 // 先改状态再回调：回调里取消自己是安全的；
                 // 回调里新增的计时器带本帧标记，不会被这一轮二次处理（见循环开头的 Frame 判断）
-                callback?.Invoke();
+                try
+                {
+                    callback?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    // 一个计时器回调失败不能中断同一帧的其它计时器
+                    if (_log.IsEnabled(LogLevel.Error))
+                        _log.Write(LogLevel.Error, "C05", "计时器回调失败 -> " + e.GetType().Name + ": " + e.Message);
+                }
             }
         }
 

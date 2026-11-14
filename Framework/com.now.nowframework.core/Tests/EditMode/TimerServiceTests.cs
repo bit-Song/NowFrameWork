@@ -247,6 +247,22 @@ namespace NowFrameWork.Core.Tests
         }
 
         [Test]
+        public void Execute_OneCallbackThrows_OtherTimersStillRun()
+        {
+            var clock = new ManualClock();
+            var timers = new TimerService(clock);
+            int good = 0;
+
+            timers.Delay(1.0, () => throw new InvalidOperationException("boom"));
+            timers.Delay(1.0, () => good++);
+
+            clock.Advance(1.1f);
+
+            Assert.DoesNotThrow(() => timers.Update(), "计时器回调异常必须被隔离");
+            Assert.AreEqual(1, good, "后续计时器仍应执行");
+        }
+
+        [Test]
         public void ManualClock_NegativeTimeScale_ClampsToZero()
         {
             var clock = new ManualClock();

@@ -60,7 +60,16 @@ namespace NowFrameWork.Core
             for (int i = 0; i < _sinks.Count; i++)
             {
                 ILogSink sink = _sinks[i];
-                if (sink.IsEnabled(level)) sink.Write(in entry);
+
+                // Sink 属于外部实现（控制台、文件、远端）：它抛异常不能反过来打断业务调用点
+                try
+                {
+                    if (sink.IsEnabled(level)) sink.Write(in entry);
+                }
+                catch (Exception)
+                {
+                    // 故意吞掉：日志系统本身不应成为崩溃源
+                }
             }
 
             Store(in entry);

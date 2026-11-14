@@ -98,6 +98,23 @@ namespace NowFrameWork.Core.Tests
             Assert.AreEqual("m5", buffer[2].Message);
         }
 
+        sealed class ThrowingSink : ILogSink
+        {
+            public bool IsEnabled(LogLevel level) => true;
+
+            public void Write(in LogEntry entry) => throw new InvalidOperationException("sink boom");
+        }
+
+        [Test]
+        public void SinkThrows_DoesNotBreakCaller()
+        {
+            var logger = new Logger(LogLevel.Trace, 0);
+            logger.AddSink(new ThrowingSink());
+
+            Assert.DoesNotThrow(() => logger.Write(LogLevel.Error, "T", "x"),
+                "日志出口属于外部实现，它失败不能反过来打断业务");
+        }
+
         [Test]
         public void LogsNull_IsAlwaysDisabledAndSilent()
         {

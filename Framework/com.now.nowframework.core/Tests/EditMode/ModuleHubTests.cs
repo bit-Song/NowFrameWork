@@ -32,6 +32,7 @@ namespace NowFrameWork.Core.Tests
             public bool ThrowOnInitialize { get; set; }
             public bool ThrowOnStart { get; set; }
             public bool ThrowOnShutdown { get; set; }
+            public bool ThrowOnTick { get; set; }
 
             public int TickCount { get; private set; }
             public int LateTickCount { get; private set; }
@@ -58,7 +59,11 @@ namespace NowFrameWork.Core.Tests
                 return UniTask.CompletedTask;
             }
 
-            public void Tick(float deltaTime, float unscaledDeltaTime) => TickCount++;
+            public void Tick(float deltaTime, float unscaledDeltaTime)
+            {
+                if (ThrowOnTick) throw new InvalidOperationException("boom-tick:" + Id);
+                TickCount++;
+            }
             public void LateTick() => LateTickCount++;
             public void FixedTick(float fixedDeltaTime) => FixedTickCount++;
         }
@@ -299,6 +304,20 @@ namespace NowFrameWork.Core.Tests
                 LastLevel = entry.Level;
                 LastMessage = entry.Message;
             }
+        }
+
+        [Test]
+        public void Tick_OneModuleThrows_OtherModulesStillTick()
+        {
+            var hub = new ModuleHub();
+            var bad = new RecordModule("Bad", new List<string>()) { ThrowOnTick = true };
+            var good = new RecordModule("Good", new List<string>());
+            hub.Register(bad);
+            hub.Register(good);
+            RunSync(hub.StartupAsync());
+
+            Assert.DoesNotThrow(() => hub.Tick(0.016f, 0.016f), "模块异常必须被隔离，不能中断整帧");
+            Assert.AreEqual(1, good.TickCount, "抛异常的模块不应影响后续模块");
         }
 
         [Test]
