@@ -67,4 +67,6 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.4 | 2026-11-14 | 热更链路实测：远端 catalog 下载新 dll 并 `Assembly.Load` 成功，10 步测试全 OK（H02 记部分通过，未在 Player 验证）；补记"远端服务未开时回退旧缓存"的现象 |
 | v0.4.5 | 2026-11-14 | **H02 通过（Windows x64）**：同一 Player 未重打，仅发布新 bundle 即生效（「中文-补丁A」+ `HotUpdate 0.1.1.0`）；05 §5 固化热更四条硬基线 |
 | v0.4.6 | 2026-11-14 | **H03 通过（Windows x64）**：A/B 对照证明 AOT 泛型缺失可定位（`MissingMethodException` 指明程序集与方法），补充元数据后 `Describe<AotData>`/`MakeList<AotData>` 均通过；05 §5 增补"补充元数据"一条基线 |
+| v0.4.7 | 2026-11-14 | **V03 通过**（副本移除 HybridCLR 后 Win64 IL2CPP 构建启动无异常）；**M1 开工**：落地 `com.now.nowframework.core` 骨架（C01 模块容器 + EditMode 用例） |
+| v0.4.8 | 2026-11-14 | **C01 加固 + 性能规则**：帧回调改为缓存列表（拓扑序分发）、排序去闭包、`TryGetAll` 零分配查询；新增 06 §4.2「性能与 GC 规则」（R1 稳态零分配 / R2 一次性预算 / R3 热路径禁用清单）与 6 个性能门禁用例，实测 20/20 通过 |
 | v0.4.7 | 2026-11-14 | **V03 通过**（副本移除 HybridCLR 后 Win64 IL2CPP 构建启动无异常）；**M1 开工**：落地 `com.now.nowframework.core` 骨架（C01 模块容器 + 8 个 EditMode 用例） |
