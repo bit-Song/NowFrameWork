@@ -217,5 +217,64 @@ namespace NowFrameWork.Core.Tests
             Assert.AreEqual(0, counter.Count);
         }
 
+        // ---- G-03 递归派发保护 ----
+
+        struct EvtB
+        {
+        }
+
+        [Test]
+        public void RecursivePublish_IsTruncatedAtDepthLimit()
+        {
+            var bus = new EventBus();
+            int calls = 0;
+
+            void OnEvt(in Evt e)
+            {
+                calls++;
+                bus.Publish(in e);   // 自我递归
+            }
+
+            bus.Subscribe<Evt>(OnEvt);
+
+            Assert.DoesNotThrow(() => bus.Publish(Make(0)), "递归必须被截断，不能爆栈");
+            Assert.Greater(calls, 0);
+            Assert.LessOrEqual(calls, EventBus.MaxPublishDepth, "调用次数不应超过深度上限");
+        }
+
+        [Test]
+        public void RecursivePublish_LogsOneError()
+        {
+            var sink = new RecordingSink();
+            var logger = new Logger(LogLevel.Trace, 0);
+            logger.AddSink(sink);
+            var bus = new EventBus(logger);
+
+            void OnEvt(in Evt e) => bus.Publish(in e);
+            bus.Subscribe<Evt>(OnEvt);
+
+            bus.Publish(Make(0));
+
+            Assert.AreEqual(1, sink.Count, "截断时应记录一条 Error，且只记一次");
+            StringAssert.Contains("递归", sink.LastMessage);
+        }
+
+        [Test]
+        public void NestedPublish_DifferentTypes_WorksWithinLimit()
+        {
+            var bus = new EventBus();
+            int bCount = 0;
+
+            void OnA(in Evt e) => bus.Publish(new EvtB());
+            void OnB(in EvtB e) => bCount++;
+
+            bus.Subscribe<Evt>(OnA);
+            bus.Subscribe<EvtB>(OnB);
+
+            bus.Publish(Make(1));
+
+            Assert.AreEqual(1, bCount, "正常嵌套（深度未超限）必须照常派发");
+        }
+
     }
 }

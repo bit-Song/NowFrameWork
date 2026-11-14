@@ -20,6 +20,15 @@ namespace NowFrameWork.Core.Events
         /// <summary>单次 Flush 的安全上限，防止 handler 无限投递延迟事件导致死循环。</summary>
         const int MaxDeferredPerFlush = 4096;
 
+        /// <summary>
+        /// 派发递归深度上限。handler 内部再次 Publish 同一事件会层层嵌套，
+        /// 超过这个深度直接丢弃并记 Error —— 表现为「派发被截断 + 一条错误日志」，
+        /// 而不是栈溢出把整个进程带走。
+        /// </summary>
+        public const int MaxPublishDepth = 16;
+
+        int _publishDepth;
+
         readonly Dictionary<Type, IChannel> _channels = new Dictionary<Type, IChannel>(16);
         readonly ILog _log;
 
@@ -53,8 +62,25 @@ namespace NowFrameWork.Core.Events
 
         public void Publish<T>(in T evt) where T : struct
         {
-            if (_channels.TryGetValue(typeof(T), out IChannel channel))
-                ((Channel<T>)channel).Publish(in evt, _log);
+            if (_publishDepth >= MaxPublishDepth)
+            {
+                // 递归保护：丢弃这一层，避免无限嵌套直到栈溢出
+                if (_log.IsEnabled(LogLevel.Error))
+                    _log.Write(LogLevel.Error, C04Tag,
+                        "事件派发递归超过 " + MaxPublishDepth + " 层，已丢弃: " + typeof(T).Name);
+                return;
+            }
+
+            _publishDepth++;
+            try
+            {
+                if (_channels.TryGetValue(typeof(T), out IChannel channel))
+                    ((Channel<T>)channel).Publish(in evt, _log);
+            }
+            finally
+            {
+                _publishDepth--;
+            }
         }
 
         public void PublishDeferred<T>(in T evt) where T : struct
