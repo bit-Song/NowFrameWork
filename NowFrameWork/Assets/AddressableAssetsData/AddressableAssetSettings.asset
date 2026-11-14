@@ -15,9 +15,9 @@ MonoBehaviour:
   m_DefaultGroup: 8f71fc8095b05914f89177acccbb595c
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 9237d65522a9aebb263a22cc16a3b69a
   m_OptimizeCatalogSize: 0
-  m_BuildRemoteCatalog: 0
+  m_BuildRemoteCatalog: 1
   m_BundleLocalCatalog: 0
   m_CatalogRequestsTimeout: 0
   m_DisableCatalogUpdateOnStart: 0
@@ -35,15 +35,16 @@ MonoBehaviour:
   m_CheckForContentUpdateRestrictionsOption: 0
   m_MonoScriptBundleCustomNaming: 
   m_RemoteCatalogBuildPath:
-    m_Id: 
+    m_Id: d075249ac5d54304ab42b492f37b0b6d
   m_RemoteCatalogLoadPath:
-    m_Id: 
-  m_ContentStateBuildPathProfileVariableName: 
+    m_Id: f36887781051b1843b5d4e56eb142115
+  m_ContentStateBuildPathProfileVariableName: <default settings path>
   m_CustomContentStateBuildPath: 
   m_ContentStateBuildPath: 
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
+  - {fileID: 11400000, guid: 26d1f1bd1bb7c09489d844040109f7fd, type: 2}
   - {fileID: 11400000, guid: c5daf84eb58573d4a95e5f1661ca63c3, type: 2}
   - {fileID: 11400000, guid: 0840a996e9cd15f4ca251e53141cebd2, type: 2}
   m_BuildSettings:
@@ -64,9 +65,9 @@ MonoBehaviour:
       - m_Id: a084e7dd61402ae468bb646157eebbde
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: d075249ac5d54304ab42b492f37b0b6d
-        m_Value: ServerData/[BuildTarget]
+        m_Value: E:/Soft/Server/phpStudy/phpstudy_pro/WWW/NowFrameWorkHotAsset/[BuildTarget]
       - m_Id: f36887781051b1843b5d4e56eb142115
-        m_Value: http://[PrivateIpAddress]:[HostingServicePort]
+        m_Value: http://localhost/NowFrameWorkHotAsset/[BuildTarget]
     m_ProfileEntryNames:
     - m_Id: 35e8befd8f25e194082c4b611c5b62bd
       m_Name: Local.LoadPath

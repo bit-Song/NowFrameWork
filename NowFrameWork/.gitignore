@@ -128,6 +128,11 @@ HybridCLRData/
 /ServerData/
 /Addressables_Temp/
 
+# ---- 热更补充元数据（从 Library/HybridCLR/AssembliesPostIl2CppStrip 复制，与 Player 强绑定）----
+# 由出包流程重新生成，不入库；换包后必须重新复制，否则运行期会 NotMatch
+/Assets/AOTMeta
+/Assets/AOTMeta.meta
+
 # ---- 构建输出 ----
 /Build/
 /Builds/
