@@ -1,6 +1,9 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+
+namespace NowFrameWork.Core.Time
 {
     /// <summary>
     /// C05 计时器实现：槽位数组 + 空闲栈 + 版本号。

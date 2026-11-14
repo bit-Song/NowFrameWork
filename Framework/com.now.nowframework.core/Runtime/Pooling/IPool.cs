@@ -1,6 +1,8 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>池的运行时统计。Created 与 Destroyed 用于**对账**：池释放后两者必须相等。</summary>
     public readonly struct PoolStats

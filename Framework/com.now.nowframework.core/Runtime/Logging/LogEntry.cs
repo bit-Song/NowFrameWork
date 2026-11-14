@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Logging
 {
     /// <summary>
     /// 一条日志。readonly struct：入参用 <c>in</c> 传递，不装箱、不分配。

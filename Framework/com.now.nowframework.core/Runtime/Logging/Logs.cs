@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Logging
 {
     /// <summary>空实现：用于可选日志依赖，避免到处写 null 判断。</summary>
     public static class Logs

@@ -1,6 +1,8 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>池已满且无闲置对象时抛出——调用方要么扩容，要么改用 TryGet 做软失败。</summary>
     public sealed class PoolExhaustedException : Exception

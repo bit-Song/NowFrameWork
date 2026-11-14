@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Logging
 {
     /// <summary>日志级别。数值越大越严重；Off 用于整体关闭（例如 Release 只保留 Error）。</summary>
     public enum LogLevel

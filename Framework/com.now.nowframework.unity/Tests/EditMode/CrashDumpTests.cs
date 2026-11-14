@@ -1,6 +1,12 @@
 using System.IO;
 using NUnit.Framework;
 using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+using NowFrameWork.Core.Events;
+using NowFrameWork.Core.Time;
+using NowFrameWork.Core.Pooling;
+using NowFrameWork.Core.Diagnostics;
+using NowFrameWork.Core.Startup;
 
 namespace NowFrameWork.Unity.Tests
 {

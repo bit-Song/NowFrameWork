@@ -1,3 +1,5 @@
+using NowFrameWork.Core.Logging;
+
 using NowFrameWork.Core;
 
 namespace NowFrameWork.Unity

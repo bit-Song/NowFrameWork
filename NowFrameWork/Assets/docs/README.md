@@ -81,3 +81,4 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.16 | 2026-11-14 | **全量回归通过**：EditMode 74/74（我方 73 + Addressables 示例 1）；修正 `PoolService_Dispose_ReleasesAllPools` 的错误断言（原用例未取对象却期望销毁 2 个） |
 | v0.4.17 | 2026-11-14 | **G-01 C02 分段启动与进度**：新增 `IStartupProgress` / `ScaledProgress`，Hub 上报 Initialize/Start 两阶段与归一化进度，失败回调阶段名 + 模块 Id；`App`/`GameBootstrap` 已透传；缺口清单 G-01 标记完成 |
 | v0.4.18 | 2026-11-15 | **G-02 + G-06**：`ErrorBudget`（作为 `ILogSink` 自动收集 Error，按模块+消息聚合，超阈值触发 Fatal 一次）与 `CrashDump`（Unity 异常/退出时把环形缓冲落盘）；顺带修掉 `LogEntry`/`Logger` 与 UnityEngine 同名的编译冲突；用例 81 → 90 全绿 |
+| v0.4.19 | 2026-11-15 | **命名空间按模块拆分**：`NowFrameWork.Core.Logging/Events/Time/Pooling/Diagnostics/Startup`，根命名空间只留跨模块契约；06 §2.1 固化约定与统一别名写法；用例 90/90 仍全绿 |

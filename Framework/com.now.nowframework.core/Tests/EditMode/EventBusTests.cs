@@ -1,6 +1,12 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using NowFrameWork.Core.Logging;
+using NowFrameWork.Core.Events;
+using NowFrameWork.Core.Time;
+using NowFrameWork.Core.Pooling;
+using NowFrameWork.Core.Diagnostics;
+using NowFrameWork.Core.Startup;
 
 namespace NowFrameWork.Core.Tests
 {

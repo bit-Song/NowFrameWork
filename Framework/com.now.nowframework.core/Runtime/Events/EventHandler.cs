@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Events
 {
     /// <summary>
     /// 事件处理器委托。用 <c>in</c> 传参：大结构体不产生拷贝，也绝不装箱。

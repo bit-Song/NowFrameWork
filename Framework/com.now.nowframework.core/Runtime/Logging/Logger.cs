@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Logging
 {
     /// <summary>
     /// C03 日志实现：级别过滤 + 多 Sink + 固定容量的近期日志环形缓冲（供崩溃报告取用）。

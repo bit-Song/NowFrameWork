@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Diagnostics
 {
     /// <summary>一条聚合后的错误记录。同类错误只占一条，用 Count 记录次数。</summary>
     public readonly struct ErrorEntry

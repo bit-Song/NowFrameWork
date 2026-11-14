@@ -6,8 +6,8 @@ using NowFrameWork.Core;
 using UnityEngine;
 
 // UnityEngine 里也有 LogEntry / Logger，显式指定用框架的
-using LogEntry = NowFrameWork.Core.LogEntry;
-using Logger = NowFrameWork.Core.Logger;
+using LogEntry = NowFrameWork.Core.Logging.LogEntry;
+using Logger = NowFrameWork.Core.Logging.Logger;
 
 namespace NowFrameWork.Unity
 {

@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+
+namespace NowFrameWork.Core.Events
 {
     /// <summary>
     /// C04 事件总线实现。

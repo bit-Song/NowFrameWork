@@ -2,6 +2,8 @@ using System;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Core;
 using UnityEngine;
+using NowFrameWork.Core.Logging;
+using NowFrameWork.Core.Startup;
 
 namespace NowFrameWork.Unity
 {

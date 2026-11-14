@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Time
 {
     /// <summary>
     /// 可注入时钟。Core 不引用 UnityEngine.Time，平台包用真实实现，测试用手动实现。

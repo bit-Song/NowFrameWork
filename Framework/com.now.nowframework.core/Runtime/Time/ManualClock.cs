@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Time
 {
     /// <summary>
     /// 手动推进的时钟：测试与固定步长模拟用。不依赖任何 Unity API。

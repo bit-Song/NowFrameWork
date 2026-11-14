@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Startup
 {
     /// <summary>
     /// 进度缩放装饰器：把子流程的 0..1 映射到外层的一段区间。

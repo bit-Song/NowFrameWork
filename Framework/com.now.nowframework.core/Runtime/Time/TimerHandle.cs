@@ -1,6 +1,8 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Time
 {
     /// <summary>
     /// 计时器句柄。带版本号：槽位被复用后，旧句柄的 Cancel 会安全地失败，不会误杀新计时器。

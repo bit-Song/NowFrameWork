@@ -1,6 +1,8 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Time
 {
     /// <summary>
     /// C05 计时器服务。所有计时器都由 <see cref="Update"/> 驱动，不依赖 Unity 协程。

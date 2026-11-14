@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+using NowFrameWork.Core.Time;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>
     /// 池注册表：按字符串键创建/复用池，每帧驱动自动回收，并负责在资源卸载时整池释放。

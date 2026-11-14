@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>
     /// 池化对象的生命周期。池在取出/归还时自动调用。

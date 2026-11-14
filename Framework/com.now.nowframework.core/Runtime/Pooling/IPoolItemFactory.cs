@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>
     /// 池化对象的创建/销毁工厂。

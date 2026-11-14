@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Startup
 {
     /// <summary>
     /// 启动进度接收者。由 UI（加载条）或日志实现；框架只负责上报。

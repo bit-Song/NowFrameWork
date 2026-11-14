@@ -1,6 +1,8 @@
 using System;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Events
 {
     /// <summary>
     /// 订阅令牌。Dispose 幂等，重复释放不会影响其它订阅。

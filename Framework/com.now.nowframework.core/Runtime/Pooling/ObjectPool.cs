@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+using NowFrameWork.Core.Time;
+
+namespace NowFrameWork.Core.Pooling
 {
     /// <summary>
     /// C06 对象池：空闲列表 + 活跃集合 + 显式创建/销毁工厂。

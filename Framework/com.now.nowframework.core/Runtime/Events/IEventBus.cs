@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Events
 {
     /// <summary>
     /// C04 事件总线。事件必须是 struct，避免装箱；派发路径零分配。

@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Events
 {
     /// <summary>
     /// 无委托的事件处理器。高频事件用它可彻底避免订阅期的委托分配。

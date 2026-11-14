@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+using NowFrameWork.Core.Logging;
+
+namespace NowFrameWork.Core.Diagnostics
 {
     /// <summary>
     /// 错误预算：把同类错误聚合成一条计数，并在越过阈值时升级为 Fatal。

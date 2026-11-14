@@ -1,4 +1,6 @@
-namespace NowFrameWork.Core
+using NowFrameWork.Core;
+
+namespace NowFrameWork.Core.Logging
 {
     /// <summary>
     /// 日志出口（Console、文件、远端）。实现放在平台包（如 unity），Core 只定义契约。

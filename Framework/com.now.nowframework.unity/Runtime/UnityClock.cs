@@ -1,3 +1,5 @@
+using NowFrameWork.Core.Time;
+
 using NowFrameWork.Core;
 
 namespace NowFrameWork.Unity
