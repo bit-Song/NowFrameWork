@@ -32,6 +32,15 @@
         "com.cysharp.unitask": "2.5.11"
       }
     },
+    "com.now.nowframework.unity": {
+      "version": "file:../../Framework/com.now.nowframework.unity",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.now.nowframework.core": "0.1.0",
+        "com.cysharp.unitask": "2.5.11"
+      }
+    },
     "com.unity.addressables": {
       "version": "1.22.4-t1",
       "depth": 0,

@@ -1,0 +1,19 @@
+{
+  "name": "NowFrameWork.Unity.Editor",
+  "rootNamespace": "NowFrameWork.Unity.EditorTools",
+  "references": [
+    "NowFrameWork.Unity",
+    "NowFrameWork.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

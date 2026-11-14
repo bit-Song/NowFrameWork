@@ -72,4 +72,4 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.9 | 2026-11-14 | **C03 日志落地**：`ILog`/`ILogSink`/`LogEntry`/`Logger`（级别过滤 + 多 Sink + 环形缓冲），关闭级别与静态消息均零分配；`ModuleHub` 清理异常不再静默吞掉；用例 20 → 29 全绿 |
 | v0.4.10 | 2026-11-14 | **C04 事件总线落地**：struct 事件 + `in` 传参、快照派发（派发中增删安全）、单 handler 异常隔离并记日志、延迟派发按类型 FIFO；委托与接口两种订阅，三条零分配门禁通过；用例 29 → 41 全绿 |
 | v0.4.11 | 2026-11-14 | **C05 时间与调度落地**：`IClock`/`ManualClock`（双时间轴 × TimeScale）、`TimerService`（槽位数组 + 空闲栈 + 版本号防 ABA）；Update 与触发路径均零分配；用例 41 → 54 全绿 |
-| v0.4.7 | 2026-11-14 | **V03 通过**（副本移除 HybridCLR 后 Win64 IL2CPP 构建启动无异常）；**M1 开工**：落地 `com.now.nowframework.core` 骨架（C01 模块容器 + 8 个 EditMode 用例） |
+| v0.4.12 | 2026-11-14 | **C02 启动器 + unity 适配包**：新增 `com.now.nowframework.unity`（`UnityClock`/`UnityConsoleSink`/`App`/`GameBootstrap`，日志与控制台打通），菜单一键生成 Boot 场景；修正 06 §4.2 的测量方法并记录自动 GC 门禁失败的实测数据；用例 45 → 50 全绿 |
