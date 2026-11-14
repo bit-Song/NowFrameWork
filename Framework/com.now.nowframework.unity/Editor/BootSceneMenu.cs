@@ -9,7 +9,8 @@ namespace NowFrameWork.Unity.EditorTools
     public static class BootSceneMenu
     {
         const string SceneDirectory = "Assets/Scenes";
-        const string ScenePath = SceneDirectory + "/Boot.unity";
+        // 团结工程的场景扩展名是 .scene（与 SampleScene.scene 保持一致）
+        const string ScenePath = SceneDirectory + "/Boot.scene";
 
         [MenuItem("NowFrameWork/创建 Boot 场景")]
         public static void CreateBootScene()
