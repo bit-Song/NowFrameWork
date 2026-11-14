@@ -1,0 +1,235 @@
+using System;
+using System.Collections.Generic;
+
+namespace NowFrameWork.Core
+{
+    /// <summary>
+    /// C04 事件总线实现。
+    ///
+    /// GC 设计：
+    /// - 每种事件类型一条 Channel，订阅时分配一次；派发只遍历**快照数组**，不分配；
+    /// - 快照在订阅/退订后置脏，下一次派发前重建（重建才分配）；
+    /// - 延迟派发按类型排队（List&lt;T&gt;），不装箱、不产生闭包；
+    /// - 异常路径才拼字符串，且先判 IsEnabled。
+    /// </summary>
+    public sealed class EventBus : IEventBus
+    {
+        /// <summary>单次 Flush 的安全上限，防止 handler 无限投递延迟事件导致死循环。</summary>
+        const int MaxDeferredPerFlush = 4096;
+
+        readonly Dictionary<Type, IChannel> _channels = new Dictionary<Type, IChannel>(16);
+        readonly ILog _log;
+
+        const string C04Tag = "C04";
+
+        public EventBus(ILog log = null)
+        {
+            _log = log ?? Logs.Null;
+        }
+
+        public IEventSubscription Subscribe<T>(EventHandler<T> handler) where T : struct
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+
+            Channel<T> channel = GetOrCreateChannel<T>();
+            channel.AddDelegate(handler);
+            return new Subscription(this, typeof(T), handler);
+        }
+
+        public IEventSubscription Subscribe<T>(IEventHandler<T> handler) where T : struct
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+
+            Channel<T> channel = GetOrCreateChannel<T>();
+            channel.AddHandler(handler);
+            return new Subscription(this, typeof(T), handler);
+        }
+
+        public void Publish<T>(in T evt) where T : struct
+        {
+            if (_channels.TryGetValue(typeof(T), out IChannel channel))
+                ((Channel<T>)channel).Publish(in evt, _log);
+        }
+
+        public void PublishDeferred<T>(in T evt) where T : struct
+        {
+            GetOrCreateChannel<T>().Enqueue(in evt);
+        }
+
+        public void FlushDeferred()
+        {
+            // 遍历字典期间 handler 可能订阅新类型 → 用快照数组，避免 InvalidOperationException
+            var keys = new List<Type>(_channels.Count);
+            foreach (KeyValuePair<Type, IChannel> pair in _channels) keys.Add(pair.Key);
+
+            for (int i = 0; i < keys.Count; i++)
+                if (_channels.TryGetValue(keys[i], out IChannel channel)) channel.FlushDeferred(_log);
+        }
+
+        public void Clear()
+        {
+            foreach (KeyValuePair<Type, IChannel> pair in _channels) pair.Value.Clear();
+            _channels.Clear();
+        }
+
+        Channel<T> GetOrCreateChannel<T>() where T : struct
+        {
+            if (_channels.TryGetValue(typeof(T), out IChannel existing))
+                return (Channel<T>)existing;
+
+            var created = new Channel<T>();
+            _channels.Add(typeof(T), created);
+            return created;
+        }
+
+        void Unsubscribe(Subscription subscription)
+        {
+            if (!_channels.TryGetValue(subscription.EventType, out IChannel channel)) return;
+            channel.Remove(subscription.Handler);
+        }
+
+        interface IChannel
+        {
+            void Clear();
+            void Remove(object handler);
+            void FlushDeferred(ILog log);
+        }
+
+        /// <summary>单一事件类型的订阅与队列。</summary>
+        sealed class Channel<T> : IChannel where T : struct
+        {
+            readonly List<EventHandler<T>> _delegates = new List<EventHandler<T>>(4);
+            readonly List<IEventHandler<T>> _handlers = new List<IEventHandler<T>>(4);
+            readonly List<T> _deferred = new List<T>(4);
+
+            EventHandler<T>[] _delegateSnapshot = Array.Empty<EventHandler<T>>();
+            IEventHandler<T>[] _handlerSnapshot = Array.Empty<IEventHandler<T>>();
+
+            bool _dirty;
+
+            public void AddDelegate(EventHandler<T> handler)
+            {
+                _delegates.Add(handler);
+                _dirty = true;
+            }
+
+            public void AddHandler(IEventHandler<T> handler)
+            {
+                _handlers.Add(handler);
+                _dirty = true;
+            }
+
+            public void Remove(object handler)
+            {
+                if (handler is EventHandler<T> d) _delegates.Remove(d);
+                else if (handler is IEventHandler<T> h) _handlers.Remove(h);
+                else return;
+
+                _dirty = true;
+            }
+
+            public void Enqueue(in T evt) => _deferred.Add(evt);
+
+            public void Publish(in T evt, ILog log)
+            {
+                EnsureSnapshot();
+
+                EventHandler<T>[] delegates = _delegateSnapshot;
+                for (int i = 0; i < delegates.Length; i++)
+                {
+                    try { delegates[i](in evt); }
+                    catch (Exception e) { Report(log, e); }
+                }
+
+                IEventHandler<T>[] handlers = _handlerSnapshot;
+                for (int i = 0; i < handlers.Length; i++)
+                {
+                    try { handlers[i].Handle(in evt); }
+                    catch (Exception e) { Report(log, e); }
+                }
+            }
+
+            public void FlushDeferred(ILog log)
+            {
+                if (_deferred.Count == 0) return;
+
+                int guard = 0;
+                // 索引遍历：handler 里继续投递的延迟事件会在本轮内被处理（有上限保护）
+                for (int i = 0; i < _deferred.Count; i++)
+                {
+                    if (++guard > MaxDeferredPerFlush)
+                    {
+                        if (log.IsEnabled(LogLevel.Error))
+                            log.Write(LogLevel.Error, "C04", "延迟派发超过上限 " + MaxDeferredPerFlush + "，已丢弃剩余事件: " + typeof(T).Name);
+                        break;
+                    }
+
+                    Publish(_deferred[i], log);
+                }
+
+                _deferred.Clear();
+            }
+
+            public void Clear()
+            {
+                _delegates.Clear();
+                _handlers.Clear();
+                _deferred.Clear();
+                _delegateSnapshot = Array.Empty<EventHandler<T>>();
+                _handlerSnapshot = Array.Empty<IEventHandler<T>>();
+                _dirty = false;
+            }
+
+            void EnsureSnapshot()
+            {
+                if (!_dirty) return;
+                _dirty = false;
+
+                if (_delegates.Count == 0) _delegateSnapshot = Array.Empty<EventHandler<T>>();
+                else
+                {
+                    if (_delegateSnapshot.Length != _delegates.Count) _delegateSnapshot = new EventHandler<T>[_delegates.Count];
+                    _delegates.CopyTo(_delegateSnapshot);
+                }
+
+                if (_handlers.Count == 0) _handlerSnapshot = Array.Empty<IEventHandler<T>>();
+                else
+                {
+                    if (_handlerSnapshot.Length != _handlers.Count) _handlerSnapshot = new IEventHandler<T>[_handlers.Count];
+                    _handlers.CopyTo(_handlerSnapshot);
+                }
+            }
+
+            static void Report(ILog log, Exception e)
+            {
+                if (!log.IsEnabled(LogLevel.Error)) return;
+                log.Write(LogLevel.Error, "C04",
+                    "事件处理失败: " + typeof(T).Name + " -> " + e.GetType().Name + ": " + e.Message);
+            }
+        }
+
+        /// <summary>订阅令牌实现。Dispose 幂等；释放后不再从总线移除任何东西。</summary>
+        sealed class Subscription : IEventSubscription
+        {
+            readonly EventBus _bus;
+
+            public Subscription(EventBus bus, Type eventType, object handler)
+            {
+                _bus = bus;
+                EventType = eventType;
+                Handler = handler;
+            }
+
+            public Type EventType { get; }
+            public object Handler { get; }
+            public bool IsDisposed { get; private set; }
+
+            public void Dispose()
+            {
+                if (IsDisposed) return;
+                IsDisposed = true;
+                _bus.Unsubscribe(this);
+            }
+        }
+    }
+}
