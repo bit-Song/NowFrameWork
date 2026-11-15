@@ -1,0 +1,17 @@
+{
+  "name": "NowFrameWork.Assets",
+  "rootNamespace": "NowFrameWork.Assets",
+  "references": [
+    "NowFrameWork.Core",
+    "UniTask"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
