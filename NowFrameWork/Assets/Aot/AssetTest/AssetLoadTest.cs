@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -8,6 +9,9 @@ using NowFrameWork.Assets.Adapter;
 using NowFrameWork.Core.Time;
 using NowFrameWork.Unity;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace NowFrameWork.AssetTest
 {
@@ -30,7 +34,16 @@ namespace NowFrameWork.AssetTest
 
         async void Start()
         {
+            Debug.Log(Application.persistentDataPath);
             _path = Path.Combine(Application.persistentDataPath, "nw-asset-probe.txt");
+
+            // 诊断：缓存位置 + Addressables 真正请求的地址
+            Write("CachePath=" + Caching.currentCacheForWriting.path);
+            Addressables.InternalIdTransformFunc = location =>
+            {
+                Write("  Request: " + location.InternalId);
+                return location.InternalId;
+            };
             Write("unity: " + Application.unityVersion);
             Write("address: " + _address);
             Write("");
@@ -64,6 +77,26 @@ namespace NowFrameWork.AssetTest
         async UniTask RunLeaseTest(AssetService service)
         {
             Write("-- A. 纯租约");
+
+            // 关键证据：这个地址到底解析成什么（远端 URL / 本地路径）
+            AsyncOperationHandle<IList<IResourceLocation>> locations =
+                Addressables.LoadResourceLocationsAsync(_address, typeof(UnityEngine.Object));
+            IList<IResourceLocation> list = await locations.Task;
+
+            if (list != null && list.Count > 0)
+            {
+                Write("   A0 InternalId=" + list[0].InternalId);
+                Write("      Provider=" + list[0].ProviderId);
+                Write("      Bundle=" + (list[0].Dependencies != null && list[0].Dependencies.Count > 0
+                    ? list[0].Dependencies[0].InternalId
+                    : "(无依赖)"));
+            }
+            else
+            {
+                Write("   A0 没有 location（资源不在当前 catalog）");
+            }
+
+            Addressables.Release(locations);
 
             try
             {

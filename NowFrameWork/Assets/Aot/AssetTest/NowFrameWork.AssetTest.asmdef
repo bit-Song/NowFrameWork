@@ -6,7 +6,9 @@
     "NowFrameWork.Assets",
     "NowFrameWork.Assets.Addressables",
     "NowFrameWork.Unity",
-    "UniTask"
+    "UniTask",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
