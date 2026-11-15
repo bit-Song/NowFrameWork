@@ -185,6 +185,28 @@ namespace NowFrameWork.Assets.Tests
         }
 
         [Test]
+        public void AllWaitersCancelled_LoadCompletes_ReleasesHandle()
+        {
+            var pending = new UniTaskCompletionSource<ProviderHandle>();
+            var provider = new FakeProvider { Load = _ => pending.Task };
+            var service = new AssetService(provider);
+            var cts = new CancellationTokenSource();
+
+            var awaiter = service.AcquireAsync<FakeAsset>("enemy", cts.Token).GetAwaiter();
+            Assert.AreEqual(1, service.PendingRequests);
+
+            cts.Cancel();
+            Assert.Throws<OperationCanceledException>(() => awaiter.GetResult());
+
+            // 加载最终完成，但已经没人要了
+            pending.TrySetResult(new ProviderHandle("enemy", ScriptableObject.CreateInstance<FakeAsset>()));
+
+            Assert.AreEqual(1, provider.ReleaseCalls, "无人等待时加载完成必须立即归还句柄");
+            Assert.AreEqual(0, service.ActiveLeases);
+            Assert.AreEqual(0, service.PendingRequests);
+        }
+
+        [Test]
         public void PendingRequests_ReturnsToZero()
         {
             var provider = new FakeProvider();

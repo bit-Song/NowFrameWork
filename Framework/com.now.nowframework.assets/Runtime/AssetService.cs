@@ -97,6 +97,10 @@ namespace NowFrameWork.Assets
             finally
             {
                 entry.Waiters--;
+
+                // 取消恰好落在"加载完成"与"当前等待者恢复"之间时，StartLoad 里的检查会看到 Waiters == 1，
+                // 之后没人接手，句柄就悬挂了。这里补一次同样条件的检查。
+                if (entry.Waiters == 0 && entry.Leases == 0 && entry.Handle != null) ReleaseEntry(entry);
             }
         }
 
