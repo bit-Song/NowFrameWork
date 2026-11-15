@@ -63,6 +63,34 @@ struct 被复制后任意一份 `Dispose` 都会归还，直接造成重复归�
 
 因此"每次租用一次分配"不能靠改 struct 解决，而靠 **`Rent` 不产生新租约**：池级保活租约只在预热时拿一次（见 [11 §8](11-对象池与资源租约.md)）。
 
+### 2.3 加载键：`AssetKey`（2026-11-15 定稿）
+
+```csharp
+public readonly struct AssetKey : IEquatable<AssetKey>
+{
+    public string Address { get; }    // 地址或 GUID 字符串
+    public string SubObject { get; }  // 子资源（图集 sprite），可空
+    public string Variant { get; }    // 池维度（不同父节点/初始状态），可空
+
+    public bool IsValid => !string.IsNullOrEmpty(Address);
+    public AssetKey WithVariant(string variant);
+    public static AssetKey From(string address, string subObject = null);
+    public static implicit operator AssetKey(string address);
+}
+```
+
+| 规则 | 决定 |
+|---|---|
+| 相等性 | **Address + SubObject**；`Variant` 不参与——同一资源的两套池共享一份资源 |
+| 哈希 | 用 C08 的 `Hash.Of`（FNV-1a，跨进程稳定），便于把键写进日志/存档后复现 |
+| 三种来源 | 地址字符串 / `AssetReference.ToKey()`（扩展方法在 Addressables 包，键类型本身不依赖 Addressables）/ GUID |
+| 地址与 GUID 指向同一资源 | 由 Provider 的 `ResolveCanonicalKeyAsync` 统一成 canonical 键，Service 缓存映射；否则会重复加载且租约分裂 |
+| 空键 | `Guard` 直接抛 |
+| 大小写 | 区分（Addressables 地址区分大小写） |
+| Tag / 标签批量加载 | **v1 不支持**。标签返回一组资源，租约语义不同，等真有批量需求再加 |
+
+对照参考：YooAsset 同样提供三层寻址——location 字符串、`AssetInfo` 预解析结构、`GetAssetInfoByGUID`。区别是它没有独立的"地址"层（路径即键），而 Addressables 的地址与路径解耦，所以 canonical 化必须由 Provider 承担。
+
 ## 3 Provider 边界
 
 ```csharp
