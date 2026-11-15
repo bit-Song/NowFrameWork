@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Core.Utility;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
@@ -82,8 +83,8 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
-            AsyncOperationHandle<List<string>> handle = Addressables.UpdateCatalogs(null, false);
-            List<string> updated = await AwaitHandle(handle, ct);
+            AsyncOperationHandle<List<IResourceLocator>> handle = Addressables.UpdateCatalogs(null, false);
+            List<IResourceLocator> updated = await AwaitHandle(handle, ct);
 
             try
             {
