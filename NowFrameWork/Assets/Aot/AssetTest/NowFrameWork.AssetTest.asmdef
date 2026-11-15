@@ -1,0 +1,19 @@
+{
+  "name": "NowFrameWork.AssetTest",
+  "rootNamespace": "NowFrameWork.AssetTest",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Assets",
+    "NowFrameWork.Assets.Addressables",
+    "UniTask"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
