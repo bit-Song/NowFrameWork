@@ -48,8 +48,8 @@ namespace NowFrameWork.EditorTools
 
         static string ResultPath()
         {
-            // Assets → 工程根 → ../../EXE/_evidence
-            string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", ".."));
+            // Assets → 工程根 → 仓库根 → Unity → 含 EXE 的外层目录（共 4 层）
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", ".."));
             return Path.Combine(root, "EXE", "_evidence", "editmode-results.xml");
         }
 
