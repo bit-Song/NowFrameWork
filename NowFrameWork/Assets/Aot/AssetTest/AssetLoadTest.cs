@@ -61,14 +61,32 @@ namespace NowFrameWork.AssetTest
                 second.Dispose();
                 Write("5. release all: active=" + service.ActiveLeases);
 
-                // R-1：跨一帧再看资源是否可用
-                await UniTask.Yield();
+                // R-1：逐帧观察资源到底在第几帧失效（Addressables 可能异步卸载）
+                int frames = 0;
+
+                while (frames < 120 && instanceId != 0 && Resources.InstanceIDToObject(instanceId) != null)
+                {
+                    await UniTask.Yield();
+                    frames++;
+                }
 
                 bool idAlive = instanceId != 0 && Resources.InstanceIDToObject(instanceId) != null;
                 bool managedNull = asset == null;
 
-                Write("6. next frame: instanceId alive=" + idAlive + " managedNull=" + managedNull);
-                Write("   => " + ((!idAlive) ? "资源已卸载：R-1 必须保留" : "资源仍存活：可能仍有其它引用"));
+                Write("6. released; alive after " + frames + " frames: " + idAlive + " managedNull=" + managedNull);
+
+                if (idAlive)
+                {
+                    Write("   => 120 帧内仍未卸载，可能有其它引用（或该资源所在包被常驻）");
+                }
+                else if (frames == 0)
+                {
+                    Write("   => R-1 证据成立：释放当帧即失效，必须跨帧再释放租约");
+                }
+                else
+                {
+                    Write("   => R-1 证据成立：异步卸载，失效于第 " + frames + " 帧；租约释放需覆盖该窗口");
+                }
             }
             catch (Exception e)
             {
