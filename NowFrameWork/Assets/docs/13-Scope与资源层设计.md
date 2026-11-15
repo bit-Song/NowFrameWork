@@ -418,6 +418,35 @@ R-1 的依据仍然是两条独立证据：
 `Scope.DefaultSettleFrames = 3` 因此**降级为兜底**，只用于"没有实例可查"的场景，不再是安全依据。
 各平台/包体差异由条件等待自然吸收，帧数只用于防死等。
 
+### 9.5 Player 全链路实测（2026-11-15）
+
+**场景**：`Assets/Scenes/AssetTest.scene`，一次出包跑三段：纯租约 / 对象池 / Scope。
+
+```
+== 初始化: OK
+-- A. 纯租约
+   A1 加载: True canonical=Assets/HotUpdateDlls/HotUpdate.dll.bytes
+   A2 双租约: active=2
+   A3 全部释放: active=0
+   A4 资源失效于第 1 帧: True
+-- B. 对象池
+   B1 建池: activeLeases=1
+   B2 租用 2 个: active=2
+   B3 归还: active=0 inactive=2
+   B4 释放池: activeLeases=0
+-- C. Scope
+   C1 启动: state=Running
+   C2 关闭: state=Stopped
+== 完成，ActiveLeases=0
+```
+
+**结论**：
+
+1. 三层链路（Provider → AssetService → AssetPool/Scope）在 Player 里全部打通，租约计数最终归零；
+2. **A4 两次测得 2 帧与 1 帧**——同样的代码、同样的资源，卸载时机并不固定，
+   这直接证明 §9.4 的结论：**不能用固定帧数做安全保证**，必须"等实例真的没了"；
+3. 对象池的保活租约在池释放时正确归还（B4）；Scope 状态机在 Player 里同样收敛到 Stopped（C2）。
+
 ## 10 评审意见处理对照（2026-11-15）
 
 | 编号 | 评审意见 | 处理 |

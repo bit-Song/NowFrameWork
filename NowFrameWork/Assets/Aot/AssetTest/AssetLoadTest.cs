@@ -5,21 +5,21 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
 using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Core.Time;
+using NowFrameWork.Unity;
 using UnityEngine;
 
 namespace NowFrameWork.AssetTest
 {
     /// <summary>
-    /// Player 内的资源加载验证：走的是框架自己的 AddressablesProvider + AssetService，
-    /// 不是裸 Addressables 调用。
+    /// Player 内的资源层验证：一次出包跑三段。
     ///
-    /// 验证点：
-    /// 1. Provider 初始化与 canonical 键解析；
-    /// 2. 同址双租约只加载一次；
-    /// 3. 逐个释放后 ActiveLeases 归零；
-    /// 4. **最后一个租约释放并跨一帧后，资源是否真的不可用**（R-1 的实证）。
+    /// A. 纯租约：加载 → 双租约 → 逐个释放 → 逐帧观察资源何时真正失效；
+    /// B. 对象池：AssetPool 保活租约 + 实例销毁；
+    /// C. Scope：启动 → 关闭，检查状态机与租约归零。
     ///
-    /// 报告写到 Application.persistentDataPath/nw-asset-probe.txt，屏幕上也显示。
+    /// EditMode 测不了这些（没有 bundle、没有真实卸载），必须在 Player 里跑。
+    /// 报告写到 persistentDataPath/nw-asset-probe.txt，屏幕同步显示。
     /// </summary>
     public sealed class AssetLoadTest : MonoBehaviour
     {
@@ -33,67 +33,135 @@ namespace NowFrameWork.AssetTest
             _path = Path.Combine(Application.persistentDataPath, "nw-asset-probe.txt");
             Write("unity: " + Application.unityVersion);
             Write("address: " + _address);
+            Write("");
+
+            var provider = new AddressablesProvider();
+            var service = new AssetService(provider);
+            var clock = new UnityClock();
 
             try
             {
-                var provider = new AddressablesProvider();
                 await provider.InitializeAsync(CancellationToken.None);
-                Write("1. provider init: OK");
+                Write("== 初始化: OK");
+            }
+            catch (Exception e)
+            {
+                Write("== 初始化失败: " + e.Message);
+                Dump();
+                return;
+            }
 
-                var service = new AssetService(provider);
+            await RunLeaseTest(service);
+            await RunPoolTest(service, clock);
+            await RunScopeTest(clock);
 
+            Write("");
+            Write("== 完成，ActiveLeases=" + service.ActiveLeases);
+            Dump();
+        }
+
+        async UniTask RunLeaseTest(AssetService service)
+        {
+            Write("-- A. 纯租约");
+
+            try
+            {
                 AssetLease<UnityEngine.Object> first =
+                    await service.AcquireAsync<UnityEngine.Object>(_address, CancellationToken.None);
+                AssetLease<UnityEngine.Object> second =
                     await service.AcquireAsync<UnityEngine.Object>(_address, CancellationToken.None);
 
                 UnityEngine.Object asset = first.Asset;
                 int instanceId = asset != null ? asset.GetInstanceID() : 0;
 
-                Write("2. load: " + (asset != null) + " canonical=" + first.CanonicalKey + " leases=" + service.ActiveLeases);
-
-                AssetLease<UnityEngine.Object> second =
-                    await service.AcquireAsync<UnityEngine.Object>(_address, CancellationToken.None);
-
-                Write("3. second lease: active=" + service.ActiveLeases);
+                Write("   A1 加载: " + (asset != null) + " canonical=" + first.CanonicalKey);
+                Write("   A2 双租约: active=" + service.ActiveLeases);
 
                 first.Dispose();
-                Write("4. release first: active=" + service.ActiveLeases);
-
                 second.Dispose();
-                Write("5. release all: active=" + service.ActiveLeases);
+                Write("   A3 全部释放: active=" + service.ActiveLeases);
 
-                // R-1：逐帧观察资源到底在第几帧失效（Addressables 可能异步卸载）
                 int frames = 0;
-
                 while (frames < 120 && instanceId != 0 && Resources.InstanceIDToObject(instanceId) != null)
                 {
                     await UniTask.Yield();
                     frames++;
                 }
 
-                bool idAlive = instanceId != 0 && Resources.InstanceIDToObject(instanceId) != null;
-                bool managedNull = asset == null;
-
-                Write("6. released; alive after " + frames + " frames: " + idAlive + " managedNull=" + managedNull);
-
-                if (idAlive)
-                {
-                    Write("   => 120 帧内仍未卸载，可能有其它引用（或该资源所在包被常驻）");
-                }
-                else if (frames == 0)
-                {
-                    Write("   => R-1 证据成立：释放当帧即失效，必须跨帧再释放租约");
-                }
-                else
-                {
-                    Write("   => R-1 证据成立：异步卸载，失效于第 " + frames + " 帧；租约释放需覆盖该窗口");
-                }
+                bool alive = instanceId != 0 && Resources.InstanceIDToObject(instanceId) != null;
+                Write("   A4 资源失效于第 " + frames + " 帧: " + (!alive));
             }
             catch (Exception e)
             {
-                Write("EXCEPTION: " + e);
+                Write("   A 失败: " + e.Message);
             }
+        }
 
-            Dump();
+        async UniTask RunPoolTest(AssetService service, IClock clock)
+        {
+            Write("-- B. 对象池");
+
+            AssetPool<ScriptableObject> pool = null;
+
+            try
+            {
+                pool = await AssetPool<ScriptableObject>.CreateAsync(
+                    service,
+                    AssetKey.From(_address),
+                    () => ScriptableObject.CreateInstance<ScriptableObject>(),
+                    UnityEngine.Object.Destroy,
+                    clock,
+                    maxSize: 4,
+                    settleFrames: 10);
+
+                Write("   B1 建池: activeLeases=" + service.ActiveLeases);
+
+                ScriptableObject a = pool.Rent();
+                ScriptableObject b = pool.Rent();
+                Write("   B2 租用 2 个: active=" + pool.ActiveCount);
+
+                pool.Release(a);
+                pool.Release(b);
+                Write("   B3 归还: active=" + pool.ActiveCount + " inactive=" + pool.InactiveCount);
+            }
+            catch (Exception e)
+            {
+                Write("   B 失败: " + e.Message);
+            }
+            finally
+            {
+                if (pool != null)
+                {
+                    await pool.DisposeAsync();
+                    Write("   B4 释放池: activeLeases=" + service.ActiveLeases);
+                }
+            }
+        }
+
+        async UniTask RunScopeTest(IClock clock)
+        {
+            Write("-- C. Scope");
+
+            Scope scope = null;
+
+            try
+            {
+                scope = new Scope("probe", null, clock);
+                await scope.StartupAsync(CancellationToken.None);
+                Write("   C1 启动: state=" + scope.State);
+            }
+            catch (Exception e)
+            {
+                Write("   C 启动失败: " + e.Message);
+            }
+            finally
+            {
+                if (scope != null)
+                {
+                    await scope.DisposeAsync();
+                    Write("   C2 关闭: state=" + scope.State);
+                }
+            }
         }
 
         void Write(string line) => _report.AppendLine(line);
@@ -116,7 +184,7 @@ namespace NowFrameWork.AssetTest
 
         void OnGUI()
         {
-            GUI.Label(new Rect(10, 10, 1000, 400), _report.ToString());
+            GUI.Label(new Rect(10, 10, 1200, 600), _report.ToString());
         }
     }
 }
