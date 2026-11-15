@@ -150,7 +150,7 @@ public sealed class Scope : IDisposable
 1. 子 Scope.DisposeAsync()
 2. 模块 ShutdownAsync()            ← 业务停止使用资源
 3. 池 Dispose(force: true)          ← 销毁实例（同步）
-4. await NextFrame()                ← 等 Object.Destroy 生效（硬规则 R-1，见 §9）
+4. await 卸载窗口（默认 3 帧）      ← 等 Object.Destroy 与 Addressables 异步卸载完成（R-1，见 §9.3）
 5. 释放池级保活租约 + 其余租约
 6. 卸载场景（SceneLease.Dispose）
 7. purgeAssets ? 资源层强制卸载本 Scope 独占资源
@@ -381,6 +381,27 @@ R-1 的依据仍然是两条独立证据：
 
 **待补的验证**：把 Addressables 的 Play Mode Script 切到 "Use Existing Build"（Packed），或在 Player 里跑同一实验，
 才能观察到"Release 后立即失效"。在这之前，R-1 按最保守假设执行。
+
+### 9.3 Player 实测：资源在第 2 帧失效（2026-11-15）
+
+**场景**：`Assets/Scenes/AssetTest.scene`（组件 `AssetLoadTest`，走框架的 `AddressablesProvider` + `AssetService`）
+**报告**：`<persistentDataPath>/nw-asset-probe.txt`
+
+```
+1. provider init: OK
+2. load: True canonical=Assets/HotUpdateDlls/HotUpdate.dll.bytes leases=1
+3. second lease: active=2
+4. release first: active=1
+5. release all: active=0
+6. released; alive after 2 frames: False managedNull=True
+```
+
+**结论**：
+
+1. 同址双租约只加载一次、逐个释放计数正确（3~5 行）；
+2. **释放后不是当帧失效，而是第 2 帧**——Addressables 走的是 `AssetBundle.UnloadAsync`；
+3. 因此 R-1 的"等一帧"**不足**，改为默认等 **3 帧**（2 帧实测 + 1 帧余量），并保持可注入；
+4. 这段窗口就是"对象已销毁、资源尚未卸载"的安全余量，宁可多等也不要同帧释放。
 
 ## 10 评审意见处理对照（2026-11-15）
 

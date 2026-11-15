@@ -58,7 +58,16 @@ namespace NowFrameWork.Assets
             Pools = new PoolService(_clock, _log);
         }
 
-        static UniTask DefaultFrameWaiter() => UniTask.NextFrame();
+        /// <summary>
+        /// 默认等待帧数。Player 实测（[13 §9.3]）：释放最后一个租约后资源在第 2 帧才失效
+        /// （Addressables 异步卸载），因此"跨一帧"不够，默认留到 3 帧。
+        /// </summary>
+        const int DefaultSettleFrames = 3;
+
+        static async UniTask DefaultFrameWaiter()
+        {
+            for (int i = 0; i < DefaultSettleFrames; i++) await UniTask.NextFrame();
+        }
 
         public string Name { get; }
 
