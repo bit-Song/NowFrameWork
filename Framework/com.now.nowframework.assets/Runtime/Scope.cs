@@ -59,8 +59,11 @@ namespace NowFrameWork.Assets
         }
 
         /// <summary>
-        /// 默认等待帧数。Player 实测（[13 §9.3]）：释放最后一个租约后资源在第 2 帧才失效
-        /// （Addressables 异步卸载），因此"跨一帧"不够，默认留到 3 帧。
+        /// 兜底等待帧数。
+        ///
+        /// 安全依据**不是**帧数，而是「最后一个引用资源的实例已被销毁」：
+        /// 有实例可查时（AssetPool）应注入"等实例全部为 null"的 settle；
+        /// 这个 3 帧只用于没有实例可查的纯租约场景（Player 实测资源在第 2 帧失效）。
         /// </summary>
         const int DefaultSettleFrames = 3;
 
