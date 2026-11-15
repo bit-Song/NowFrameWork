@@ -23,6 +23,16 @@ namespace NowFrameWork.Assets.Adapter
     /// </summary>
     public sealed class AddressablesProvider : IAssetProvider, IAssetUpdateProvider
     {
+        readonly TimeSpan _timeout;
+
+        /// <param name="timeout">
+        /// 单次操作超时。默认 30s：远端 catalog/bundle 取不到时必须失败退出，
+        /// 不能无限等待（UnityWebRequest 自身没有默认超时）。
+        /// </param>
+        public AddressablesProvider(TimeSpan? timeout = null)
+        {
+            _timeout = timeout ?? TimeSpan.FromSeconds(30);
+        }
         public async UniTask InitializeAsync(CancellationToken ct)
         {
             await AwaitHandle(Addressables.InitializeAsync(), ct);
@@ -126,8 +136,19 @@ namespace NowFrameWork.Assets.Adapter
             }
         }
 
+        /// <summary>超时注册：到点就释放句柄并以 TimeoutException 结束等待。</summary>
+        CancellationTokenSource StartTimeout(CancellationToken ct, Action onTimeout)
+        {
+            if (_timeout <= TimeSpan.Zero) return null;
+
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(_timeout);
+            cts.Token.Register(onTimeout);
+            return cts;
+        }
+
         /// <summary>桥接 Addressables 泛型操作；取消仅放弃等待，底层操作继续（共享加载语义）。</summary>
-        static UniTask<T> AwaitHandle<T>(AsyncOperationHandle<T> handle, CancellationToken ct)
+        UniTask<T> AwaitHandle<T>(AsyncOperationHandle<T> handle, CancellationToken ct)
         {
             if (handle.IsDone)
             {
@@ -139,8 +160,16 @@ namespace NowFrameWork.Assets.Adapter
             }
 
             var tcs = new UniTaskCompletionSource<T>();
+            CancellationTokenSource timeoutCts = StartTimeout(ct, () =>
+            {
+                Addressables.Release(handle);
+                tcs.TrySetException(new TimeoutException("Addressables 操作超时（" + _timeout.TotalSeconds + "s）"));
+            });
+
             handle.Completed += op =>
             {
+                timeoutCts?.Dispose();
+
                 if (op.Status == AsyncOperationStatus.Succeeded)
                 {
                     tcs.TrySetResult(op.Result);
@@ -157,7 +186,7 @@ namespace NowFrameWork.Assets.Adapter
         }
 
         /// <summary>桥接非泛型操作。</summary>
-        static UniTask AwaitHandle(AsyncOperationHandle handle, CancellationToken ct)
+        UniTask AwaitHandle(AsyncOperationHandle handle, CancellationToken ct)
         {
             if (handle.IsDone)
             {
@@ -169,8 +198,16 @@ namespace NowFrameWork.Assets.Adapter
             }
 
             var tcs = new UniTaskCompletionSource();
+            CancellationTokenSource timeoutCts = StartTimeout(ct, () =>
+            {
+                Addressables.Release(handle);
+                tcs.TrySetException(new TimeoutException("Addressables 操作超时（" + _timeout.TotalSeconds + "s）"));
+            });
+
             handle.Completed += op =>
             {
+                timeoutCts?.Dispose();
+
                 if (op.Status == AsyncOperationStatus.Succeeded)
                 {
                     tcs.TrySetResult();

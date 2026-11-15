@@ -41,6 +41,7 @@ namespace NowFrameWork.AssetTest
 
             try
             {
+                Write("== 初始化中（超时 30s）…");
                 await provider.InitializeAsync(CancellationToken.None);
                 Write("== 初始化: OK");
             }
