@@ -159,15 +159,53 @@ namespace NowFrameWork.Assets
             }
         }
 
-        void ILeaseOwner.ReleaseLease(string canonicalKey)
+        void ILeaseOwner.ReleaseLease(string canonicalKey, long version)
         {
+            // 先扣总数：这个租约确实存在过，无论条目是否还在，总数都必须减一次。
+            // 反过来（找不到条目就提前 return）会让 _activeLeases 永久偏高。
+            _activeLeases--;
+
             if (!_entries.TryGetValue(canonicalKey, out Entry entry)) return;
 
+            // 条目已被重建（旧租约在新世代才被释放）：只扣总数，不动新条目的计数
+            if (entry.Version != version) return;
+
             entry.Leases--;
-            _activeLeases--;
 
             if (entry.Leases > 0) return;
             ReleaseEntry(entry);
+        }
+
+        /// <summary>
+        /// 计数不变量自检（测试与诊断用）：
+        /// 1. `_activeLeases` 必须等于所有条目租约数之和；
+        /// 2. 没有租约的条目不应留在表里。
+        /// </summary>
+        internal bool Validate(out string error)
+        {
+            int sum = 0;
+            int orphan = 0;
+
+            foreach (KeyValuePair<string, Entry> pair in _entries)
+            {
+                sum += pair.Value.Leases;
+                if (pair.Value.Leases <= 0) orphan++;
+            }
+
+            if (sum != _activeLeases)
+            {
+                error = "ActiveLeases 漂移: 计数=" + _activeLeases + " 条目合计=" + sum;
+                return false;
+            }
+
+            if (orphan > 0)
+            {
+                error = "存在 " + orphan + " 个零租约条目，应已移除";
+                return false;
+            }
+
+            error = null;
+            return true;
         }
 
         void ReleaseEntry(Entry entry)

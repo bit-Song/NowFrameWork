@@ -207,6 +207,57 @@ namespace NowFrameWork.Assets.Tests
         }
 
         [Test]
+        public void CountingInvariants_HoldAfterMixedOperations()
+        {
+            var provider = new FakeProvider();
+            var service = new AssetService(provider);
+
+            AssetLease<FakeAsset> a = service.AcquireAsync<FakeAsset>("a", default).GetAwaiter().GetResult();
+            AssetLease<FakeAsset> b = service.AcquireAsync<FakeAsset>("a", default).GetAwaiter().GetResult();
+            AssetLease<FakeAsset> cache = service.AcquireCacheAsync<FakeAsset>("a", default).GetAwaiter().GetResult();
+
+            Assert.AreEqual(3, service.ActiveLeases);
+            Assert.IsTrue(service.Validate(out string error0), error0);
+
+            a.Dispose();
+            b.Dispose();
+            cache.Dispose();
+
+            Assert.AreEqual(0, service.ActiveLeases);
+            Assert.AreEqual(1, provider.ReleaseCalls);
+            Assert.IsTrue(service.Validate(out string error1), error1);
+        }
+
+        [Test]
+        public void CountingInvariants_HoldAfterFailureAndCancel()
+        {
+            var provider = new FakeProvider();
+            int attempt = 0;
+            provider.Load = _ =>
+            {
+                attempt++;
+                if (attempt == 1) throw new InvalidOperationException("boom");
+                return UniTask.FromResult(new ProviderHandle("k", ScriptableObject.CreateInstance<FakeAsset>()));
+            };
+
+            var service = new AssetService(provider);
+
+            Assert.Throws<InvalidOperationException>(() => service.AcquireAsync<FakeAsset>("k", default).GetAwaiter().GetResult());
+
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+            Assert.Throws<OperationCanceledException>(() => service.AcquireAsync<FakeAsset>("k", cts.Token).GetAwaiter().GetResult());
+
+            AssetLease<FakeAsset> lease = service.AcquireAsync<FakeAsset>("k", default).GetAwaiter().GetResult();
+            Assert.AreEqual(1, service.ActiveLeases);
+
+            lease.Dispose();
+
+            Assert.AreEqual(0, service.ActiveLeases);
+            Assert.IsTrue(service.Validate(out string error), error);
+        }
+
+        [Test]
         public void PendingRequests_ReturnsToZero()
         {
             var provider = new FakeProvider();

@@ -12,7 +12,8 @@ namespace NowFrameWork.Assets
     /// <summary>内部：租约归还回调的宿主（由 AssetService 实现），避免每个租约分配一个闭包。</summary>
     internal interface ILeaseOwner
     {
-        void ReleaseLease(string canonicalKey);
+        /// <summary>归还租约。version 用于识别"条目已被重建"的过期租约。</summary>
+        void ReleaseLease(string canonicalKey, long version);
     }
 
     /// <summary>
@@ -62,7 +63,7 @@ namespace NowFrameWork.Assets
             if (IsReleased) return;
 
             IsReleased = true;
-            _owner?.ReleaseLease(CanonicalKey);
+            _owner?.ReleaseLease(CanonicalKey, Version);
         }
 
         public override string ToString()
