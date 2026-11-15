@@ -1,0 +1,17 @@
+{
+  "name": "NowFrameWork.Diagnostics",
+  "rootNamespace": "NowFrameWork.Diagnostics",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Assets"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

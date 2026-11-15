@@ -5,6 +5,7 @@
     "NowFrameWork.Core",
     "NowFrameWork.Assets",
     "NowFrameWork.Assets.Addressables",
+    "NowFrameWork.Diagnostics",
     "UniTask"
   ],
   "includePlatforms": [],

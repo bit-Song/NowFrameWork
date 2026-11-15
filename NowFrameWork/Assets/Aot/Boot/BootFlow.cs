@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
 using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Diagnostics;
 using UnityEngine;
 
 namespace NowFrameWork.Boot
@@ -41,6 +42,9 @@ namespace NowFrameWork.Boot
             // 1. 组装：业务只拿到 IAssetService，不接触 Addressables
             (IAssetService assets, AssetsModule module) = AddressablesAssets.Create();
             var config = new ConfigService(assets);
+
+            // 诊断面板（F1 呼出）：直接在屏幕上看到租约与在途加载
+            DiagnosticsOverlay.Install(assets);
             var scenes = new AddressablesSceneService();
 
             try

@@ -1,0 +1,11 @@
+{
+  "name": "com.now.nowframework.diagnostics",
+  "version": "0.1.0",
+  "displayName": "NowFrameWork Diagnostics",
+  "description": "运行时诊断面板：资源租约、在途加载、错误预算。只在 Editor / Development Build 生效。",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.now.nowframework.core": "0.1.0",
+    "com.now.nowframework.assets": "0.1.0"
+  }
+}
