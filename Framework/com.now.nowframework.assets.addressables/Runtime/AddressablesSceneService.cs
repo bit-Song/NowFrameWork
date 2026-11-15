@@ -41,6 +41,16 @@ namespace NowFrameWork.Assets.Adapter
 
         async UniTask AwaitHandle<T>(AsyncOperationHandle<T> handle, CancellationToken ct)
         {
+            // 已完成：不能再注册 Completed（可能不再触发），直接取结果
+            if (handle.IsDone)
+            {
+                if (handle.Status == AsyncOperationStatus.Succeeded) return;
+
+                Exception failed = handle.OperationException ?? new InvalidOperationException("场景操作失败");
+                UnityEngine.AddressableAssets.Addressables.Release(handle);
+                throw failed;
+            }
+
             var tcs = new UniTaskCompletionSource<T>();
             CancellationTokenSource cts = null;
 
@@ -48,8 +58,12 @@ namespace NowFrameWork.Assets.Adapter
             {
                 cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 cts.CancelAfter(_timeout);
-                cts.Token.Register(() => tcs.TrySetException(
-                    new TimeoutException("场景操作超时（" + _timeout.TotalSeconds + "s）")));
+                cts.Token.Register(() =>
+                {
+                    // 超时也必须归还句柄，否则场景句柄永久占用
+                    UnityEngine.AddressableAssets.Addressables.Release(handle);
+                    tcs.TrySetException(new TimeoutException("场景操作超时（" + _timeout.TotalSeconds + "s）"));
+                });
             }
 
             handle.Completed += op =>
