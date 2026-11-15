@@ -29,8 +29,10 @@ namespace NowFrameWork.Assets
         {
             if (IsUnloaded) return;
 
-            IsUnloaded = true;
+            // 成功之后才标记：卸载失败时保留可重试的机会，
+            // 否则场景已经加载着、租约却显示"已卸载"，永久泄漏。
             await _unload();
+            IsUnloaded = true;
         }
 
         public override string ToString() => "SceneLease(" + Key + (IsUnloaded ? ", unloaded" : "") + ")";
