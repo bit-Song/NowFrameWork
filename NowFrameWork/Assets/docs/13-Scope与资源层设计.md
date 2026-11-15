@@ -359,6 +359,29 @@ lease.Dispose()     → 计数归零 → Addressables 立即 Unload(true)
 
 闲置回收不受影响：自动回收只销毁实例，不动池级保活租约。
 
+### 9.2 补测：在编辑器里 Release 不会让资源失效（2026-11-15）
+
+**探针**：`Assets/Aot/Editor/AddressablesProbe.cs`（菜单 `NowFrameWork/Tests/资源实验`）
+**报告**：`EXE/_evidence/addressables-probe.txt`
+
+| 检查项 | 结果 |
+|---|---|
+| InitializeAsync | OK |
+| LoadResourceLocationsAsync | 1 个位置，PrimaryKey = 资源路径 |
+| LoadAssetAsync | OK（TextAsset） |
+| **Release 之后** | **资源仍存活**：托管引用不为 null、InstanceID 仍可解析 |
+
+**这不是 R-1 被推翻，而是编辑器模式的限制**：编辑器默认用 "Use Asset Database (fastest)" 数据构建器，
+Release 只是减计数，不会真的卸载 asset-database 里的资源，所以"立即失效"在这里观察不到。
+
+R-1 的依据仍然是两条独立证据：
+
+1. §9.1 的 AssetBundle 实测：`Unload(true)` 之后资源**立即**不可用；
+2. Addressables 1.22.4-t1 源码：`AssetBundleProvider.Unload()` 调的就是 `Unload(true)`（`AssetBundleProvider.cs:885`）。
+
+**待补的验证**：把 Addressables 的 Play Mode Script 切到 "Use Existing Build"（Packed），或在 Player 里跑同一实验，
+才能观察到"Release 后立即失效"。在这之前，R-1 按最保守假设执行。
+
 ## 10 评审意见处理对照（2026-11-15）
 
 | 编号 | 评审意见 | 处理 |
