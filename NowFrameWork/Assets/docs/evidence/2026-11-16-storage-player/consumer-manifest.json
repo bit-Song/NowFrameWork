@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "com.now.nowframework.core": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.core",
+    "com.now.nowframework.unity": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.unity",
+    "com.cysharp.unitask": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.cysharp.unitask@a77a1b4a89",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0"
+  }
+}

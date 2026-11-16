@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-16",
+  "target": "Windows x64 IL2CPP Development",
+  "stripping": "Low",
+  "phases": 10,
+  "finished": true,
+  "passed": true,
+  "files": {
+    "consumer-manifest.json": "cf88a9e297a79fa924706b866f19297d01b794955d0fc3c5e2959cffdf717e4f",
+    "consumer-packages-lock.json": "4d987e37a2203ffc9a51edd671abadbd5b893ea9b1e10fc6376ed2c9512b01b3",
+    "corrupt-both.json": "d20e1d48baf792f31313b3807bca5143fe26bba9d8c3ff1863eaf9aa9e876355",
+    "limit.json": "e5c2bcb885f7820389319ab097332a7c690732be94c6e8176b472878091e22d2",
+    "migrate.json": "3d722ecfe724ffd2b6466046609736580a18ec6c82aa3d6002c24e63211b9b0d",
+    "read-repaired.json": "cfa98477b7c12758041b495ea639c1e29f03b827df44a2431526a564f62e3ad7",
+    "read-v2.json": "e22414ed8c4d42b02efc5772be4066b15f95d5f859264be89cc28927898d986d",
+    "read.json": "9b0045049fb9bc55c7709554772b9aaff22ae1ff8cf03ffdac372e452b34a57a",
+    "recover.json": "75c4e4153171d0b842217d4e0aacb6c15bce5c8d96c47efb49e253134001836a",
+    "reject-old.json": "633acb157f5a9347c5fc45bb7252688aa8c2cec8788f62e9a0c7db7b947ad83d",
+    "run.json": "9fd473cb748d034dce36007afa07ba1f8c2f43212dae2bdbf3b0c3a169bb75d2",
+    "seed.json": "0a1736874d99878cb8df4eae9d60664b74ff1a23ab9eed89d7d1570c1ac7b4bf",
+    "thread.json": "5c41f000ecd0bdf31e9d521b4ac12fbb830f2c314bdafadcfa45b13e0713dc6f"
+  },
+  "sources": {
+    "Tools/Prepare-StorageRegression.ps1": "bdc2638c285dbe053adb6908416b84e39ab213d266deb8b9360892e01c7cac3c",
+    "Tools/Run-StorageRegression.ps1": "5de688d877a6ee370c4ccd6e0e5857b47ee11cad54d909e0a89b8765fdcb1640",
+    "Tools/StorageRegression/Runtime/StoragePlayerProbe.cs": "d0af1ec7a8ddb2f28491f477a256a5d0ca6f333042ebb1edfe468c6f786df792",
+    "Tools/StorageRegression/Runtime/NowFrameWork.StorageProbe.asmdef": "7ec475b7053b8cce51c4747876b4f8e4d5e9685218e0dc2e340b9a4ae6280992",
+    "Tools/StorageRegression/Editor/StorageProbeBuild.cs": "b793cf4183893859f02cff27fa5b1c49b4ee26765f015f7eac6eac500c00e4aa",
+    "Tools/StorageRegression/Editor/NowFrameWork.StorageProbe.Editor.asmdef": "d534acd95daa2867621c9b7f8665d25ba5b68361ef4c04bbeafb9c3163fef066",
+    "Framework/com.now.nowframework.unity/Runtime/Storage/JsonSettingsCodec.cs": "ec888dbc2c197dcd6388005be9a4fd1e6eba9f8dd17d93b0920a52395b9cfb96",
+    "Framework/com.now.nowframework.core/Runtime/Threading/MainThreadGuard.cs": "2fd21abeea2b2d4189b6b96fd024cb5d1b1e33d1dc019c1a780509e96223e8b8",
+    "Framework/com.now.nowframework.core/Runtime/Storage/FileSettingsStore.cs": "28a19e7da2812bbf8eabf959c5952e32d203eb7019c904853eb56599c411e1d4",
+    "Framework/com.now.nowframework.core/Runtime/Storage/ISettingsCodec.cs": "849dbe0735bc8a45d261afab2205db6e1023912114e1658b18d5f4fb5988c949",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsCompatibilityException.cs": "1f2f006f7d1c27ab23bccdca0bd478a2c03c678b1138715bc7ba3aa5ce5e79e1",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsEnvelope.cs": "7dbccb6e42431070413cba26203f474e5f7abf9b6e1f3ed1d361eb374d5fb314",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsLoadResult.cs": "cb69df6a309dfbf370684a5663acfe0f5e8b5e65091e4ce4f77234e826867b26",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsLoadSource.cs": "be21fe5b75f063c45c652436e0c5f8ba8e12e6085888b7231a3c79dbb354cba3"
+  },
+  "sourceHashNormalization": "UTF-8 text with CRLF normalized to LF",
+  "codeSha256": {
+    "StorageRegression.exe": "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+    "GameAssembly.dll": "3A5FA4FE4D6F2AD3E6900B1EB9DE5E853665774D8C8935861D6849596825F30B",
+    "TuanjiePlayer.dll": "52D6D37BB80BDE6983AEDD51C621D48EABF77811E5DDFEAF243E2C5D7F9A33BE"
+  },
+  "originalResourcePlayerCodeSha256": {
+    "PCRegression.exe": "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+    "GameAssembly.dll": "44BFD95EA8D4EBDCAF955579BD43B89B0AC7E810D564BAD6146B848C5535D9BE",
+    "TuanjiePlayer.dll": "52D6D37BB80BDE6983AEDD51C621D48EABF77811E5DDFEAF243E2C5D7F9A33BE"
+  }
+}

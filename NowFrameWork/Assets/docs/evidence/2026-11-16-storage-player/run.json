@@ -1,0 +1,82 @@
+{
+  "utc": "2026-11-16T07:09:16.4937975Z",
+  "finished": true,
+  "passed": true,
+  "codeSha256": {
+    "StorageRegression.exe": "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+    "GameAssembly.dll": "3A5FA4FE4D6F2AD3E6900B1EB9DE5E853665774D8C8935861D6849596825F30B",
+    "TuanjiePlayer.dll": "52D6D37BB80BDE6983AEDD51C621D48EABF77811E5DDFEAF243E2C5D7F9A33BE"
+  },
+  "phases": [
+    {
+      "phase": "seed",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\seed.json",
+      "passed": true,
+      "checks": 7
+    },
+    {
+      "phase": "read",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\read.json",
+      "passed": true,
+      "checks": 5
+    },
+    {
+      "phase": "recover",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\recover.json",
+      "passed": true,
+      "checks": 6
+    },
+    {
+      "phase": "read-repaired",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\read-repaired.json",
+      "passed": true,
+      "checks": 4
+    },
+    {
+      "phase": "migrate",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\migrate.json",
+      "passed": true,
+      "checks": 6
+    },
+    {
+      "phase": "read-v2",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\read-v2.json",
+      "passed": true,
+      "checks": 5
+    },
+    {
+      "phase": "reject-old",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\reject-old.json",
+      "passed": true,
+      "checks": 5
+    },
+    {
+      "phase": "limit",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\limit.json",
+      "passed": true,
+      "checks": 5
+    },
+    {
+      "phase": "thread",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\thread.json",
+      "passed": true,
+      "checks": 6
+    },
+    {
+      "phase": "corrupt-both",
+      "exitCode": 0,
+      "report": "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\StorageRegression\\Evidence\\20261116-commit-review\\corrupt-both.json",
+      "passed": true,
+      "checks": 5
+    }
+  ]
+}

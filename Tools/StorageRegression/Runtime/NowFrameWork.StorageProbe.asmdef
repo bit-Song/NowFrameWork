@@ -1,0 +1,9 @@
+{
+  "name": "NowFrameWork.StorageProbe",
+  "rootNamespace": "NowFrameWork.Validation.Storage",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Unity"
+  ],
+  "autoReferenced": false
+}

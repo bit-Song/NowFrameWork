@@ -1,0 +1,17 @@
+{
+    "phase": "read-v2",
+    "utc": "2026-11-16T07:09:14.9255369Z",
+    "unity": "2022.3.62t4",
+    "backend": "IL2CPP",
+    "development": true,
+    "finished": true,
+    "passed": true,
+    "error": "",
+    "checks": [
+        "IL2CPP backend",
+        "development main-thread host bound",
+        "no HybridCLR/Addressables assembly loaded",
+        "saved schema 2 reads without migration",
+        "migrated fields persist across process restart"
+    ]
+}

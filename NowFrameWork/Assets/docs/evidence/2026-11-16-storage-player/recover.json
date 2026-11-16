@@ -1,0 +1,18 @@
+{
+    "phase": "recover",
+    "utc": "2026-11-16T07:09:13.8476073Z",
+    "unity": "2022.3.62t4",
+    "backend": "IL2CPP",
+    "development": true,
+    "finished": true,
+    "passed": true,
+    "error": "",
+    "checks": [
+        "IL2CPP backend",
+        "development main-thread host bound",
+        "no HybridCLR/Addressables assembly loaded",
+        "corrupt primary reports backup recovery",
+        "previous committed value recovered",
+        "repair preserves valid backup"
+    ]
+}

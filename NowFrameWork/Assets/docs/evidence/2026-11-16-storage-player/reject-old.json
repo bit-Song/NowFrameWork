@@ -1,0 +1,17 @@
+{
+    "phase": "reject-old",
+    "utc": "2026-11-16T07:09:15.2407811Z",
+    "unity": "2022.3.62t4",
+    "backend": "IL2CPP",
+    "development": true,
+    "finished": true,
+    "passed": true,
+    "error": "",
+    "checks": [
+        "IL2CPP backend",
+        "development main-thread host bound",
+        "no HybridCLR/Addressables assembly loaded",
+        "future schema blocks old client",
+        "incompatible load blocks overwrite and preserves both files"
+    ]
+}

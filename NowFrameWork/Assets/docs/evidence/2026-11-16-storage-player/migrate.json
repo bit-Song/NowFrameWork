@@ -1,0 +1,18 @@
+{
+    "phase": "migrate",
+    "utc": "2026-11-16T07:09:14.5597955Z",
+    "unity": "2022.3.62t4",
+    "backend": "IL2CPP",
+    "development": true,
+    "finished": true,
+    "passed": true,
+    "error": "",
+    "checks": [
+        "IL2CPP backend",
+        "development main-thread host bound",
+        "no HybridCLR/Addressables assembly loaded",
+        "schema 1 migrates to 2",
+        "migration remains in memory until explicit save",
+        "migration keeps old-schema backup"
+    ]
+}

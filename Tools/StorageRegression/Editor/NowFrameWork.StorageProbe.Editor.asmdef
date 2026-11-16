@@ -1,0 +1,10 @@
+{
+  "name": "NowFrameWork.StorageProbe.Editor",
+  "references": [
+    "NowFrameWork.StorageProbe"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}

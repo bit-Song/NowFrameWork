@@ -1,0 +1,19 @@
+{
+    "phase": "seed",
+    "utc": "2026-11-16T07:09:12.7522021Z",
+    "unity": "2022.3.62t4",
+    "backend": "IL2CPP",
+    "development": true,
+    "finished": true,
+    "passed": true,
+    "error": "",
+    "checks": [
+        "IL2CPP backend",
+        "development main-thread host bound",
+        "no HybridCLR/Addressables assembly loaded",
+        "fresh isolated data files",
+        "defaults source",
+        "load defaults does not write",
+        "primary and backup committed"
+    ]
+}
