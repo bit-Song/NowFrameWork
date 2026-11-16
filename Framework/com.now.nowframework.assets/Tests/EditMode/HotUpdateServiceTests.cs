@@ -1,112 +1,99 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 
 namespace NowFrameWork.Assets.Tests
 {
-    /// <summary>热更流程：状态机、检查/下载/应用的编排。</summary>
     public class HotUpdateServiceTests
     {
-        sealed class FloatProgress : IProgress<float>
+        sealed class Provider : IAssetUpdateProvider
         {
-            public float Value;
-            public void Report(float value) => Value = value;
-        }
-
-        sealed class FakeUpdateProvider : IAssetUpdateProvider
-        {
-            public bool HasUpdate;
-            public long Size = 1024;
-            public int CheckCalls;
-            public int SizeCalls;
-            public int DownloadCalls;
-            public int ApplyCalls;
-            public bool ThrowOnCheck;
-
-            public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct)
+            public bool Changed = true;
+            public bool Updated;
+            public bool FailUpdate;
+            public bool FailDownload;
+            public readonly List<string> Calls = new List<string>();
+            public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct) { Calls.Add("check"); return UniTask.FromResult(Changed); }
+            public UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
             {
-                CheckCalls++;
-                if (ThrowOnCheck) throw new InvalidOperationException("check failed");
-                return UniTask.FromResult(HasUpdate);
+                Calls.Add("catalog");
+                if (FailUpdate) throw new InvalidOperationException("update failed");
+                Updated = true;
+                return UniTask.FromResult(1);
             }
-
             public UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
             {
-                SizeCalls++;
-                return UniTask.FromResult(Size);
+                Calls.Add("size");
+                if (Changed && !Updated) throw new InvalidOperationException("queried old catalog");
+                return UniTask.FromResult(2048L);
             }
-
             public UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct)
             {
-                DownloadCalls++;
+                Calls.Add("download");
+                if (Changed && !Updated || FailDownload) throw new InvalidOperationException("download failed");
                 progress?.Report(1f);
                 return UniTask.CompletedTask;
             }
-
-            public UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
-            {
-                ApplyCalls++;
-                return UniTask.FromResult(2);
-            }
         }
-
         [Test]
-        public void Check_NoUpdate_DoesNotQuerySize()
+        public void Prepare_UpdatesCatalogBeforeSizeAndDownload()
         {
-            var provider = new FakeUpdateProvider { HasUpdate = false };
+            var provider = new Provider();
             var service = new HotUpdateService(provider);
-
-            HotUpdatePlan plan = service.CheckAsync("catalog").GetAwaiter().GetResult();
-
-            Assert.IsFalse(plan.HasUpdate);
-            Assert.AreEqual(0, plan.DownloadBytes);
-            Assert.AreEqual(1, provider.CheckCalls);
-            Assert.AreEqual(0, provider.SizeCalls, "无更新时不应查询下载大小");
-            Assert.AreEqual(HotUpdateState.Idle, service.State);
-        }
-
-        [Test]
-        public void Check_WithUpdate_ReturnsSize()
-        {
-            var provider = new FakeUpdateProvider { HasUpdate = true, Size = 2048 };
-            var service = new HotUpdateService(provider);
-
-            HotUpdatePlan plan = service.CheckAsync("catalog").GetAwaiter().GetResult();
-
+            var plan = service.PrepareAsync("dll").GetAwaiter().GetResult();
+            service.DownloadAsync("dll").GetAwaiter().GetResult();
             Assert.IsTrue(plan.HasUpdate);
             Assert.AreEqual(2048, plan.DownloadBytes);
-            Assert.AreEqual(1, provider.SizeCalls);
+            CollectionAssert.AreEqual(new[] { "check", "catalog", "size", "download" }, provider.Calls);
         }
-
         [Test]
-        public void Check_Throws_ResetsState()
+        public void Prepare_NoCatalogUpdate_StillMeasuresMissingCache()
         {
-            var provider = new FakeUpdateProvider { ThrowOnCheck = true };
-            var service = new HotUpdateService(provider);
-
-            Assert.Throws<InvalidOperationException>(() =>
-                service.CheckAsync("catalog").GetAwaiter().GetResult());
-
-            Assert.AreEqual(HotUpdateState.Idle, service.State, "异常后状态必须复位，否则永远卡住");
+            var provider = new Provider { Changed = false };
+            var plan = new HotUpdateService(provider).PrepareAsync("dll").GetAwaiter().GetResult();
+            Assert.IsFalse(plan.HasUpdate);
+            Assert.AreEqual(2048, plan.DownloadBytes);
+            CollectionAssert.AreEqual(new[] { "check", "size" }, provider.Calls);
         }
-
         [Test]
-        public void Download_And_Apply_DelegateToProvider()
+        public void Check_DoesNotActivateCatalog()
         {
-            var provider = new FakeUpdateProvider();
+            var provider = new Provider();
+            Assert.IsTrue(new HotUpdateService(provider).CheckAsync().GetAwaiter().GetResult());
+            CollectionAssert.AreEqual(new[] { "check" }, provider.Calls);
+        }
+        [Test]
+        public void Download_WithoutPreparedMatchingKey_IsRejected()
+        {
+            var service = new HotUpdateService(new Provider());
+            Assert.Throws<InvalidOperationException>(() => service.DownloadAsync("dll").GetAwaiter().GetResult());
+            service.PrepareAsync("dll").GetAwaiter().GetResult();
+            Assert.Throws<InvalidOperationException>(() => service.DownloadAsync("other").GetAwaiter().GetResult());
+        }
+        [Test]
+        public void PrepareFailure_ResetsState_AndCanRetry()
+        {
+            var provider = new Provider { FailUpdate = true };
             var service = new HotUpdateService(provider);
-
-            var progress = new FloatProgress();
-
-            service.DownloadAsync("catalog", progress).GetAwaiter().GetResult();
-            Assert.AreEqual(1, provider.DownloadCalls);
-            Assert.AreEqual(1f, progress.Value);
-
-            int applied = service.ApplyAsync().GetAwaiter().GetResult();
-            Assert.AreEqual(2, applied);
-            Assert.AreEqual(1, provider.ApplyCalls);
+            Assert.Throws<InvalidOperationException>(() => service.PrepareAsync("dll").GetAwaiter().GetResult());
             Assert.AreEqual(HotUpdateState.Idle, service.State);
+            Assert.Throws<InvalidOperationException>(() => service.DownloadAsync("dll").GetAwaiter().GetResult());
+            provider.FailUpdate = false;
+            service.PrepareAsync("dll").GetAwaiter().GetResult();
+            service.DownloadAsync("dll").GetAwaiter().GetResult();
+        }
+        [Test]
+        public void DownloadFailure_CanRetryPreparedPlan()
+        {
+            var provider = new Provider { FailDownload = true };
+            var service = new HotUpdateService(provider);
+            service.PrepareAsync("dll").GetAwaiter().GetResult();
+            Assert.Throws<InvalidOperationException>(() => service.DownloadAsync("dll").GetAwaiter().GetResult());
+            Assert.AreEqual(HotUpdateState.Idle, service.State);
+            provider.FailDownload = false;
+            service.DownloadAsync("dll").GetAwaiter().GetResult();
         }
     }
 }

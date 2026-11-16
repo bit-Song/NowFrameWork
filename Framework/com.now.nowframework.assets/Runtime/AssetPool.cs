@@ -30,6 +30,7 @@ namespace NowFrameWork.Assets
         readonly int _settleFrames;
         readonly Func<UniTask> _frameWaiter;
 
+        UniTaskCompletionSource _disposing;
         bool _disposed;
 
         AssetPool(AssetLease<UnityEngine.Object> keepAlive, Func<T> create, Action<T> destroy,
@@ -69,49 +70,78 @@ namespace NowFrameWork.Assets
         /// <summary>创建池：先拿保活租约，再建内部对象池。</summary>
         public static async UniTask<AssetPool<T>> CreateAsync(AssetService service, AssetKey key,
             Func<T> create, Action<T> destroy, IClock clock, ILog log = null, int maxSize = 0,
-            int settleFrames = 60, Func<UniTask> frameWaiter = null)
+            int settleFrames = 60, Func<UniTask> frameWaiter = null, CancellationToken ct = default)
         {
             if (service == null) throw new ArgumentNullException(nameof(service));
             if (create == null) throw new ArgumentNullException(nameof(create));
+            if (destroy == null) throw new ArgumentNullException(nameof(destroy));
             if (clock == null) throw new ArgumentNullException(nameof(clock));
 
             AssetLease<UnityEngine.Object> keepAlive =
-                await service.AcquireCacheAsync<UnityEngine.Object>(key, CancellationToken.None);
-
-            return new AssetPool<T>(keepAlive, create, destroy, clock, log, maxSize, settleFrames, frameWaiter);
+                await service.AcquireCacheAsync<UnityEngine.Object>(key, ct);
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                return new AssetPool<T>(keepAlive, create, destroy, clock, log, maxSize, settleFrames, frameWaiter);
+            }
+            catch
+            {
+                keepAlive.Dispose();
+                throw;
+            }
         }
 
         public T Rent() => _pool.Get();
 
-        public UniTask<T> RentAsync(CancellationToken ct) => _pool.RentAsync(ct);
+        public UniTask<T> RentAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return UniTask.FromResult(_pool.Get());
+        }
 
         public void Release(T item) => _pool.Release(item);
 
         public void Tick(double now) => _pool.Tick(now);
 
         /// <summary>销毁全部实例 → 等它们真的消失 → 释放保活租约。</summary>
-        public async UniTask DisposeAsync()
+        public UniTask DisposeAsync()
         {
-            if (_disposed) return;
-            _disposed = true;
+            if (_disposed) return UniTask.CompletedTask;
+            if (_disposing != null) return _disposing.Task;
+            var completion = new UniTaskCompletionSource();
+            _disposing = completion;
+            DisposeCoreAsync(completion).Forget();
+            return completion.Task;
+        }
 
-            _pool.Dispose(force: true);
-
-            int frames = 0;
-            while (!AllDestroyed() && frames < _settleFrames)
+        async UniTask DisposeCoreAsync(UniTaskCompletionSource completion)
+        {
+            try
             {
-                await _frameWaiter();
-                frames++;
-            }
+                _pool.Dispose(force: true);
 
-            if (!AllDestroyed() && _log.IsEnabled(LogLevel.Error))
+                int frames = 0;
+                while (!AllDestroyed() && frames < _settleFrames)
+                {
+                    await _frameWaiter();
+                    frames++;
+                }
+
+                if (!AllDestroyed())
+                    throw new TimeoutException("实例未销毁，保留资源租约；销毁完成后须重试 DisposeAsync: " + CanonicalKey);
+
+                _keepAlive.Dispose();
+                _tracked.Clear();
+                _disposed = true;
+                _disposing = null;
+                completion.TrySetResult();
+            }
+            catch (Exception e)
             {
-                _log.Write(LogLevel.Error, "ASSET",
-                    "实例在 " + _settleFrames + " 帧内未销毁，仍释放租约: " + CanonicalKey);
+                _disposing = null;
+                if (_log.IsEnabled(LogLevel.Error)) _log.Write(LogLevel.Error, "ASSET", e.Message);
+                completion.TrySetException(e);
             }
-
-            _keepAlive.Dispose();
-            _tracked.Clear();
         }
 
         public void Dispose() => DisposeAsync().Forget();

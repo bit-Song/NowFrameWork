@@ -13,6 +13,7 @@ namespace NowFrameWork.Assets
     public sealed class SceneLease
     {
         readonly Func<UniTask> _unload;
+        UniTaskCompletionSource _unloading;
 
         internal SceneLease(string key, Func<UniTask> unload)
         {
@@ -25,14 +26,30 @@ namespace NowFrameWork.Assets
         public bool IsUnloaded { get; private set; }
 
         /// <summary>卸载场景；幂等。</summary>
-        public async UniTask UnloadAsync()
+        public UniTask UnloadAsync()
         {
-            if (IsUnloaded) return;
+            if (IsUnloaded) return UniTask.CompletedTask;
+            if (_unloading != null) return _unloading.Task;
+            var completion = new UniTaskCompletionSource();
+            _unloading = completion;
+            UnloadCoreAsync(completion).Forget();
+            return completion.Task;
+        }
 
-            // 成功之后才标记：卸载失败时保留可重试的机会，
-            // 否则场景已经加载着、租约却显示"已卸载"，永久泄漏。
-            await _unload();
-            IsUnloaded = true;
+        async UniTask UnloadCoreAsync(UniTaskCompletionSource completion)
+        {
+            try
+            {
+                await _unload();
+                IsUnloaded = true;
+                _unloading = null;
+                completion.TrySetResult();
+            }
+            catch (Exception e)
+            {
+                _unloading = null;
+                completion.TrySetException(e);
+            }
         }
 
         public override string ToString() => "SceneLease(" + Key + (IsUnloaded ? ", unloaded" : "") + ")";

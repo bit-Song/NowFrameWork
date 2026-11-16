@@ -22,8 +22,8 @@ namespace NowFrameWork.Assets
         readonly IAssetService _assets;
         readonly Dictionary<string, AssetLease<UnityEngine.Object>> _leases =
             new Dictionary<string, AssetLease<UnityEngine.Object>>(StringComparer.Ordinal);
-        readonly Dictionary<string, UnityEngine.Object> _values =
-            new Dictionary<string, UnityEngine.Object>(StringComparer.Ordinal);
+        readonly Dictionary<AssetKey, UnityEngine.Object> _values =
+            new Dictionary<AssetKey, UnityEngine.Object>();
 
         bool _disposed;
 
@@ -38,8 +38,9 @@ namespace NowFrameWork.Assets
         public async UniTask<T> LoadAsync<T>(object key, CancellationToken ct = default) where T : UnityEngine.Object
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ConfigService));
+            ct.ThrowIfCancellationRequested();
 
-            string cacheKey = KeyOf(key);
+            AssetKey cacheKey = KeyOf(key);
 
             if (_values.TryGetValue(cacheKey, out UnityEngine.Object cached))
             {
@@ -50,25 +51,28 @@ namespace NowFrameWork.Assets
             }
 
             AssetLease<UnityEngine.Object> lease = await _assets.AcquireCacheAsync<UnityEngine.Object>(key, ct);
-            UnityEngine.Object asset = lease.Asset;
-
-            if (asset == null)
+            try
             {
-                lease.Dispose();
-                throw new InvalidOperationException("配置加载结果为空: " + cacheKey);
-            }
+                ct.ThrowIfCancellationRequested();
+                if (_disposed) throw new ObjectDisposedException(nameof(ConfigService));
+                UnityEngine.Object asset = lease.Asset;
+                if (asset == null) throw new InvalidOperationException("配置加载结果为空: " + cacheKey);
+                if (!(asset is T value))
+                    throw new InvalidCastException("配置类型不匹配: " + cacheKey + " 实际是 " + asset.GetType().Name + "，请求 " + typeof(T).Name);
 
-            if (!(asset is T value))
+                // 等待期间其他请求可能已经入库；地址别名也按 canonical 合并保活租约。
+                if (!_leases.ContainsKey(lease.CanonicalKey))
+                {
+                    _leases.Add(lease.CanonicalKey, lease);
+                    lease = null;
+                }
+                _values[cacheKey] = value;
+                return value;
+            }
+            finally
             {
-                lease.Dispose();
-                throw new InvalidCastException(
-                    "配置类型不匹配: " + cacheKey + " 实际是 " + asset.GetType().Name + "，请求 " + typeof(T).Name);
+                lease?.Dispose();
             }
-
-            _leases[cacheKey] = lease;
-            _values[cacheKey] = value;
-
-            return value;
         }
 
         /// <summary>归还全部配置租约；幂等。</summary>
@@ -88,14 +92,14 @@ namespace NowFrameWork.Assets
 
         public void Dispose() => DisposeAsync().Forget();
 
-        static string KeyOf(object key)
+        static AssetKey KeyOf(object key)
         {
             switch (key)
             {
-                case AssetKey assetKey: return assetKey.ToString();
-                case string address: return address;
+                case AssetKey assetKey: return assetKey;
+                case string address: return AssetKey.From(address);
                 case null: throw new ArgumentNullException(nameof(key));
-                default: return key.ToString();
+                default: throw new ArgumentException("不支持的配置键类型: " + key.GetType().Name);
             }
         }
     }

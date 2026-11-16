@@ -50,6 +50,7 @@ namespace NowFrameWork.Core.Pooling
         int _idleCount;
 
         readonly HashSet<T> _active = new HashSet<T>();
+        readonly HashSet<T> _asyncItems = new HashSet<T>();
         readonly IPoolItemFactory<T> _factory;
         readonly Func<T, bool> _isValid;
         readonly int _maxSize;               // 0 表示不限
@@ -116,7 +117,7 @@ namespace NowFrameWork.Core.Pooling
                 return candidate;
             }
 
-            if (_maxSize > 0 && _live >= _maxSize)
+            if (_maxSize > 0 && _live + _reserved >= _maxSize)
                 throw new PoolExhaustedException("对象池已达上限 " + _maxSize + "，类型: " + typeof(T).Name);
 
             T created = CreateItem();
@@ -152,6 +153,7 @@ namespace NowFrameWork.Core.Pooling
         public async UniTask<T> RentAsync(CancellationToken ct)
         {
             ThrowIfDisposed();
+            ct.ThrowIfCancellationRequested();
 
             if (TryGet(out T idle)) return idle;
 
@@ -165,18 +167,17 @@ namespace NowFrameWork.Core.Pooling
             try
             {
                 T created = await _asyncFactory.CreateAsync(ct);
-
-                if (ct.IsCancellationRequested)
-                {
-                    // 创建完成但调用方已取消：立刻销毁，不占用名额与租约
-                    if (created != null) _asyncFactory.Destroy(created);
-                    ct.ThrowIfCancellationRequested();
-                }
-
                 if (created == null) throw new PoolUsageException("异步创建返回 null，类型: " + typeof(T).Name);
 
                 _created++;
                 _live++;
+                _asyncItems.Add(created);
+                if (_disposed || ct.IsCancellationRequested)
+                {
+                    DestroyItem(created);
+                    ct.ThrowIfCancellationRequested();
+                    ThrowIfDisposed();
+                }
                 Spawn(created);
                 return created;
             }
@@ -195,7 +196,12 @@ namespace NowFrameWork.Core.Pooling
             if (!_active.Remove(item))
                 throw new PoolUsageException("归还了不属于本池、或已经归还过的对象，类型: " + typeof(T).Name);
 
-            (item as IPoolable)?.OnDespawn();
+            try { (item as IPoolable)?.OnDespawn(); }
+            catch
+            {
+                DestroyItem(item);
+                throw;
+            }
 
             // 超出上限：销毁而非无限囤积。显式行为，同时保证 Create/Destroy 仍一一对应
             if (_maxSize > 0 && _idleCount >= _maxSize)
@@ -215,7 +221,7 @@ namespace NowFrameWork.Core.Pooling
             int made = 0;
             for (int i = 0; i < count; i++)
             {
-                if (_maxSize > 0 && _live >= _maxSize) break;
+                if (_maxSize > 0 && _live + _reserved >= _maxSize) break;
                 PushIdle(CreateItem());
                 made++;
             }
@@ -260,8 +266,8 @@ namespace NowFrameWork.Core.Pooling
                 throw new InvalidOperationException(
                     "池仍有 " + _active.Count + " 个未归还对象，拒绝释放；确认要强制销毁请用 Dispose(force: true)，类型: " + typeof(T).Name);
 
-            Clear(includeActive: true);
             _disposed = true;
+            Clear(includeActive: true);
         }
 
         T CreateItem()
@@ -285,7 +291,8 @@ namespace NowFrameWork.Core.Pooling
             // 一旦抛异常，后续对象的资源释放会被跳过，表现是"部分租约永远不归还"
             try
             {
-                _factory.Destroy(item);
+                if (_asyncItems.Remove(item)) _asyncFactory.Destroy(item);
+                else _factory.Destroy(item);
             }
             catch (Exception e)
             {
@@ -297,7 +304,13 @@ namespace NowFrameWork.Core.Pooling
         void Spawn(T item)
         {
             _active.Add(item);
-            (item as IPoolable)?.OnSpawn();
+            try { (item as IPoolable)?.OnSpawn(); }
+            catch
+            {
+                _active.Remove(item);
+                DestroyItem(item);
+                throw;
+            }
         }
 
         void PushIdle(T item)

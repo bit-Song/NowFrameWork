@@ -2,7 +2,8 @@
   "testables": [
     "com.now.nowframework.assets",
     "com.now.nowframework.core",
-    "com.now.nowframework.unity"
+    "com.now.nowframework.unity",
+    "com.now.nowframework.assets.addressables"
   ],
   "dependencies": {
     "cn.tuanjie.codely.bridge": "1.0.91",

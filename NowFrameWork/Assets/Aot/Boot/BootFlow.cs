@@ -46,12 +46,14 @@ namespace NowFrameWork.Boot
             // 诊断面板（F1 呼出）：直接在屏幕上看到租约与在途加载
             DiagnosticsOverlay.Install(assets);
             var scenes = new AddressablesSceneService();
+            SceneLease sceneLease = null;
+            CancellationToken ct = destroyCancellationToken;
 
             try
             {
                 // 2. 初始化（加载 catalog）
                 Write("初始化资源…");
-                await module.InitializeAsync(CancellationToken.None);
+                await module.InitializeAsync(ct);
                 Write("初始化完成");
 
                 // 3. 配置：常驻 + 类型校验
@@ -59,7 +61,7 @@ namespace NowFrameWork.Boot
                 {
                     try
                     {
-                        UnityEngine.Object asset = await config.LoadAsync<UnityEngine.Object>(_configAddress, CancellationToken.None);
+                        UnityEngine.Object asset = await config.LoadAsync<UnityEngine.Object>(_configAddress, ct);
                         Write("配置加载: " + asset.name);
                     }
                     catch (Exception e)
@@ -71,8 +73,8 @@ namespace NowFrameWork.Boot
                 // 4. 场景（可选）
                 if (!string.IsNullOrEmpty(_sceneAddress))
                 {
-                    SceneLease lease = await scenes.LoadAdditiveAsync(_sceneAddress, CancellationToken.None);
-                    Write("场景已加载: " + lease.Key);
+                    sceneLease = await scenes.LoadAdditiveAsync(_sceneAddress, ct);
+                    Write("场景已加载: " + sceneLease.Key);
                 }
 
                 Write("== Boot 完成，ActiveLeases=" + assets.ActiveLeases);
@@ -84,8 +86,16 @@ namespace NowFrameWork.Boot
             finally
             {
                 // 5. 收尾：先还配置租约，再关模块
-                await config.DisposeAsync();
-                await module.ShutdownAsync(CancellationToken.None);
+                try
+                {
+                    // 本样例加载后即验证收尾；场景必须先停止使用配置。
+                    if (sceneLease != null) await sceneLease.UnloadAsync();
+                }
+                finally
+                {
+                    await config.DisposeAsync();
+                    await module.ShutdownAsync(CancellationToken.None);
+                }
 
                 Write("== 收尾完成，ActiveLeases=" + assets.ActiveLeases);
             }

@@ -18,7 +18,7 @@ namespace NowFrameWork.Assets
     ///
     /// 线程：仅主线程。
     /// </summary>
-    public sealed class AssetService : IAssetService, ILeaseOwner
+    public sealed class AssetService : IAssetService, IAssetUpdateProvider, ILeaseOwner
     {
         sealed class Entry
         {
@@ -39,6 +39,8 @@ namespace NowFrameWork.Assets
         int _pending;
         int _activeLeases;
         long _versionSeed;
+        int _resolving;
+        bool _updatingCatalog;
 
         public AssetService(IAssetProvider provider, ILog log = null)
         {
@@ -50,7 +52,13 @@ namespace NowFrameWork.Assets
 
         public int ActiveLeases => _activeLeases;
 
-        public UniTask InitializeAsync(CancellationToken ct) => UniTask.CompletedTask;
+        public UniTask InitializeAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return _provider is IAssetProviderLifecycle lifecycle
+                ? lifecycle.InitializeAsync(ct)
+                : UniTask.CompletedTask;
+        }
 
         public UniTask<AssetLease<T>> AcquireAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object
             => AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Business, ct);
@@ -63,8 +71,10 @@ namespace NowFrameWork.Assets
         {
             ct.ThrowIfCancellationRequested();
             if (!key.IsValid) throw new ArgumentException("加载键为空");
+            if (_updatingCatalog) throw new InvalidOperationException("Catalog 更新期间不能加载资源");
 
-            string canonical = await ResolveCanonicalAsync(key, ct);
+            string canonical = await ResolveCanonicalAsync(key, typeof(T), ct);
+            ct.ThrowIfCancellationRequested();
 
             if (!_entries.TryGetValue(canonical, out Entry entry))
             {
@@ -116,47 +126,54 @@ namespace NowFrameWork.Assets
             return new AssetLease<T>(this, asset, entry.Key, entry.Canonical, entry.Version, kind);
         }
 
-        async UniTask<string> ResolveCanonicalAsync(AssetKey key, CancellationToken ct)
+        async UniTask<string> ResolveCanonicalAsync(AssetKey key, Type assetType, CancellationToken ct)
         {
-            string cacheKey = (key.Address ?? string.Empty) + "|" + (key.SubObject ?? string.Empty);
+            string cacheKey = key.Address.Length + ":" + key.Address + (key.SubObject ?? string.Empty);
+            if (_provider is ITypedAssetProvider) cacheKey += "|" + assetType.FullName;
             if (_canonicalCache.TryGetValue(cacheKey, out string cached)) return cached;
 
-            string canonical = await _provider.ResolveCanonicalKeyAsync(key, ct);
-            if (string.IsNullOrEmpty(canonical))
-                throw new InvalidOperationException("Provider 返回空 canonical 键: " + key.Address);
-
-            _canonicalCache[cacheKey] = canonical;
-            return canonical;
+            _resolving++;
+            try
+            {
+                string canonical = _provider is ITypedAssetProvider typed
+                    ? await typed.ResolveCanonicalKeyAsync(key, assetType, ct)
+                    : await _provider.ResolveCanonicalKeyAsync(key, ct);
+                ct.ThrowIfCancellationRequested();
+                if (string.IsNullOrEmpty(canonical))
+                    throw new InvalidOperationException("Provider 返回空 canonical 键: " + key.Address);
+                _canonicalCache[cacheKey] = canonical;
+                return canonical;
+            }
+            finally { _resolving--; }
         }
 
         async UniTaskVoid StartLoad(Entry entry)
         {
+            UniTaskCompletionSource<ProviderHandle> pending = entry.Pending;
+            ProviderHandle handle;
             try
             {
-                ProviderHandle handle = await _provider.LoadAsync(entry.Canonical, CancellationToken.None);
-                _pending--;
-
-                entry.Handle = handle;
-                UniTaskCompletionSource<ProviderHandle> pending = entry.Pending;
-                entry.Pending = null;
-                pending.TrySetResult(handle);
-
-                // 所有等待者都已取消：立即归还，避免悬挂资源
-                if (entry.Waiters == 0 && entry.Leases == 0) ReleaseEntry(entry);
+                handle = await _provider.LoadAsync(entry.Canonical, CancellationToken.None);
+                if (handle == null) throw new InvalidOperationException("Provider 返回空句柄: " + entry.Canonical);
             }
             catch (Exception e)
             {
                 _pending--;
-
-                UniTaskCompletionSource<ProviderHandle> pending = entry.Pending;
                 entry.Pending = null;
-                _entries.Remove(entry.Canonical);
+                if (_entries.TryGetValue(entry.Canonical, out Entry current) && ReferenceEquals(current, entry))
+                    _entries.Remove(entry.Canonical);
                 pending.TrySetException(e);
-
                 if (_log.IsEnabled(LogLevel.Error))
-                    _log.Write(LogLevel.Error, "ASSET",
-                        "加载失败: " + entry.Canonical + " -> " + e.GetType().Name + ": " + e.Message);
+                    _log.Write(LogLevel.Error, "ASSET", "加载失败: " + entry.Canonical + " -> " + e.Message);
+                return;
             }
+
+            _pending--;
+            entry.Handle = handle;
+            entry.Pending = null;
+            pending.TrySetResult(handle);
+            // 完成通知可以同步恢复多个等待者；不能把通知/释放异常当作第二次加载失败。
+            if (entry.Waiters == 0 && entry.Leases == 0 && entry.Handle != null) ReleaseEntry(entry);
         }
 
         void ILeaseOwner.ReleaseLease(string canonicalKey, long version)
@@ -172,7 +189,7 @@ namespace NowFrameWork.Assets
 
             entry.Leases--;
 
-            if (entry.Leases > 0) return;
+            if (entry.Leases > 0 || entry.Waiters > 0) return;
             ReleaseEntry(entry);
         }
 
@@ -189,7 +206,7 @@ namespace NowFrameWork.Assets
             foreach (KeyValuePair<string, Entry> pair in _entries)
             {
                 sum += pair.Value.Leases;
-                if (pair.Value.Leases <= 0) orphan++;
+                if (pair.Value.Leases <= 0 && pair.Value.Waiters == 0 && pair.Value.Pending == null) orphan++;
             }
 
             if (sum != _activeLeases)
@@ -210,13 +227,11 @@ namespace NowFrameWork.Assets
 
         void ReleaseEntry(Entry entry)
         {
-            if (entry.Handle != null)
-            {
-                _provider.Release(entry.Handle);
-                entry.Handle = null;
-            }
-
-            if (entry.Canonical != null) _entries.Remove(entry.Canonical);
+            ProviderHandle handle = entry.Handle;
+            entry.Handle = null;
+            if (_entries.TryGetValue(entry.Canonical, out Entry current) && ReferenceEquals(current, entry))
+                _entries.Remove(entry.Canonical);
+            if (handle != null) _provider.Release(handle);
         }
 
         IAssetUpdateProvider UpdateProvider()
@@ -225,7 +240,19 @@ namespace NowFrameWork.Assets
 
         public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct) => UpdateProvider().CheckForUpdatesAsync(ct);
 
-        public UniTask<int> UpdateCatalogsAsync(CancellationToken ct) => UpdateProvider().UpdateCatalogsAsync(ct);
+        public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
+        {
+            if (_entries.Count != 0 || _resolving != 0 || _updatingCatalog)
+                throw new InvalidOperationException("更新 Catalog 前必须归还全部租约并结束在途加载");
+            _updatingCatalog = true;
+            try
+            {
+                int updated = await UpdateProvider().UpdateCatalogsAsync(ct);
+                _canonicalCache.Clear();
+                return updated;
+            }
+            finally { _updatingCatalog = false; }
+        }
 
         public UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
             => UpdateProvider().GetDownloadSizeAsync(key, ct);

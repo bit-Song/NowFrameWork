@@ -168,14 +168,15 @@ namespace NowFrameWork.Core.Events
             {
                 EnsureSnapshot();
 
+                // 两类快照必须在回调之前一起捕获，嵌套派发可发布另一份新快照。
                 EventHandler<T>[] delegates = _delegateSnapshot;
+                IEventHandler<T>[] handlers = _handlerSnapshot;
                 for (int i = 0; i < delegates.Length; i++)
                 {
                     try { delegates[i](in evt); }
                     catch (Exception e) { Report(log, e); }
                 }
 
-                IEventHandler<T>[] handlers = _handlerSnapshot;
                 for (int i = 0; i < handlers.Length; i++)
                 {
                     try { handlers[i].Handle(in evt); }
@@ -222,15 +223,13 @@ namespace NowFrameWork.Core.Events
                 if (_delegates.Count == 0) _delegateSnapshot = Array.Empty<EventHandler<T>>();
                 else
                 {
-                    if (_delegateSnapshot.Length != _delegates.Count) _delegateSnapshot = new EventHandler<T>[_delegates.Count];
-                    _delegates.CopyTo(_delegateSnapshot);
+                    _delegateSnapshot = _delegates.ToArray();
                 }
 
                 if (_handlers.Count == 0) _handlerSnapshot = Array.Empty<IEventHandler<T>>();
                 else
                 {
-                    if (_handlerSnapshot.Length != _handlers.Count) _handlerSnapshot = new IEventHandler<T>[_handlers.Count];
-                    _handlers.CopyTo(_handlerSnapshot);
+                    _handlerSnapshot = _handlers.ToArray();
                 }
             }
 

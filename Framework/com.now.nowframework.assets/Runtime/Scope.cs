@@ -43,6 +43,8 @@ namespace NowFrameWork.Assets
 
         /// <summary>启动过程中收到释放请求：等启动结束后立即释放，而不是丢弃。</summary>
         bool _disposeRequested;
+        UniTaskCompletionSource _startupFinished;
+        UniTaskCompletionSource _disposeFinished;
 
         public Scope(string name, Scope parent, IClock clock, ILog log = null, Func<UniTask> frameWaiter = null)
         {
@@ -101,18 +103,13 @@ namespace NowFrameWork.Assets
                 throw new InvalidOperationException("Scope 只能从 Created 启动，当前: " + _state + " (" + Name + ")");
 
             _state = ScopeState.Starting;
+            _startupFinished = new UniTaskCompletionSource();
 
             try
             {
                 await Modules.StartupAsync(ct, progress);
                 _state = ScopeState.Running;
 
-                // 启动期间有人请求过释放：现在才真正能释放
-                if (_disposeRequested)
-                {
-                    _disposeRequested = false;
-                    await DisposeAsync();
-                }
             }
             catch
             {
@@ -121,27 +118,32 @@ namespace NowFrameWork.Assets
                 Pools.Dispose();
                 throw;
             }
+            finally
+            {
+                _startupFinished.TrySetResult();
+            }
+
+            if (_disposeRequested) await DisposeAsync();
         }
 
         /// <param name="purgeAssets">预留：资源层落地后用于强制卸载本 Scope 独占资源。</param>
-        public async UniTask DisposeAsync(bool purgeAssets = false)
+        public UniTask DisposeAsync(bool purgeAssets = false)
         {
-            // 幂等 + 可重入：Stopping 期间再次调用直接返回，避免重复清理与重复等帧
-            if (_state == ScopeState.Stopping || _state == ScopeState.Stopped) return;
+            if (_state == ScopeState.Stopped) return UniTask.CompletedTask;
+            if (_disposeFinished != null) return _disposeFinished.Task;
+            _disposeRequested = true;
+            var completion = new UniTaskCompletionSource();
+            _disposeFinished = completion;
+            DisposeCoreAsync(purgeAssets, completion).Forget();
+            return completion.Task;
+        }
 
-            if (_state == ScopeState.Starting)
-            {
-                // 不能打断启动，但要记住这个请求，启动结束后立即释放
-                _disposeRequested = true;
-                if (_log.IsEnabled(LogLevel.Debug))
-                    _log.Write(LogLevel.Debug, "SCOPE", "启动中收到释放请求，将在启动完成后执行: " + Name);
-                return;
-            }
-
-            _state = ScopeState.Stopping;
-
+        async UniTask DisposeCoreAsync(bool purgeAssets, UniTaskCompletionSource completion)
+        {
             try
             {
+                if (_state == ScopeState.Starting) await _startupFinished.Task;
+                _state = ScopeState.Stopping;
                 // 1. 子 Scope 先关（父级释放后子级还在用就晚了）
                 for (int i = _children.Count - 1; i >= 0; i--)
                     await _children[i].DisposeAsync(purgeAssets);
@@ -161,6 +163,8 @@ namespace NowFrameWork.Assets
                     _log.Write(LogLevel.Debug, "SCOPE", "purgeAssets 已请求，但资源层尚未接入: " + Name);
 
                 _state = ScopeState.Stopped;
+                _disposeFinished = null;
+                completion.TrySetResult();
             }
             catch (Exception e)
             {
@@ -170,7 +174,8 @@ namespace NowFrameWork.Assets
                 if (_log.IsEnabled(LogLevel.Error))
                     _log.Write(LogLevel.Error, "SCOPE",
                         "释放失败: " + Name + " -> " + e.GetType().Name + ": " + e.Message);
-                throw;
+                _disposeFinished = null;
+                completion.TrySetException(e);
             }
         }
 
@@ -182,12 +187,6 @@ namespace NowFrameWork.Assets
             if (_log.IsEnabled(LogLevel.Error))
                 _log.Write(LogLevel.Error, "SCOPE",
                     "Scope 被同步释放（应当用 DisposeAsync）: " + Name + "，当前状态 " + _state);
-
-            if (_state == ScopeState.Starting)
-            {
-                _disposeRequested = true;   // 启动结束后自动释放
-                return;
-            }
 
             DisposeAsync().Forget();
         }

@@ -98,7 +98,7 @@ namespace NowFrameWork.Assets.Tests
         }
 
         [Test]
-        public void DisposeAsync_TimeoutStillReleasesLease()
+        public void DisposeAsync_TimeoutRetainsLease_AndCanRetryAfterDestruction()
         {
             var provider = new FakeProvider();
             var service = new AssetService(provider);
@@ -113,10 +113,15 @@ namespace NowFrameWork.Assets.Tests
                 settleFrames: 4,
                 frameWaiter: () => UniTask.CompletedTask).GetAwaiter().GetResult();
 
-            pool.Rent();
+            FakeAsset instance = pool.Rent();
 
-            Assert.DoesNotThrow(() => pool.DisposeAsync().GetAwaiter().GetResult());
-            Assert.AreEqual(1, provider.ReleaseCalls, "超时后仍要归还租约，避免永久泄漏");
+            Assert.Throws<TimeoutException>(() => pool.DisposeAsync().GetAwaiter().GetResult());
+            Assert.AreEqual(0, provider.ReleaseCalls, "实例存活时不能卸载其依赖");
+            Assert.AreEqual(1, service.ActiveLeases);
+            UnityEngine.Object.DestroyImmediate(instance);
+            pool.DisposeAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(1, provider.ReleaseCalls);
+            Assert.AreEqual(0, service.ActiveLeases);
         }
 
         [Test]

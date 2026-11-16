@@ -4,223 +4,122 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Core.Utility;
 using UnityEngine.AddressableAssets;
-using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-// 注意：命名空间不能以 .Addressables 结尾，否则会遮蔽 UnityEngine.AddressableAssets.Addressables 类
 namespace NowFrameWork.Assets.Adapter
 {
-    /// <summary>
-    /// Addressables 实现。全工程唯一直接引用 Addressables 的类。
-    ///
-    /// 三个与 [13](../../NowFrameWork/Assets/docs/13-Scope与资源层设计.md) 对应的实现选择：
-    /// 1. **canonical 键用 PrimaryKey**：地址与 GUID 指向同一资源时 PrimaryKey 相同，计数不会分裂；
-    /// 2. **取消只放弃等待**：单个等待者取消不取消底层共享加载（由 AssetService 保证语义）；
-    /// 3. **Release 后资源立即失效**：Addressables 用 AssetBundle.Unload(true)，故销毁实例与释放租约必须跨帧（R-1）。
-    ///
-    /// 线程：仅主线程。
-    /// </summary>
-    public sealed class AddressablesProvider : IAssetProvider, IAssetUpdateProvider
+    /// <summary>Addressables Provider。仅主线程；每次请求的句柄只有一个释放责任人。</summary>
+    public sealed class AddressablesProvider : IAssetProvider, IAssetUpdateProvider, IAssetProviderLifecycle, ITypedAssetProvider
     {
         readonly TimeSpan _timeout;
+        readonly Dictionary<string, IResourceLocation> _locations = new Dictionary<string, IResourceLocation>(StringComparer.Ordinal);
 
-        /// <param name="timeout">
-        /// 单次操作超时。默认 30s：远端 catalog/bundle 取不到时必须失败退出，
-        /// 不能无限等待（UnityWebRequest 自身没有默认超时）。
-        /// </param>
         public AddressablesProvider(TimeSpan? timeout = null)
         {
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
         }
+
         public async UniTask InitializeAsync(CancellationToken ct)
         {
-            await AwaitHandle(Addressables.InitializeAsync(), ct);
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.InitializeAsync(false);
+            try { await AddressablesOperation.WaitAsync(handle, _timeout, ct); }
+            finally { AddressablesOperation.Release(handle); }
         }
 
-        public async UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
+        public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
+            => ResolveCanonicalKeyAsync(key, typeof(UnityEngine.Object), ct);
+
+        public async UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, Type assetType, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             Guard.NotNullOrEmpty(key.Address, nameof(key));
-
-            AsyncOperationHandle<IList<IResourceLocation>> handle =
-                Addressables.LoadResourceLocationsAsync(key.Address, typeof(UnityEngine.Object));
-
-            IList<IResourceLocation> locations = await AwaitHandle(handle, ct);
-
+            string address = string.IsNullOrEmpty(key.SubObject) ? key.Address : key.Address + "[" + key.SubObject + "]";
+            var handle = Addressables.LoadResourceLocationsAsync(address, assetType);
             try
             {
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                IList<IResourceLocation> locations = handle.Result;
                 if (locations == null || locations.Count == 0)
-                    throw new InvalidOperationException("找不到资源: " + key.Address);
-
-                return locations[0].PrimaryKey;
+                    throw new InvalidOperationException("找不到资源: " + address);
+                if (locations.Count != 1)
+                    throw new InvalidOperationException("资源键不唯一，不支持以标签加载单个资源: " + address);
+                IResourceLocation location = locations[0];
+                string canonical = location.PrimaryKey + "|" + location.ResourceType.FullName;
+                _locations[canonical] = location;
+                return canonical;
             }
-            finally
-            {
-                Addressables.Release(handle);
-            }
+            finally { AddressablesOperation.Release(handle); }
         }
 
         public async UniTask<ProviderHandle> LoadAsync(string canonicalKey, CancellationToken ct)
         {
-            AsyncOperationHandle<UnityEngine.Object> handle =
-                Addressables.LoadAssetAsync<UnityEngine.Object>(canonicalKey);
-
-            UnityEngine.Object asset = await AwaitHandle(handle, ct);
-            return new ProviderHandle(canonicalKey, asset, handle);
+            ct.ThrowIfCancellationRequested();
+            if (!_locations.TryGetValue(canonicalKey, out IResourceLocation location))
+                throw new InvalidOperationException("资源须先完成定位: " + canonicalKey);
+            var handle = Addressables.LoadAssetAsync<UnityEngine.Object>(location);
+            try
+            {
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                // 成功时交给 ProviderHandle 持有，直到最后一个租约归还。
+                return new ProviderHandle(canonicalKey, handle.Result, handle);
+            }
+            catch
+            {
+                AddressablesOperation.Release(handle);
+                throw;
+            }
         }
 
         public void Release(ProviderHandle handle)
         {
-            if (handle == null) return;
-
-            if (handle.Tag is AsyncOperationHandle<UnityEngine.Object> op) Addressables.Release(op);
+            if (handle?.Tag is AsyncOperationHandle<UnityEngine.Object> op)
+                AddressablesOperation.Release(op);
         }
 
         public async UniTask<bool> CheckForUpdatesAsync(CancellationToken ct)
         {
-            AsyncOperationHandle<List<string>> handle = Addressables.CheckForCatalogUpdates(false);
-            List<string> catalogs = await AwaitHandle(handle, ct);
-
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.CheckForCatalogUpdates(false);
             try
             {
-                return catalogs != null && catalogs.Count > 0;
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                return handle.Result != null && handle.Result.Count > 0;
             }
-            finally
-            {
-                Addressables.Release(handle);
-            }
+            finally { AddressablesOperation.Release(handle); }
         }
 
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
-            AsyncOperationHandle<List<IResourceLocator>> handle = Addressables.UpdateCatalogs(null, false);
-            List<IResourceLocator> updated = await AwaitHandle(handle, ct);
-
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.UpdateCatalogs(null, false);
             try
             {
-                return updated?.Count ?? 0;
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                return handle.Result?.Count ?? 0;
             }
-            finally
-            {
-                Addressables.Release(handle);
-            }
+            finally { AddressablesOperation.Release(handle); }
         }
 
         public async UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
         {
-            AsyncOperationHandle<long> handle = Addressables.GetDownloadSizeAsync(key);
-
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.GetDownloadSizeAsync(key);
             try
             {
-                return await AwaitHandle(handle, ct);
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                return handle.Result;
             }
-            finally
-            {
-                Addressables.Release(handle);
-            }
+            finally { AddressablesOperation.Release(handle); }
         }
 
         public async UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct)
         {
-            AsyncOperationHandle handle = Addressables.DownloadDependenciesAsync(key);
-
-            if (progress != null) handle.Completed += _ => progress.Report(1f);
-
-            try
-            {
-                await AwaitHandle(handle, ct);
-            }
-            finally
-            {
-                Addressables.Release(handle);
-            }
-        }
-
-        /// <summary>超时注册：到点就释放句柄并以 TimeoutException 结束等待。</summary>
-        CancellationTokenSource StartTimeout(CancellationToken ct, Action onTimeout)
-        {
-            if (_timeout <= TimeSpan.Zero) return null;
-
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(_timeout);
-            cts.Token.Register(onTimeout);
-            return cts;
-        }
-
-        /// <summary>桥接 Addressables 泛型操作；取消仅放弃等待，底层操作继续（共享加载语义）。</summary>
-        UniTask<T> AwaitHandle<T>(AsyncOperationHandle<T> handle, CancellationToken ct)
-        {
-            if (handle.IsDone)
-            {
-                if (handle.Status == AsyncOperationStatus.Succeeded) return UniTask.FromResult(handle.Result);
-
-                Exception failed = handle.OperationException ?? new InvalidOperationException("Addressables 操作失败");
-                Addressables.Release(handle);
-                return UniTask.FromException<T>(failed);
-            }
-
-            var tcs = new UniTaskCompletionSource<T>();
-            CancellationTokenSource timeoutCts = StartTimeout(ct, () =>
-            {
-                Addressables.Release(handle);
-                tcs.TrySetException(new TimeoutException("Addressables 操作超时（" + _timeout.TotalSeconds + "s）"));
-            });
-
-            handle.Completed += op =>
-            {
-                timeoutCts?.Dispose();
-
-                if (op.Status == AsyncOperationStatus.Succeeded)
-                {
-                    tcs.TrySetResult(op.Result);
-                }
-                else
-                {
-                    Exception failed = op.OperationException ?? new InvalidOperationException("Addressables 操作失败");
-                    Addressables.Release(op);
-                    tcs.TrySetException(failed);
-                }
-            };
-
-            return tcs.Task;
-        }
-
-        /// <summary>桥接非泛型操作。</summary>
-        UniTask AwaitHandle(AsyncOperationHandle handle, CancellationToken ct)
-        {
-            if (handle.IsDone)
-            {
-                if (handle.Status == AsyncOperationStatus.Succeeded) return UniTask.CompletedTask;
-
-                Exception failed = handle.OperationException ?? new InvalidOperationException("Addressables 操作失败");
-                Addressables.Release(handle);
-                return UniTask.FromException(failed);
-            }
-
-            var tcs = new UniTaskCompletionSource();
-            CancellationTokenSource timeoutCts = StartTimeout(ct, () =>
-            {
-                Addressables.Release(handle);
-                tcs.TrySetException(new TimeoutException("Addressables 操作超时（" + _timeout.TotalSeconds + "s）"));
-            });
-
-            handle.Completed += op =>
-            {
-                timeoutCts?.Dispose();
-
-                if (op.Status == AsyncOperationStatus.Succeeded)
-                {
-                    tcs.TrySetResult();
-                }
-                else
-                {
-                    Exception failed = op.OperationException ?? new InvalidOperationException("Addressables 操作失败");
-                    Addressables.Release(op);
-                    tcs.TrySetException(failed);
-                }
-            };
-
-            return tcs.Task;
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.DownloadDependenciesAsync(key, false);
+            try { await AddressablesOperation.WaitAsync(handle, _timeout, ct, progress); }
+            finally { AddressablesOperation.Release(handle); }
         }
     }
 }

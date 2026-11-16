@@ -1,17 +1,14 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 
 namespace NowFrameWork.Assets.Adapter
 {
-    /// <summary>
-    /// Addressables 场景服务：附加加载 + 异步卸载。
-    ///
-    /// 与资源服务共用同一套超时策略——远端场景在服务器不可达时同样不能无限挂起。
-    /// </summary>
+    /// <summary>仅主线程。取消只结束调用方等待，晚到的场景仍由服务负责卸载。</summary>
     public sealed class AddressablesSceneService : ISceneService
     {
         readonly TimeSpan _timeout;
@@ -24,57 +21,82 @@ namespace NowFrameWork.Assets.Adapter
         public async UniTask<SceneLease> LoadAdditiveAsync(object key, CancellationToken ct)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-
-            AsyncOperationHandle<SceneInstance> handle =
-                UnityEngine.AddressableAssets.Addressables.LoadSceneAsync(key, LoadSceneMode.Additive);
-
-            await AwaitHandle(handle, ct);
-
-            return new SceneLease(key.ToString(), async () =>
+            ct.ThrowIfCancellationRequested();
+            var handle = Addressables.LoadSceneAsync(key, LoadSceneMode.Additive);
+            var owner = new SceneOwner(handle, _timeout);
+            try
             {
-                AsyncOperationHandle<SceneInstance> unload =
-                    UnityEngine.AddressableAssets.Addressables.UnloadSceneAsync(handle);
-
-                await AwaitHandle(unload, CancellationToken.None);
-            });
+                await AddressablesOperation.WaitAsync(handle, _timeout, ct);
+                return new SceneLease(key.ToString(), owner.UnloadAsync);
+            }
+            catch
+            {
+                owner.CleanupAbandonedAsync().Forget();
+                throw;
+            }
         }
 
-        async UniTask AwaitHandle<T>(AsyncOperationHandle<T> handle, CancellationToken ct)
+        sealed class SceneOwner
         {
-            // 已完成：不能再注册 Completed（可能不再触发），直接取结果
-            if (handle.IsDone)
-            {
-                if (handle.Status == AsyncOperationStatus.Succeeded) return;
+            readonly AsyncOperationHandle<SceneInstance> _load;
+            readonly TimeSpan _timeout;
+            UniTaskCompletionSource _unloading;
+            bool _unloaded;
 
-                Exception failed = handle.OperationException ?? new InvalidOperationException("场景操作失败");
-                UnityEngine.AddressableAssets.Addressables.Release(handle);
-                throw failed;
+            public SceneOwner(AsyncOperationHandle<SceneInstance> load, TimeSpan timeout)
+            {
+                _load = load;
+                _timeout = timeout;
             }
 
-            var tcs = new UniTaskCompletionSource<T>();
-            CancellationTokenSource cts = null;
-
-            if (_timeout > TimeSpan.Zero)
+            public async UniTask UnloadAsync()
             {
-                cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(_timeout);
-                cts.Token.Register(() =>
+                if (_unloaded) return;
+                UniTaskCompletionSource completion = _unloading;
+                if (completion == null)
                 {
-                    // 超时也必须归还句柄，否则场景句柄永久占用
-                    UnityEngine.AddressableAssets.Addressables.Release(handle);
-                    tcs.TrySetException(new TimeoutException("场景操作超时（" + _timeout.TotalSeconds + "s）"));
-                });
+                    completion = new UniTaskCompletionSource();
+                    _unloading = completion;
+                    PerformUnloadAsync(completion).Forget();
+                }
+                await AddressablesOperation.WaitAsync(completion.Task, _timeout, CancellationToken.None);
             }
 
-            handle.Completed += op =>
+            async UniTask PerformUnloadAsync(UniTaskCompletionSource completion)
             {
-                cts?.Dispose();
+                AsyncOperationHandle<SceneInstance> operation = default;
+                try
+                {
+                    operation = Addressables.UnloadSceneAsync(_load, false);
+                    // 不因外层超时重复卸载。实际操作继续完成并归还其句柄。
+                    await AddressablesOperation.WaitAsync(operation, TimeSpan.Zero, CancellationToken.None);
+                    _unloaded = true;
+                    completion.TrySetResult();
+                }
+                catch (Exception e)
+                {
+                    // 若加载句柄仍有效，允许租约在真实卸载失败后重试。
+                    if (_load.IsValid()) _unloading = null;
+                    completion.TrySetException(e);
+                }
+                finally { AddressablesOperation.Release(operation); }
+            }
 
-                if (op.Status == AsyncOperationStatus.Succeeded) tcs.TrySetResult(op.Result);
-                else tcs.TrySetException(op.OperationException ?? new InvalidOperationException("场景操作失败"));
-            };
-
-            await tcs.Task;
+            public async UniTask CleanupAbandonedAsync()
+            {
+                try
+                {
+                    await AddressablesOperation.WaitAsync(_load, TimeSpan.Zero, CancellationToken.None);
+                    var operation = Addressables.UnloadSceneAsync(_load, false);
+                    try { await AddressablesOperation.WaitAsync(operation, TimeSpan.Zero, CancellationToken.None); }
+                    finally { AddressablesOperation.Release(operation); }
+                }
+                catch (Exception e)
+                {
+                    AddressablesOperation.Release(_load);
+                    UnityEngine.Debug.LogException(e);
+                }
+            }
         }
     }
 }

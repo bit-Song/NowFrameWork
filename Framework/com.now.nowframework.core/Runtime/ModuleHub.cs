@@ -39,6 +39,10 @@ namespace NowFrameWork.Core
         readonly List<IAppModule> _sortOrder = new List<IAppModule>(8);
 
         bool _hasStarted;
+        bool _starting;
+        UniTaskCompletionSource _startupFinished;
+        UniTaskCompletionSource _shutdownFinished;
+        CancellationTokenSource _startupCancellation;
 
         readonly ILog _log;
 
@@ -57,7 +61,8 @@ namespace NowFrameWork.Core
         {
             if (module == null) throw new ModuleRegistrationException("Register 收到 null 模块");
             if (string.IsNullOrEmpty(module.Id)) throw new ModuleRegistrationException("模块 Id 不能为空: " + module.GetType().Name);
-            if (_hasStarted) throw new ModuleRegistrationException("Startup 完成后不允许再注册: " + module.Id);
+            if (_hasStarted || _starting || _shutdownFinished != null)
+                throw new ModuleRegistrationException("启动或关闭期间不允许注册: " + module.Id);
             if (_byId.ContainsKey(module.Id)) throw new ModuleRegistrationException("模块 Id 重复: " + module.Id);
 
             _modules.Add(module);
@@ -72,10 +77,15 @@ namespace NowFrameWork.Core
         /// </summary>
         public async UniTask StartupAsync(CancellationToken ct, IStartupProgress progress)
         {
-            if (_hasStarted) throw new InvalidOperationException("ModuleHub 已经 Startup 过");
+            if (_hasStarted || _starting || _shutdownFinished != null)
+                throw new InvalidOperationException("ModuleHub 已启动或正在启停");
 
             // 依赖图先算完：缺失/循环必须暴露在「任何模块被初始化」之前
             IReadOnlyList<IAppModule> order = SortByDependencies();
+            _starting = true;
+            _startupFinished = new UniTaskCompletionSource();
+            _startupCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            ct = _startupCancellation.Token;
 
             string phase = "Initialize";
             string currentModule = null;
@@ -109,6 +119,7 @@ namespace NowFrameWork.Core
                     await order[i].StartAsync(ct);
                 }
 
+                ct.ThrowIfCancellationRequested();
                 CacheFrameCallbacks(order);
                 _hasStarted = true;
 
@@ -126,14 +137,45 @@ namespace NowFrameWork.Core
                 _sortOrder.Clear();
                 _sortState.Clear();
                 _sortPath.Clear();
+                _starting = false;
+                _startupCancellation.Dispose();
+                _startupCancellation = null;
+                _startupFinished.TrySetResult();
             }
         }
 
-        public async UniTask ShutdownAsync(CancellationToken ct = default)
+        public UniTask ShutdownAsync(CancellationToken ct = default)
         {
-            // ct 不参与清理：清理到一半比清理慢更糟。参数保留仅为与接口对称。
-            await CleanupStartedAsync();
-            _hasStarted = false;
+            if (_shutdownFinished != null) return _shutdownFinished.Task;
+            var completion = new UniTaskCompletionSource();
+            _shutdownFinished = completion;
+            ShutdownCoreAsync(completion).Forget();
+            return completion.Task;
+        }
+
+        async UniTask ShutdownCoreAsync(UniTaskCompletionSource completion)
+        {
+            try
+            {
+                if (_starting)
+                {
+                    _startupCancellation.Cancel();
+                    await _startupFinished.Task;
+                }
+                // 关闭期间停止帧驱动；已初始化模块仍按逆序清理。
+                _tickables.Clear();
+                _lateTickables.Clear();
+                _fixedTickables.Clear();
+                await CleanupStartedAsync();
+                _hasStarted = false;
+                _shutdownFinished = null;
+                completion.TrySetResult();
+            }
+            catch (Exception e)
+            {
+                _shutdownFinished = null;
+                completion.TrySetException(e);
+            }
         }
 
         async UniTask CleanupStartedAsync()
