@@ -1,0 +1,5 @@
+{"utc":"2026-11-16T03:19:04.584Z","event":"listening","root":"D:\\UnityProject\\TMP\\NowFrameWork\\Build\\PCRegression\\Releases\\V2","port":18182,"delayMs":0}
+{"utc":"2026-11-16T03:19:05.391Z","path":"/StandaloneWindows64/catalog_pc-regression-v1.hash","status":200,"bytes":32,"milliseconds":4}
+{"utc":"2026-11-16T03:19:05.394Z","path":"/StandaloneWindows64/catalog_pc-regression-v1.hash","status":200,"bytes":32,"milliseconds":1}
+{"utc":"2026-11-16T03:19:05.407Z","path":"/StandaloneWindows64/catalog_pc-regression-v1.json","status":200,"bytes":20223,"milliseconds":11}
+{"utc":"2026-11-16T03:19:07.347Z","path":"/StandaloneWindows64/pcregressionremote_assets_assets/hotupdatedlls/hotupdate.dll.bytes_c1774083c8501ee5cee56345bc02905e.bundle","status":200,"bytes":8302,"milliseconds":19}

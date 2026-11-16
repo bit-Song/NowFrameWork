@@ -11,6 +11,16 @@ using UnityEngine;
 // 热更程序集引用不到它。等给 Assets/Aot 建了 asmdef 并让 HotUpdate 引用后再接回来。
 public static class Hello
 {
+    // PC 回归只调用此入口，不把泛型元数据实验混入最小 DLL 发布验证。
+    public static string GetProbeMarker()
+    {
+#if PC_PROBE_PATCH_V2
+        return "PC-PROBE-V2";
+#else
+        return "PC-PROBE-V1";
+#endif
+    }
+
     public static void Run() => RunStep(-1);
 
     // only >= 0 时只跑那一步，方便定位崩在哪

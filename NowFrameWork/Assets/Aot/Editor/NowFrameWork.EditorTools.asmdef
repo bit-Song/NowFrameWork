@@ -6,7 +6,9 @@
     "UnityEngine.TestRunner",
     "Unity.Addressables",
     "Unity.ResourceManager",
-    "NowFrameWork.AssetTest"
+    "NowFrameWork.AssetTest",
+    "Unity.Addressables.Editor",
+    "HybridCLR.Editor"
   ],
   "includePlatforms": [
     "Editor"

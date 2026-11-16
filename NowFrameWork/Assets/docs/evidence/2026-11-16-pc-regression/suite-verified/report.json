@@ -1,0 +1,73 @@
+﻿{
+    "utc": "2026-11-16T02:51:09.7401870Z",
+    "unity": "2022.3.62t4",
+    "mode": "suite",
+    "marker": "",
+    "finished": true,
+    "passed": true,
+    "activeLeases": 0,
+    "pendingRequests": 0,
+    "errorCount": 0,
+    "cases": [
+        {
+            "name": "INIT",
+            "passed": true,
+            "seconds": 0.017826700000000085,
+            "detail": "OK"
+        },
+        {
+            "name": "A-LEASE",
+            "passed": true,
+            "seconds": 0.0036127000000001354,
+            "detail": "OK"
+        },
+        {
+            "name": "B-POOL",
+            "passed": true,
+            "seconds": 0.0019751000000001186,
+            "detail": "OK"
+        },
+        {
+            "name": "C-SCOPE",
+            "passed": true,
+            "seconds": 0.004172400000000076,
+            "detail": "OK"
+        },
+        {
+            "name": "D-CONFIG",
+            "passed": true,
+            "seconds": 0.0016728999999999772,
+            "detail": "OK"
+        },
+        {
+            "name": "E-SCENE",
+            "passed": true,
+            "seconds": 0.005533599999999916,
+            "detail": "OK"
+        },
+        {
+            "name": "F-ATLAS",
+            "passed": true,
+            "seconds": 0.05319230000000008,
+            "detail": "OK"
+        },
+        {
+            "name": "G-POOL-TIMEOUT",
+            "passed": true,
+            "seconds": 0.0007854000000000472,
+            "detail": "OK"
+        },
+        {
+            "name": "H-MISSING",
+            "passed": true,
+            "seconds": 0.0005488000000000159,
+            "detail": "OK"
+        },
+        {
+            "name": "CLEANUP",
+            "passed": true,
+            "seconds": 0.000033500000000019625,
+            "detail": "OK"
+        }
+    ]
+}

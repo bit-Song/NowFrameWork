@@ -1,0 +1,31 @@
+﻿{
+    "utc": "2026-11-16T03:19:55.2645860Z",
+    "unity": "2022.3.62t4",
+    "mode": "remote-timeout",
+    "marker": "",
+    "finished": true,
+    "passed": true,
+    "activeLeases": 0,
+    "pendingRequests": 0,
+    "errorCount": 1,
+    "cases": [
+        {
+            "name": "INIT",
+            "passed": true,
+            "seconds": 0.018786200000000087,
+            "detail": "OK"
+        },
+        {
+            "name": "REMOTE-TIMEOUT-RETRY",
+            "passed": true,
+            "seconds": 7.0338992000000009,
+            "detail": "OK"
+        },
+        {
+            "name": "CLEANUP",
+            "passed": true,
+            "seconds": 0.00003740000000007626,
+            "detail": "OK"
+        }
+    ]
+}

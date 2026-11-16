@@ -28,3 +28,8 @@
 *.asmref text
 *.json  text
 *.meta  text
+
+# Preserve original regression evidence bytes (including BOM and line endings).
+NowFrameWork/Assets/docs/evidence/**/*.json -text whitespace=cr-at-eol
+NowFrameWork/Assets/docs/evidence/**/*.jsonl -text whitespace=cr-at-eol
+NowFrameWork/Assets/docs/evidence/**/*.xml -text whitespace=cr-at-eol

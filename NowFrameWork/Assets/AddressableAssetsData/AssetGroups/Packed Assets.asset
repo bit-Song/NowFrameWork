@@ -42,11 +42,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a4545a6bf8cb3134bb1ba3df7f15a0b2
-    m_Address: Assets/HotUpdateDlls/HotUpdate.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e87353e72cb2aa34a84ba04388143dd3, type: 2}
   m_SchemaSet:

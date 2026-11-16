@@ -1,0 +1,286 @@
+{
+  "date": "2026-11-16",
+  "platform": "Windows x64 IL2CPP Development",
+  "unity": "2022.3.62t4",
+  "executedBy": "User on local PC; reports, HTTP logs and Player hashes verified by Codex",
+  "runs": 7,
+  "caseEntries": 28,
+  "note": "Case entries include repeated INIT/CLEANUP checks; no claim of 28 distinct features or cross-platform acceptance.",
+  "editMode": {
+    "total": 185,
+    "passed": 185,
+    "failed": 0,
+    "skipped": 0
+  },
+  "playerCodeSha256": {
+    "PCRegression.exe": "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+    "GameAssembly.dll": "44BFD95EA8D4EBDCAF955579BD43B89B0AC7E810D564BAD6146B848C5535D9BE",
+    "TuanjiePlayer.dll": "52D6D37BB80BDE6983AEDD51C621D48EABF77811E5DDFEAF243E2C5D7F9A33BE"
+  },
+  "results": [
+    {
+      "id": "suite-verified",
+      "mode": "suite",
+      "release": "Current",
+      "marker": "",
+      "cases": 10,
+      "passed": true,
+      "errorCount": 0,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T02:51:09.7401870Z",
+      "httpRequests": []
+    },
+    {
+      "id": "offline-verified",
+      "mode": "offline",
+      "release": "Current",
+      "marker": "",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 3,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T02:54:03.7852764Z",
+      "httpRequests": []
+    },
+    {
+      "id": "20261116-111835-hot",
+      "mode": "hot",
+      "release": "V1",
+      "marker": "PC-PROBE-V1",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 0,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T03:18:40.4232125Z",
+      "httpRequests": [
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.hash",
+          "status": 200,
+          "bytes": 32,
+          "milliseconds": 4
+        },
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.hash",
+          "status": 200,
+          "bytes": 32,
+          "milliseconds": 0
+        },
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.json",
+          "status": 200,
+          "bytes": 20223,
+          "milliseconds": 7
+        },
+        {
+          "path": "/StandaloneWindows64/pcregressionremote_assets_assets/hotupdatedlls/hotupdate.dll.bytes_78b221463a68216f33188db4afaf3549.bundle",
+          "status": 200,
+          "bytes": 8300,
+          "milliseconds": 2
+        }
+      ]
+    },
+    {
+      "id": "20261116-111903-hot",
+      "mode": "hot",
+      "release": "V2",
+      "marker": "PC-PROBE-V2",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 0,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T03:19:05.3632103Z",
+      "httpRequests": [
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.hash",
+          "status": 200,
+          "bytes": 32,
+          "milliseconds": 4
+        },
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.hash",
+          "status": 200,
+          "bytes": 32,
+          "milliseconds": 1
+        },
+        {
+          "path": "/StandaloneWindows64/catalog_pc-regression-v1.json",
+          "status": 200,
+          "bytes": 20223,
+          "milliseconds": 11
+        },
+        {
+          "path": "/StandaloneWindows64/pcregressionremote_assets_assets/hotupdatedlls/hotupdate.dll.bytes_c1774083c8501ee5cee56345bc02905e.bundle",
+          "status": 200,
+          "bytes": 8302,
+          "milliseconds": 19
+        }
+      ]
+    },
+    {
+      "id": "20261116-111940-remote-cancel",
+      "mode": "remote-cancel",
+      "release": "Current",
+      "marker": "",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 0,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T03:19:42.1037391Z",
+      "httpRequests": [
+        {
+          "path": "/StandaloneWindows64/pcregressionremote_assets_pcprobe/remotedata_fd9ba39f3adef3a8135a9a863792dc80.bundle",
+          "status": 200,
+          "bytes": 263861,
+          "milliseconds": 529
+        }
+      ]
+    },
+    {
+      "id": "20261116-111952-remote-timeout",
+      "mode": "remote-timeout",
+      "release": "Current",
+      "marker": "",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 1,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T03:19:55.2645860Z",
+      "httpRequests": [
+        {
+          "path": "/StandaloneWindows64/pcregressionremote_assets_pcprobe/remotedata_fd9ba39f3adef3a8135a9a863792dc80.bundle",
+          "status": 200,
+          "bytes": 263861,
+          "milliseconds": 7022
+        }
+      ]
+    },
+    {
+      "id": "20261116-112129-scene-cancel",
+      "mode": "scene-cancel",
+      "release": "Current",
+      "marker": "",
+      "cases": 3,
+      "passed": true,
+      "errorCount": 0,
+      "activeLeases": 0,
+      "pendingRequests": 0,
+      "utc": "2026-11-16T03:21:31.6727216Z",
+      "httpRequests": [
+        {
+          "path": "/StandaloneWindows64/pcregressionremote_scenes_pcprobe/remotescene_b0a20763aa7f6ecf185bac124a34e452.bundle",
+          "status": 200,
+          "bytes": 6567,
+          "milliseconds": 545
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "suite-verified/report.json",
+      "sha256": "e4651425caf4b1e3603de82fb36506b5d4963a9ee66d26461cfd0222a544a85f",
+      "bytes": 1781
+    },
+    {
+      "path": "suite-verified/run.json",
+      "sha256": "7bbbf0b7bf3d4e363de04db8814f8f662c681db39c1b1349322e2ed08ad8dda7",
+      "bytes": 531
+    },
+    {
+      "path": "offline-verified/report.json",
+      "sha256": "3541ae068cea1185e53921956a4d8ffd93bd79ffb5fa5b088a7af5a6ed839162",
+      "bytes": 695
+    },
+    {
+      "path": "offline-verified/run.json",
+      "sha256": "109fde3f9ce4bd2612748fbe520edd675b21eef9d7ab47bff8004429cf464ab7",
+      "bytes": 629
+    },
+    {
+      "path": "20261116-111835-hot/report.json",
+      "sha256": "6b79de800cb9a30684aa30ca303601a650cdfb15b287b0370c9bf174e2be0c33",
+      "bytes": 712
+    },
+    {
+      "path": "20261116-111835-hot/run.json",
+      "sha256": "d9e1b2f44a4d769467c47fab1cf103a9549d8c18b4f8f827d1bc9958c5130b38",
+      "bytes": 748
+    },
+    {
+      "path": "20261116-111835-hot/http.jsonl",
+      "sha256": "ef8fdf2589739f953d2e3397be81c07ddfc8303be18120016f54641ea38cd35d",
+      "bytes": 786
+    },
+    {
+      "path": "20261116-111903-hot/report.json",
+      "sha256": "e5f9cb38948f1af9d7e960214beb694a73e1f53c33ab9b7dcb86b6fbf02d51fd",
+      "bytes": 702
+    },
+    {
+      "path": "20261116-111903-hot/run.json",
+      "sha256": "2947578083a4150f02d57cdf8694322f7dfec60e02f4a70db10c6462ba3dbc53",
+      "bytes": 748
+    },
+    {
+      "path": "20261116-111903-hot/http.jsonl",
+      "sha256": "c437ea70ad1a9c59f1d7725e7229bee95ebd3f7bf843fe4f5527837cc553d4f2",
+      "bytes": 788
+    },
+    {
+      "path": "20261116-111940-remote-cancel/report.json",
+      "sha256": "fab6e8d3b049ef7c31b5dc6d464f218aee0306dc45e16010c05837d34e3d3413",
+      "bytes": 715
+    },
+    {
+      "path": "20261116-111940-remote-cancel/run.json",
+      "sha256": "ec0a65e29fb58e3b6be88744a57e6a8885ed77b71cc4811fa92db733d84dee88",
+      "bytes": 773
+    },
+    {
+      "path": "20261116-111940-remote-cancel/http.jsonl",
+      "sha256": "ff969f448db1ee92e68f39534631d676bf2f763d0f08f8ec638c1d8d8b75b532",
+      "bytes": 357
+    },
+    {
+      "path": "20261116-111952-remote-timeout/report.json",
+      "sha256": "3ed41245607a21e6881c369f242fbdc5cd8921e198bd619f735a1d523f202aed",
+      "bytes": 723
+    },
+    {
+      "path": "20261116-111952-remote-timeout/run.json",
+      "sha256": "aaa3504c74ebe6fb35c63e2a64b59f7e2d20070c3a12b2f9a724017da2002ae5",
+      "bytes": 775
+    },
+    {
+      "path": "20261116-111952-remote-timeout/http.jsonl",
+      "sha256": "8ae8b9c65114b2ba04a2524981a53b00ca25423f961119f4ce99b2b5182e1e83",
+      "bytes": 359
+    },
+    {
+      "path": "20261116-112129-scene-cancel/report.json",
+      "sha256": "51a3598c8beaa259d107794162bb2e922af652f3189756aaa2e6db8171ba95d1",
+      "bytes": 704
+    },
+    {
+      "path": "20261116-112129-scene-cancel/run.json",
+      "sha256": "e936b3f4b624b51c04649694c773f4107e2a11e8661d4a3b42b359d6bf4771cd",
+      "bytes": 771
+    },
+    {
+      "path": "20261116-112129-scene-cancel/http.jsonl",
+      "sha256": "b91cec1392738d2ec22b91d060f9cc22dbb4ca2eab0b4f73e6d07cb968256f80",
+      "bytes": 356
+    },
+    {
+      "path": "editmode.xml",
+      "sha256": "0c6e680a3bfcad4ee1f6ed9b516d3bbdf71ecf9efccc7150b8a758fb97b8db19",
+      "bytes": 109058
+    }
+  ]
+}

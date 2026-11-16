@@ -1,0 +1,13 @@
+﻿{
+    "mode":  "scene-cancel",
+    "release":  "Current",
+    "playerSha256":  "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+    "playerCodeSha256":  {
+                             "PCRegression.exe":  "BE2F2E2D46D5D210E01EB559D85554D370D2F4E411EAC6A055AA891869B63972",
+                             "GameAssembly.dll":  "44BFD95EA8D4EBDCAF955579BD43B89B0AC7E810D564BAD6146B848C5535D9BE",
+                             "TuanjiePlayer.dll":  "52D6D37BB80BDE6983AEDD51C621D48EABF77811E5DDFEAF243E2C5D7F9A33BE"
+                         },
+    "playerExitCode":  0,
+    "report":  "D:\\UnityProject\\TMP\\NowFrameWork\\Build\\PCRegression\\Evidence\\20261116-112129-scene-cancel\\report.json",
+    "utc":  "2026-11-16T03:21:33.7537327Z"
+}

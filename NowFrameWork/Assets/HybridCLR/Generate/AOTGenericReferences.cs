@@ -18,6 +18,7 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
     // System.Action<AotData>
     // System.Action<UnityEngine.Vector3>
     // System.Action<int>
+    // System.Action<object,object>
     // System.Action<object>
     // System.Collections.Generic.ArraySortHelper<AotData>
     // System.Collections.Generic.ArraySortHelper<UnityEngine.Vector3>
@@ -153,6 +154,7 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
     // System.Runtime.CompilerServices.ConfiguredTaskAwaitable.ConfiguredTaskAwaiter<System.Threading.Tasks.VoidTaskResult>
     // System.Runtime.CompilerServices.ConfiguredTaskAwaitable<System.Threading.Tasks.VoidTaskResult>
     // System.Runtime.CompilerServices.TaskAwaiter<System.Threading.Tasks.VoidTaskResult>
+    // System.Threading.Tasks.ContinuationTaskFromResultTask<System.Threading.Tasks.VoidTaskResult>
     // System.Threading.Tasks.Task<System.Threading.Tasks.VoidTaskResult>
     // }}
 
@@ -166,9 +168,9 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
         // System.Collections.Generic.IEnumerable<int> System.Linq.Enumerable.Where<int>(System.Collections.Generic.IEnumerable<int>,System.Func<int,bool>)
         // System.Collections.Generic.IEnumerable<int> System.Linq.Enumerable.Iterator<int>.Select<int>(System.Func<int,int>)
         // System.Collections.Generic.IEnumerable<object> System.Linq.Enumerable.Iterator<int>.Select<object>(System.Func<int,object>)
-        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<System.Runtime.CompilerServices.TaskAwaiter,Hello.<Delay>d__14>(System.Runtime.CompilerServices.TaskAwaiter&,Hello.<Delay>d__14&)
-        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder<System.Threading.Tasks.VoidTaskResult>.AwaitUnsafeOnCompleted<System.Runtime.CompilerServices.TaskAwaiter,Hello.<Delay>d__14>(System.Runtime.CompilerServices.TaskAwaiter&,Hello.<Delay>d__14&)
-        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start<Hello.<Delay>d__14>(Hello.<Delay>d__14&)
+        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<System.Runtime.CompilerServices.TaskAwaiter,object>(System.Runtime.CompilerServices.TaskAwaiter&,object&)
+        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder<System.Threading.Tasks.VoidTaskResult>.AwaitUnsafeOnCompleted<System.Runtime.CompilerServices.TaskAwaiter,object>(System.Runtime.CompilerServices.TaskAwaiter&,object&)
+        // System.Void System.Runtime.CompilerServices.AsyncTaskMethodBuilder.Start<object>(object&)
         // string string.Join<int>(string,System.Collections.Generic.IEnumerable<int>)
         // string string.JoinCore<int>(System.Char*,int,System.Collections.Generic.IEnumerable<int>)
     }

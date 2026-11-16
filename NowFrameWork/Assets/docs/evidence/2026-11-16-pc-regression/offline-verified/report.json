@@ -1,0 +1,31 @@
+﻿{
+    "utc": "2026-11-16T02:54:03.7852764Z",
+    "unity": "2022.3.62t4",
+    "mode": "offline",
+    "marker": "",
+    "finished": true,
+    "passed": true,
+    "activeLeases": 0,
+    "pendingRequests": 0,
+    "errorCount": 3,
+    "cases": [
+        {
+            "name": "INIT",
+            "passed": true,
+            "seconds": 0.019649999999999947,
+            "detail": "OK"
+        },
+        {
+            "name": "OFFLINE",
+            "passed": true,
+            "seconds": 1.0103754,
+            "detail": "OK"
+        },
+        {
+            "name": "CLEANUP",
+            "passed": true,
+            "seconds": 0.000038499999999830337,
+            "detail": "OK"
+        }
+    ]
+}
