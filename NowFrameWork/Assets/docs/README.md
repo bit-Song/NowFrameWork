@@ -63,7 +63,7 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | [19 存储与设置设计](19-存储与设置设计.md) | 单写入者契约、显式保存、备份恢复与迁移、256 项回归及未测范围 |
 | [20 存储 Player 验证](20-存储Player验证.md) | 独立普通 AOT 消费工程、Windows IL2CPP 10 进程存储回归与复现脚本 |
 | [21 Boot 启动整合](21-Boot启动整合.md) | 设置/模块/资源/可选代码加载、项目入口、取消与重试、279 项回归 |
-| [22 UI 框架设计](22-UI框架设计.md) | 功能范围、动静 Canvas、显隐/动画生命周期、资源与 UiModule/Boot 接入；设计待实现 |
+| [22 UI 框架设计](22-UI框架设计.md) | 功能范围、动静 Canvas、显隐/动画生命周期、资源与 UiModule/Boot 接入；§13 为 2026-11-16 评审定稿，UI-1 待实现 |
 
 阅读顺序：01 → 02 → 03 → 04；执行 M0 时同时查 08、10；实现模块时查 05、06、09。07 中已废弃的决策仅供历史追溯，不作为当前约束。
 
@@ -106,4 +106,5 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.31 | 2026-11-16 | **存储与设置**：`FileSettingsStore<T>` / `ISettingsCodec<T>` / `JsonSettingsCodec<T>`，备份恢复与迁移；新增 [19](19-存储与设置设计.md)、[20](20-存储Player验证.md)，256 项回归 + 独立 Windows IL2CPP 10 进程通过 |
 | v0.4.32 | 2026-11-16 | **PC 回归入口与实测**：`Build/PCRegression` 夹具、V1/V2 DLL、断网/取消/超时；七轮 Player 运行通过；新增 [17](17-PC回归入口与实测.md)；证据归档于 `docs/evidence/` |
 | v0.4.33 | 2026-11-16 | **Boot 启动整合**：`BootSession` / `BootContext`，设置→模块→资源→可选代码加载，取消与重试；279/279 通过；新增 [21](21-Boot启动整合.md) |
+| v0.4.35 | 2026-11-16 | **UI 设计评审定稿**：`TArgs : class`、一页一个 addressable Prefab（bundle 划分归项目）、新增 `IUiViewFactory` 可测接缝、`UiHandle`/`UiOpenOptions` 字段、输入阻挡与 `IUiBackSource`、`UnityObjectLifecycle` 复用；见 [22 §13](22-UI框架设计.md) |
 | v0.4.34 | 2026-11-16 | **UI 框架设计（待实现）**：动静 Canvas、显隐/动画生命周期、资源清理、`UiModule` 接入；新增 [22](22-UI框架设计.md)；记录 DOTween 1.3.045 安装 |
