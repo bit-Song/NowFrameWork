@@ -1,6 +1,7 @@
 {
   "testables": [
     "com.now.nowframework.assets",
+    "com.now.nowframework.ui.ugui",
     "com.now.nowframework.core",
     "com.now.nowframework.unity",
     "com.now.nowframework.assets.addressables"
@@ -13,6 +14,7 @@
     "com.now.nowframework.assets.addressables": "file:../../Framework/com.now.nowframework.assets.addressables",
     "com.now.nowframework.diagnostics": "file:../../Framework/com.now.nowframework.diagnostics",
     "com.now.nowframework.core": "file:../../Framework/com.now.nowframework.core",
+    "com.now.nowframework.ui.ugui": "file:../../Framework/com.now.nowframework.ui.ugui",
     "com.now.nowframework.unity": "file:../../Framework/com.now.nowframework.unity",
     "com.unity.addressables": "1.22.4-t1",
     "com.unity.collab-proxy": "2.5.1",
