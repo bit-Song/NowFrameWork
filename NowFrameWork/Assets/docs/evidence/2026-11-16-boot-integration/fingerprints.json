@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-16",
+  "editMode": {
+    "total": 279,
+    "passed": 279,
+    "failed": 0,
+    "skipped": 0,
+    "bootAdded": 23
+  },
+  "fileHashNormalization": "XML original bytes; source text UTF-8 with CRLF normalized to LF",
+  "files": {
+    "editmode.xml": "3599a4f357147a721a5f848c0c249b4894b15f948d5168bc61db705e2485f332"
+  },
+  "sources": {
+    "NowFrameWork/Assets/Aot/Boot/Addressables/BootFlow.cs": "feb9581f39d2a9d850fbf3050e0b66867f80ac1312927fa2977f7358395dbdc4",
+    "NowFrameWork/Assets/Aot/Boot/Addressables/NowFrameWork.Boot.Addressables.asmdef": "462f05be653c1b53f8f3d19f515f449d17bb39c4f5a25e92b4f1e74b88d6a4cf",
+    "NowFrameWork/Assets/Aot/Boot/BootContext.cs": "d1c39623dc9f8d05813866f3981e3bf29d425ae7d6b33493c6eb127050b9eeb9",
+    "NowFrameWork/Assets/Aot/Boot/BootOptions.cs": "947a9da8bb05fde99751251b3f5eb49ff60b3b367a99f1080be3ababd18616ba",
+    "NowFrameWork/Assets/Aot/Boot/BootPreferences.cs": "db78ac060289f546a9efd3680c1772d081489492959e8e2f1ee4ae89f2c3d778",
+    "NowFrameWork/Assets/Aot/Boot/BootSession.cs": "478e28e4840e3c25a964174b671b42557e829af0f9429b456ffa0d9cfe6795ea",
+    "NowFrameWork/Assets/Aot/Boot/BootState.cs": "ea17b632bec3770919e5cc182e4012e94f3458631cb68d1225a0be82e73249a0",
+    "NowFrameWork/Assets/Aot/Boot/HybridCLR/HybridClrBootLoader.cs": "1c4ca2036107108380d49a7ffa7dc483141a2282ea67702c5cd1b54c77df2de4",
+    "NowFrameWork/Assets/Aot/Boot/HybridCLR/NowFrameWork.Boot.HybridCLR.asmdef": "5b621734d63bf23bdde5837422fc96893fc3b6dc15a24c4dcfe12665d7ebe075",
+    "NowFrameWork/Assets/Aot/Boot/IBootCodeLoader.cs": "8c4b569ce9964aeaaf3a708bffcee2792bb52285665203afc45ae907759fc876",
+    "NowFrameWork/Assets/Aot/Boot/IBootEntry.cs": "ee6147aec9e3b8e1a83222a823343392b7051d15ee97dfc4e2006d0a74c090fb",
+    "NowFrameWork/Assets/Aot/Boot/NowFrameWork.Boot.asmdef": "d2003ec57730d0f81376abdfdc113a0db8cb3e4468af5fca20eb8bb1165997d4",
+    "NowFrameWork/Assets/Aot/Boot/Tests/EditMode/BootSessionTests.cs": "1de4e837a2f103e00b7b37b4fdd65cf73c7205b4a645e788ca0155980f89a6db",
+    "NowFrameWork/Assets/Aot/Boot/Tests/EditMode/NowFrameWork.Boot.Tests.asmdef": "6b561999b6a048972ed0fabb0a9425bac9f4966ac5d81c62be26a1d262766fe5",
+    "NowFrameWork/Assets/Aot/Editor/BootIntegrationSceneMenu.cs": "7108f05b342903d8e6c0ce8ec41b7f66b91e4db948177b5bc2f112bcb4ea2ab9",
+    "NowFrameWork/Assets/Aot/Editor/NowFrameWork.EditorTools.asmdef": "545d2b7e758d43ac08f4950d3aa4072251c02ccdf5cc6a544aa9cf3ad5976467",
+    "NowFrameWork/Assets/Scenes/BootIntegration.scene": "e12261c052b95bf16dfaf9043032c293fa61a452c200c77e86030787e2ffb1dd"
+  }
+}

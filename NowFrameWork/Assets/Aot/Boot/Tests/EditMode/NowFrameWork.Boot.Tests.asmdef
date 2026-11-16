@@ -1,0 +1,24 @@
+{
+  "name": "NowFrameWork.Boot.Tests",
+  "rootNamespace": "NowFrameWork.Boot.Tests",
+  "references": [
+    "NowFrameWork.Boot",
+    "NowFrameWork.Core",
+    "NowFrameWork.Unity",
+    "NowFrameWork.Assets",
+    "UniTask",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ]
+}

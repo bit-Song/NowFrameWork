@@ -33,3 +33,6 @@
 NowFrameWork/Assets/docs/evidence/**/*.json -text whitespace=cr-at-eol
 NowFrameWork/Assets/docs/evidence/**/*.jsonl -text whitespace=cr-at-eol
 NowFrameWork/Assets/docs/evidence/**/*.xml -text whitespace=cr-at-eol
+
+# Preserve upstream whitespace in the vendored DOTween distribution.
+NowFrameWork/Assets/Plugins/Demigiant/DOTween/** whitespace=-blank-at-eol,-blank-at-eof

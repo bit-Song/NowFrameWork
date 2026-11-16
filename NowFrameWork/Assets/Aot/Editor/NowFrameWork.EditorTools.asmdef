@@ -8,7 +8,8 @@
     "Unity.ResourceManager",
     "NowFrameWork.AssetTest",
     "Unity.Addressables.Editor",
-    "HybridCLR.Editor"
+    "HybridCLR.Editor",
+    "NowFrameWork.Boot.Addressables"
   ],
   "includePlatforms": [
     "Editor"

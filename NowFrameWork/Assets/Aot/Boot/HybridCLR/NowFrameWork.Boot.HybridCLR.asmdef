@@ -1,0 +1,11 @@
+{
+  "name": "NowFrameWork.Boot.HybridCLR",
+  "references": [
+    "NowFrameWork.Boot",
+    "NowFrameWork.Assets",
+    "HybridCLR.Runtime",
+    "UniTask",
+    "NowFrameWork.Core"
+  ],
+  "autoReferenced": false
+}
