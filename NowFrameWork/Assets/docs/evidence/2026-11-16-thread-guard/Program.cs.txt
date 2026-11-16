@@ -1,0 +1,31 @@
+using System;
+using System.Reflection;
+using System.Threading;
+using NowFrameWork.Core.Threading;
+class Program
+{
+    static void ProbeCall() { MainThreadGuard.Assert("standalone-probe"); }
+    static void Main()
+    {
+#if DEVELOPMENT_BUILD
+        bool rejected = false;
+        var worker = new Thread(() => { try { ProbeCall(); } catch (InvalidOperationException) { rejected = true; } });
+        worker.Start();
+        if (!worker.Join(3000) || !rejected || MainThreadGuard.ThreadId != 0)
+            throw new Exception("Unbound worker must not become the main thread");
+        MainThreadGuard.BindCurrentThread();
+        ProbeCall();
+        bool rebindRejected = false;
+        worker = new Thread(() => { try { MainThreadGuard.BindCurrentThread(); } catch (InvalidOperationException) { rebindRejected = true; } });
+        worker.Start();
+        if (!worker.Join(3000) || !rebindRejected) throw new Exception("Worker rebind was accepted");
+        Console.WriteLine("PASS DEVELOPMENT: unbound worker rejected; host bound; worker rebind rejected");
+#else
+        ProbeCall();
+        byte[] il = typeof(Program).GetMethod("ProbeCall", BindingFlags.NonPublic | BindingFlags.Static).GetMethodBody().GetILAsByteArray();
+        if (MainThreadGuard.ThreadId != 0 || il.Length != 1 || il[0] != 0x2A)
+            throw new Exception("Release Assert call was not removed");
+        Console.WriteLine("PASS RELEASE: assertion call removed; method IL is ret only; no host binding required");
+#endif
+    }
+}

@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -25,20 +26,40 @@ namespace NowFrameWork.Core.Async
 
         public TaskRunner(ILog log = null)
         {
+            MainThreadGuard.Assert("TaskRunner.TaskRunner");
             _log = log ?? Logs.Null;
         }
 
         /// <summary>传给任务的取消源；`CancelAll` 会取消它。</summary>
-        public CancellationToken Token => _cts.Token;
+        public CancellationToken Token
+        {
+            get
+            {
+                MainThreadGuard.Assert("TaskRunner.Token");
+                return _cts.Token;
+            }
+        }
 
-        public int Running => _running;
+        public int Running
+        {
+            get
+            {
+                MainThreadGuard.Assert("TaskRunner.Running");
+                return _running;
+            }
+        }
 
         /// <summary>启动并立即返回；异常由内部兜住并记录。</summary>
-        public void Run(UniTask task, string context = null) => RunAsync(task, context).Forget();
+        public void Run(UniTask task, string context = null)
+        {
+            MainThreadGuard.Assert("TaskRunner.Run");
+            RunAsync(task, context).Forget();
+        }
 
         /// <summary>可等待版本，便于测试与"关闭时等待"。</summary>
         public async UniTask RunAsync(UniTask task, string context = null)
         {
+            MainThreadGuard.Assert("TaskRunner.RunAsync");
             _running++;
             try
             {
@@ -62,11 +83,13 @@ namespace NowFrameWork.Core.Async
 
         public void CancelAll()
         {
+            MainThreadGuard.Assert("TaskRunner.CancelAll");
             if (!_disposed) _cts.Cancel();
         }
 
         public void Dispose()
         {
+            MainThreadGuard.Assert("TaskRunner.Dispose");
             if (_disposed) return;
             _disposed = true;
 

@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using NowFrameWork.Core.Time;
 
 using NowFrameWork.Core;
@@ -10,12 +11,40 @@ namespace NowFrameWork.Unity
     /// </summary>
     public sealed class UnityClock : IClock
     {
-        public double Now => UnityEngine.Time.timeAsDouble;
+        public double Now
+        {
+            get
+            {
+                MainThreadGuard.Assert("UnityClock.Now");
+                return UnityEngine.Time.timeAsDouble;
+            }
+        }
 
-        public double UnscaledNow => UnityEngine.Time.unscaledTimeAsDouble;
+        public double UnscaledNow
+        {
+            get
+            {
+                MainThreadGuard.Assert("UnityClock.UnscaledNow");
+                return UnityEngine.Time.unscaledTimeAsDouble;
+            }
+        }
 
-        public float DeltaTime => UnityEngine.Time.deltaTime;
+        public float DeltaTime
+        {
+            get
+            {
+                MainThreadGuard.Assert("UnityClock.DeltaTime");
+                return UnityEngine.Time.deltaTime;
+            }
+        }
 
-        public float UnscaledDeltaTime => UnityEngine.Time.unscaledDeltaTime;
+        public float UnscaledDeltaTime
+        {
+            get
+            {
+                MainThreadGuard.Assert("UnityClock.UnscaledDeltaTime");
+                return UnityEngine.Time.unscaledDeltaTime;
+            }
+        }
     }
 }

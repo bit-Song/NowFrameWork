@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,11 +18,13 @@ namespace NowFrameWork.Assets.Adapter
 
         public AddressablesProvider(TimeSpan? timeout = null)
         {
+            MainThreadGuard.Assert("AddressablesProvider.AddressablesProvider");
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
         }
 
         public async UniTask InitializeAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.InitializeAsync");
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.InitializeAsync(false);
             try { await AddressablesOperation.WaitAsync(handle, _timeout, ct); }
@@ -33,6 +36,7 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, Type assetType, CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.ResolveCanonicalKeyAsync");
             ct.ThrowIfCancellationRequested();
             Guard.NotNullOrEmpty(key.Address, nameof(key));
             string address = string.IsNullOrEmpty(key.SubObject) ? key.Address : key.Address + "[" + key.SubObject + "]";
@@ -55,6 +59,7 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask<ProviderHandle> LoadAsync(string canonicalKey, CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.LoadAsync");
             ct.ThrowIfCancellationRequested();
             if (!_locations.TryGetValue(canonicalKey, out IResourceLocation location))
                 throw new InvalidOperationException("资源须先完成定位: " + canonicalKey);
@@ -74,12 +79,14 @@ namespace NowFrameWork.Assets.Adapter
 
         public void Release(ProviderHandle handle)
         {
+            MainThreadGuard.Assert("AddressablesProvider.Release");
             if (handle?.Tag is AsyncOperationHandle<UnityEngine.Object> op)
                 AddressablesOperation.Release(op);
         }
 
         public async UniTask<bool> CheckForUpdatesAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.CheckForUpdatesAsync");
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.CheckForCatalogUpdates(false);
             try
@@ -92,6 +99,7 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.UpdateCatalogsAsync");
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.UpdateCatalogs(null, false);
             try
@@ -104,6 +112,7 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.GetDownloadSizeAsync");
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.GetDownloadSizeAsync(key);
             try
@@ -116,6 +125,7 @@ namespace NowFrameWork.Assets.Adapter
 
         public async UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesProvider.DownloadAsync");
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.DownloadDependenciesAsync(key, false);
             try { await AddressablesOperation.WaitAsync(handle, _timeout, ct, progress); }

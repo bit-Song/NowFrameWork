@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace NowFrameWork.Unity
 
         public App(Logger log)
         {
+            MainThreadGuard.Assert("App.App");
             Log = log ?? throw new ArgumentNullException(nameof(log));
             _clock = new UnityClock();
             Events = new EventBus(log);
@@ -61,6 +63,7 @@ namespace NowFrameWork.Unity
         /// <summary>创建装配好的 App：控制台出口 + Unity 时钟。</summary>
         public static App Create(LogLevel minLevel = LogLevel.Info, int recentLogCapacity = 256)
         {
+            MainThreadGuard.Assert("App.Create");
             var log = new Logger(minLevel, recentLogCapacity, ReadTime);
             log.AddSink(new UnityConsoleSink());
             return new App(log);
@@ -70,7 +73,10 @@ namespace NowFrameWork.Unity
 
         /// <summary>启动全部模块；progress 可为空（无加载界面时）。</summary>
         public UniTask StartupAsync(CancellationToken ct = default, IStartupProgress progress = null)
-            => Hub.StartupAsync(ct, progress);
+        {
+            MainThreadGuard.Assert("App.StartupAsync");
+            return Hub.StartupAsync(ct, progress);
+        }
 
         /// <summary>
         /// 关闭：**先关模块**，再清事件/计时器/池。
@@ -79,6 +85,7 @@ namespace NowFrameWork.Unity
         /// </summary>
         public async UniTask ShutdownAsync()
         {
+            MainThreadGuard.Assert("App.ShutdownAsync");
             await Hub.ShutdownAsync();
 
             Events.Clear();
@@ -89,6 +96,7 @@ namespace NowFrameWork.Unity
         /// <summary>每帧驱动（对应 Update）。</summary>
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
+            MainThreadGuard.Assert("App.Tick");
             Timers.Update();
             Pools.Tick();
             Hub.Tick(deltaTime, unscaledDeltaTime);
@@ -96,9 +104,17 @@ namespace NowFrameWork.Unity
         }
 
         /// <summary>对应 LateUpdate。</summary>
-        public void LateTick() => Hub.LateTick();
+        public void LateTick()
+        {
+            MainThreadGuard.Assert("App.LateTick");
+            Hub.LateTick();
+        }
 
         /// <summary>对应 FixedUpdate。</summary>
-        public void FixedTick(float fixedDeltaTime) => Hub.FixedTick(fixedDeltaTime);
+        public void FixedTick(float fixedDeltaTime)
+        {
+            MainThreadGuard.Assert("App.FixedTick");
+            Hub.FixedTick(fixedDeltaTime);
+        }
     }
 }

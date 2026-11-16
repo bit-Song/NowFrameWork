@@ -1,0 +1,1 @@
+PASS: Core-only .NET build; roundtrip; write failure preserves files; backup recovery/repair; schema migration; future-schema protection

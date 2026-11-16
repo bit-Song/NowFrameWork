@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using NowFrameWork.Core.Logging;
 
 using NowFrameWork.Core;
@@ -17,6 +18,7 @@ namespace NowFrameWork.Unity
 
         public void Write(in LogEntry entry)
         {
+            MainThreadGuard.Assert("UnityConsoleSink.Write");
             string message = Format(in entry);
 
             switch (entry.Level)

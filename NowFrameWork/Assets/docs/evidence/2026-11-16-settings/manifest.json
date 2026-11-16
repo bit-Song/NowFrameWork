@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-16",
+  "editMode": {
+    "total": 256,
+    "passed": 256,
+    "failed": 0,
+    "storageAdded": 50
+  },
+  "files": {
+    "editmode.xml": "a167bf85a69f7244b6b7117575177f56c2d7a772c2e97bc1ae6ef837ed804771",
+    "Program.cs.txt": "67c0ffad5438ea54d0de70ad56da07cb2f45c91173e42368c736b4ee3d55db40",
+    "Probe.csproj.txt": "4633a51739567f1da043945fbefbc25dcdf67a90c13c9890e1c57d4e43769986",
+    "standalone.txt": "ef4ee8b3ee578bae5ae09b8ff46912b6a8e7ff5c456b8b0a816013dde18ed645"
+  },
+  "runtimeSources": {
+    "Framework/com.now.nowframework.core/Runtime/Threading/MainThreadGuard.cs": "2fd21abeea2b2d4189b6b96fd024cb5d1b1e33d1dc019c1a780509e96223e8b8",
+    "Framework/com.now.nowframework.core/Runtime/Storage/FileSettingsStore.cs": "28a19e7da2812bbf8eabf959c5952e32d203eb7019c904853eb56599c411e1d4",
+    "Framework/com.now.nowframework.core/Runtime/Storage/ISettingsCodec.cs": "849dbe0735bc8a45d261afab2205db6e1023912114e1658b18d5f4fb5988c949",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsCompatibilityException.cs": "1f2f006f7d1c27ab23bccdca0bd478a2c03c678b1138715bc7ba3aa5ce5e79e1",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsEnvelope.cs": "7dbccb6e42431070413cba26203f474e5f7abf9b6e1f3ed1d361eb374d5fb314",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsLoadResult.cs": "cb69df6a309dfbf370684a5663acfe0f5e8b5e65091e4ce4f77234e826867b26",
+    "Framework/com.now.nowframework.core/Runtime/Storage/SettingsLoadSource.cs": "be21fe5b75f063c45c652436e0c5f8ba8e12e6085888b7231a3c79dbb354cba3",
+    "Framework/com.now.nowframework.unity/Runtime/Storage/JsonSettingsCodec.cs": "ec888dbc2c197dcd6388005be9a4fd1e6eba9f8dd17d93b0920a52395b9cfb96"
+  },
+  "sourceHashNormalization": "UTF-8 source text with CRLF normalized to LF",
+  "filesHashNormalization": "XML uses original bytes; .txt files use UTF-8 text with CRLF normalized to LF"
+}

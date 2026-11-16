@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 
 namespace NowFrameWork.Core.Platform
@@ -39,21 +40,29 @@ namespace NowFrameWork.Core.Platform
 
         public AppState State => _state;
 
-        public event Action<AppState> StateChanged;
+        Action<AppState> _stateChanged;
+        public event Action<AppState> StateChanged
+        {
+            add { MainThreadGuard.Assert("AppLifecycle.StateChanged.add"); _stateChanged += value; }
+            remove { MainThreadGuard.Assert("AppLifecycle.StateChanged.remove"); _stateChanged -= value; }
+        }
 
         public void NotifyPause()
         {
+            MainThreadGuard.Assert("AppLifecycle.NotifyPause");
             // Starting 视为前台：第一次信号是 pause 时直接进后台，不先发一次 Foreground
             if (_state == AppState.Foreground || _state == AppState.Starting) SetState(AppState.Background);
         }
 
         public void NotifyResume()
         {
+            MainThreadGuard.Assert("AppLifecycle.NotifyResume");
             if (_state == AppState.Starting || _state == AppState.Background) SetState(AppState.Foreground);
         }
 
         public void NotifyQuit()
         {
+            MainThreadGuard.Assert("AppLifecycle.NotifyQuit");
             if (_state == AppState.Quitting) return;
             SetState(AppState.Quitting);
         }
@@ -63,7 +72,7 @@ namespace NowFrameWork.Core.Platform
             if (_state == next) return;
 
             _state = next;
-            StateChanged?.Invoke(next);
+            _stateChanged?.Invoke(next);
         }
     }
 }

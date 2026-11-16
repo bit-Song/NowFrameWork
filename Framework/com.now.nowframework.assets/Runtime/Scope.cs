@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -48,6 +49,7 @@ namespace NowFrameWork.Assets
 
         public Scope(string name, Scope parent, IClock clock, ILog log = null, Func<UniTask> frameWaiter = null)
         {
+            MainThreadGuard.Assert("Scope.Scope");
             if (string.IsNullOrEmpty(name)) throw new ArgumentException("Scope 名称不能为空", nameof(name));
 
             Name = name;
@@ -78,17 +80,32 @@ namespace NowFrameWork.Assets
 
         public Scope Parent { get; }
 
-        public ScopeState State => _state;
+        public ScopeState State
+        {
+            get
+            {
+                MainThreadGuard.Assert("Scope.State");
+                return _state;
+            }
+        }
 
         public ModuleHub Modules { get; }
 
         public PoolService Pools { get; }
 
-        public int ChildCount => _children.Count;
+        public int ChildCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("Scope.ChildCount");
+                return _children.Count;
+            }
+        }
 
         /// <summary>只有 Running 状态能派生子 Scope，避免在启动/关闭过程中长出新的生命周期。</summary>
         public Scope CreateChild(string name)
         {
+            MainThreadGuard.Assert("Scope.CreateChild");
             if (_state != ScopeState.Running)
                 throw new InvalidOperationException("只有 Running 状态才能创建子 Scope，当前: " + _state + " (" + Name + ")");
 
@@ -99,6 +116,7 @@ namespace NowFrameWork.Assets
 
         public async UniTask StartupAsync(CancellationToken ct = default, IStartupProgress progress = null)
         {
+            MainThreadGuard.Assert("Scope.StartupAsync");
             if (_state != ScopeState.Created)
                 throw new InvalidOperationException("Scope 只能从 Created 启动，当前: " + _state + " (" + Name + ")");
 
@@ -129,6 +147,7 @@ namespace NowFrameWork.Assets
         /// <param name="purgeAssets">预留：资源层落地后用于强制卸载本 Scope 独占资源。</param>
         public UniTask DisposeAsync(bool purgeAssets = false)
         {
+            MainThreadGuard.Assert("Scope.DisposeAsync");
             if (_state == ScopeState.Stopped) return UniTask.CompletedTask;
             if (_disposeFinished != null) return _disposeFinished.Task;
             _disposeRequested = true;
@@ -182,6 +201,7 @@ namespace NowFrameWork.Assets
         /// <summary>同步兜底：已停止则幂等；否则记 Error 并尽力异步释放（不阻塞主线程）。</summary>
         public void Dispose()
         {
+            MainThreadGuard.Assert("Scope.Dispose");
             if (_state == ScopeState.Stopped) return;
 
             if (_log.IsEnabled(LogLevel.Error))

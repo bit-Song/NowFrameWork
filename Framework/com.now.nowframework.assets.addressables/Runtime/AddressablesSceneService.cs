@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -15,11 +16,13 @@ namespace NowFrameWork.Assets.Adapter
 
         public AddressablesSceneService(TimeSpan? timeout = null)
         {
+            MainThreadGuard.Assert("AddressablesSceneService.AddressablesSceneService");
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
         }
 
         public async UniTask<SceneLease> LoadAdditiveAsync(object key, CancellationToken ct)
         {
+            MainThreadGuard.Assert("AddressablesSceneService.LoadAdditiveAsync");
             if (key == null) throw new ArgumentNullException(nameof(key));
             ct.ThrowIfCancellationRequested();
             var handle = Addressables.LoadSceneAsync(key, LoadSceneMode.Additive);

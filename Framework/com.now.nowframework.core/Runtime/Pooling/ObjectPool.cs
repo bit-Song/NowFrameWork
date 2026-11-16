@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -70,6 +71,7 @@ namespace NowFrameWork.Core.Pooling
             IAsyncPoolItemFactory<T> asyncFactory = null)
             : this(new DelegateFactory(create, destroy), maxSize, autoRecycleSeconds, prewarm, isValid, clock, log, asyncFactory)
         {
+            MainThreadGuard.Assert("ObjectPool.ObjectPool");
         }
 
         /// <param name="factory">创建/销毁工厂；资源层在这里申请与释放租约。</param>
@@ -82,6 +84,7 @@ namespace NowFrameWork.Core.Pooling
             double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null,
             IAsyncPoolItemFactory<T> asyncFactory = null)
         {
+            MainThreadGuard.Assert("ObjectPool.ObjectPool");
             if (autoRecycleSeconds > 0d && clock == null)
                 throw new ArgumentNullException(nameof(clock), "启用自动回收必须提供时钟");
 
@@ -96,15 +99,51 @@ namespace NowFrameWork.Core.Pooling
             if (prewarm > 0) Prewarm(prewarm);
         }
 
-        public int ActiveCount => _active.Count;
-        public int InactiveCount => _idleCount;
-        public int TotalCount => _live;
-        public bool IsDisposed => _disposed;
+        public int ActiveCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ObjectPool.ActiveCount");
+                return _active.Count;
+            }
+        }
+        public int InactiveCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ObjectPool.InactiveCount");
+                return _idleCount;
+            }
+        }
+        public int TotalCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ObjectPool.TotalCount");
+                return _live;
+            }
+        }
+        public bool IsDisposed
+        {
+            get
+            {
+                MainThreadGuard.Assert("ObjectPool.IsDisposed");
+                return _disposed;
+            }
+        }
 
-        public PoolStats Stats => new PoolStats(_created, _destroyed, _active.Count, _idleCount, _reserved, _maxSize);
+        public PoolStats Stats
+        {
+            get
+            {
+                MainThreadGuard.Assert("ObjectPool.Stats");
+                return new PoolStats(_created, _destroyed, _active.Count, _idleCount, _reserved, _maxSize);
+            }
+        }
 
         public T Get()
         {
+            MainThreadGuard.Assert("ObjectPool.Get");
             ThrowIfDisposed();
 
             while (_idleCount > 0)
@@ -127,6 +166,7 @@ namespace NowFrameWork.Core.Pooling
 
         public bool TryGet(out T item)
         {
+            MainThreadGuard.Assert("ObjectPool.TryGet");
             ThrowIfDisposed();
 
             while (_idleCount > 0)
@@ -152,6 +192,7 @@ namespace NowFrameWork.Core.Pooling
         /// </summary>
         public async UniTask<T> RentAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("ObjectPool.RentAsync");
             ThrowIfDisposed();
             ct.ThrowIfCancellationRequested();
 
@@ -189,6 +230,7 @@ namespace NowFrameWork.Core.Pooling
 
         public void Release(T item)
         {
+            MainThreadGuard.Assert("ObjectPool.Release");
             ThrowIfDisposed();
 
             if (item == null) throw new PoolUsageException("归还 null 对象");
@@ -215,6 +257,7 @@ namespace NowFrameWork.Core.Pooling
 
         public int Prewarm(int count)
         {
+            MainThreadGuard.Assert("ObjectPool.Prewarm");
             ThrowIfDisposed();
             if (count <= 0) return 0;
 
@@ -231,6 +274,7 @@ namespace NowFrameWork.Core.Pooling
 
         public void Tick(double now)
         {
+            MainThreadGuard.Assert("ObjectPool.Tick");
             if (_disposed || _autoRecycleSeconds <= 0d || _idleCount == 0) return;
 
             // 倒序 + 换尾删除：O(k)，不分配临时集合
@@ -246,6 +290,7 @@ namespace NowFrameWork.Core.Pooling
 
         public void Clear(bool includeActive)
         {
+            MainThreadGuard.Assert("ObjectPool.Clear");
             for (int i = 0; i < _idleCount; i++) DestroyItem(_idle[i].Value);
             _idle.Clear();
             _idleCount = 0;
@@ -260,6 +305,7 @@ namespace NowFrameWork.Core.Pooling
 
         public void Dispose(bool force)
         {
+            MainThreadGuard.Assert("ObjectPool.Dispose");
             if (_disposed) return;
 
             if (_active.Count > 0 && !force)

@@ -1,0 +1,4 @@
+Development: PASS — unbound worker rejected; host bound; worker rebind rejected
+Release: PASS — assertion call removed; method IL is ret only; no host binding required
+SDK: .NET 9.0.315; source: Framework/com.now.nowframework.core/Runtime/Threading/MainThreadGuard.cs
+Archived Probe.csproj.txt uses the original local absolute source path. Copy to a build directory and adjust paths before rerunning elsewhere. Program.cs.txt must be renamed Program.cs.

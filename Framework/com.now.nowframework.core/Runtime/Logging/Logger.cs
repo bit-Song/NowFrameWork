@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 
@@ -31,6 +32,7 @@ namespace NowFrameWork.Core.Logging
         /// <param name="clock">时间源；为空时使用常量 0，由平台包注入真实时间。</param>
         public Logger(LogLevel minLevel = LogLevel.Info, int ringCapacity = 256, Func<double> clock = null)
         {
+            MainThreadGuard.Assert("Logger.Logger");
             if (ringCapacity < 0) throw new ArgumentOutOfRangeException(nameof(ringCapacity));
 
             _minLevel = minLevel;
@@ -38,23 +40,44 @@ namespace NowFrameWork.Core.Logging
             _clock = clock ?? s_zeroClock;
         }
 
-        public LogLevel MinLevel => _minLevel;
+        public LogLevel MinLevel
+        {
+            get
+            {
+                MainThreadGuard.Assert("Logger.MinLevel");
+                return _minLevel;
+            }
+        }
 
-        public bool IsEnabled(LogLevel level) => level >= _minLevel && level != LogLevel.Off;
+        public bool IsEnabled(LogLevel level)
+        {
+            MainThreadGuard.Assert("Logger.IsEnabled");
+            return level >= _minLevel && level != LogLevel.Off;
+        }
 
-        public void SetMinLevel(LogLevel level) => _minLevel = level;
+        public void SetMinLevel(LogLevel level)
+        {
+            MainThreadGuard.Assert("Logger.SetMinLevel");
+            _minLevel = level;
+        }
 
         public void AddSink(ILogSink sink)
         {
+            MainThreadGuard.Assert("Logger.AddSink");
             if (sink == null) throw new ArgumentNullException(nameof(sink));
             if (_sinks.Contains(sink)) return;
             _sinks.Add(sink);
         }
 
-        public void RemoveSink(ILogSink sink) => _sinks.Remove(sink);
+        public void RemoveSink(ILogSink sink)
+        {
+            MainThreadGuard.Assert("Logger.RemoveSink");
+            _sinks.Remove(sink);
+        }
 
         public void Write(LogLevel level, string tag, string message)
         {
+            MainThreadGuard.Assert("Logger.Write");
             if (!IsEnabled(level)) return;
 
             var entry = new LogEntry(level, tag, message ?? string.Empty, _clock());
@@ -80,6 +103,7 @@ namespace NowFrameWork.Core.Logging
         /// <summary>把近期日志按「旧 → 新」写入调用方缓冲（内部先 Clear），用于崩溃报告。</summary>
         public void DumpRecent(List<LogEntry> buffer)
         {
+            MainThreadGuard.Assert("Logger.DumpRecent");
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             buffer.Clear();

@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 
@@ -39,11 +40,13 @@ namespace NowFrameWork.Core.Events
 
         public EventBus(ILog log = null)
         {
+            MainThreadGuard.Assert("EventBus.EventBus");
             _log = log ?? Logs.Null;
         }
 
         public IEventSubscription Subscribe<T>(EventHandler<T> handler) where T : struct
         {
+            MainThreadGuard.Assert("EventBus.Subscribe");
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
             Channel<T> channel = GetOrCreateChannel<T>();
@@ -53,6 +56,7 @@ namespace NowFrameWork.Core.Events
 
         public IEventSubscription Subscribe<T>(IEventHandler<T> handler) where T : struct
         {
+            MainThreadGuard.Assert("EventBus.Subscribe");
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
             Channel<T> channel = GetOrCreateChannel<T>();
@@ -62,6 +66,7 @@ namespace NowFrameWork.Core.Events
 
         public void Publish<T>(in T evt) where T : struct
         {
+            MainThreadGuard.Assert("EventBus.Publish");
             if (_publishDepth >= MaxPublishDepth)
             {
                 // 递归保护：丢弃这一层，避免无限嵌套直到栈溢出
@@ -85,11 +90,13 @@ namespace NowFrameWork.Core.Events
 
         public void PublishDeferred<T>(in T evt) where T : struct
         {
+            MainThreadGuard.Assert("EventBus.PublishDeferred");
             GetOrCreateChannel<T>().Enqueue(in evt);
         }
 
         public void FlushDeferred()
         {
+            MainThreadGuard.Assert("EventBus.FlushDeferred");
             if (_channels.Count == 0) return;
 
             // 遍历字典期间 handler 可能订阅新类型 → 先快照键；缓冲复用，避免每帧分配
@@ -102,6 +109,7 @@ namespace NowFrameWork.Core.Events
 
         public void Clear()
         {
+            MainThreadGuard.Assert("EventBus.Clear");
             foreach (KeyValuePair<Type, IChannel> pair in _channels) pair.Value.Clear();
             _channels.Clear();
         }
@@ -259,6 +267,7 @@ namespace NowFrameWork.Core.Events
 
             public void Dispose()
             {
+                MainThreadGuard.Assert("EventSubscription.Dispose");
                 if (IsDisposed) return;
                 IsDisposed = true;
                 _bus.Unsubscribe(this);

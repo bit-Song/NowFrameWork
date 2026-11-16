@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -41,16 +42,32 @@ namespace NowFrameWork.Assets
 
         public HotUpdateService(IAssetUpdateProvider provider, ILog log = null)
         {
+            MainThreadGuard.Assert("HotUpdateService.HotUpdateService");
             _provider = Guard.NotNull(provider, nameof(provider));
             _log = log ?? Logs.Null;
         }
 
-        public HotUpdateState State => _state;
-        public bool IsBusy => _state != HotUpdateState.Idle;
+        public HotUpdateState State
+        {
+            get
+            {
+                MainThreadGuard.Assert("HotUpdateService.State");
+                return _state;
+            }
+        }
+        public bool IsBusy
+        {
+            get
+            {
+                MainThreadGuard.Assert("HotUpdateService.IsBusy");
+                return _state != HotUpdateState.Idle;
+            }
+        }
 
         /// <summary>只检查，不更新 Catalog，不提供可能基于旧目录的下载大小。</summary>
         public async UniTask<bool> CheckAsync(CancellationToken ct = default)
         {
+            MainThreadGuard.Assert("HotUpdateService.CheckAsync");
             EnsureIdle();
             ct.ThrowIfCancellationRequested();
             _state = HotUpdateState.Checking;
@@ -60,6 +77,7 @@ namespace NowFrameWork.Assets
 
         public async UniTask<HotUpdatePlan> PrepareAsync(object key, CancellationToken ct = default)
         {
+            MainThreadGuard.Assert("HotUpdateService.PrepareAsync");
             EnsureIdle();
             if (key == null) throw new ArgumentNullException(nameof(key));
             ct.ThrowIfCancellationRequested();
@@ -84,6 +102,7 @@ namespace NowFrameWork.Assets
 
         public async UniTask DownloadAsync(object key, IProgress<float> progress = null, CancellationToken ct = default)
         {
+            MainThreadGuard.Assert("HotUpdateService.DownloadAsync");
             EnsureIdle();
             ct.ThrowIfCancellationRequested();
             if (_preparedKey == null || !Equals(_preparedKey, key))

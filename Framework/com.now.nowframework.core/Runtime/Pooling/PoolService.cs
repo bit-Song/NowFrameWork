@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 
@@ -27,16 +28,25 @@ namespace NowFrameWork.Core.Pooling
 
         public PoolService(IClock clock, ILog log = null)
         {
+            MainThreadGuard.Assert("PoolService.PoolService");
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _log = log ?? Logs.Null;
         }
 
-        public int PoolCount => _all.Count;
+        public int PoolCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("PoolService.PoolCount");
+                return _all.Count;
+            }
+        }
 
         public ObjectPool<T> GetOrCreate<T>(string key, Func<T> create, Action<T> destroy = null,
             int maxSize = 0, double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null)
             where T : class
         {
+            MainThreadGuard.Assert("PoolService.GetOrCreate");
             ThrowIfDisposed();
             return GetOrCreate(key, new DelegateFactory<T>(create, destroy), maxSize, autoRecycleSeconds, prewarm, isValid);
         }
@@ -45,6 +55,7 @@ namespace NowFrameWork.Core.Pooling
             int maxSize = 0, double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null)
             where T : class
         {
+            MainThreadGuard.Assert("PoolService.GetOrCreate");
             ThrowIfDisposed();
             if (string.IsNullOrEmpty(key)) throw new ArgumentException("池键不能为空", nameof(key));
 
@@ -62,6 +73,7 @@ namespace NowFrameWork.Core.Pooling
 
         public bool TryGetPool<T>(string key, out ObjectPool<T> pool) where T : class
         {
+            MainThreadGuard.Assert("PoolService.TryGetPool");
             if (_byKey.TryGetValue(key, out IPool existing) && existing is ObjectPool<T> typed)
             {
                 pool = typed;
@@ -75,6 +87,7 @@ namespace NowFrameWork.Core.Pooling
         /// <summary>释放并移除一个池；资源卸载时调用。仍有未归还对象需要 force。</summary>
         public bool DisposePool(string key, bool force = false)
         {
+            MainThreadGuard.Assert("PoolService.DisposePool");
             if (!_byKey.TryGetValue(key, out IPool pool)) return false;
 
             pool.Dispose(force);
@@ -94,6 +107,7 @@ namespace NowFrameWork.Core.Pooling
         /// <summary>每帧驱动：回收各池中闲置超时的对象。用真实时间，暂停时照常回收。</summary>
         public void Tick()
         {
+            MainThreadGuard.Assert("PoolService.Tick");
             if (_disposed) return;
 
             double now = _clock.UnscaledNow;
@@ -112,11 +126,13 @@ namespace NowFrameWork.Core.Pooling
 
         public void ClearAll(bool includeActive)
         {
+            MainThreadGuard.Assert("PoolService.ClearAll");
             for (int i = 0; i < _all.Count; i++) _all[i].Clear(includeActive);
         }
 
         public void Dispose()
         {
+            MainThreadGuard.Assert("PoolService.Dispose");
             if (_disposed) return;
 
             for (int i = 0; i < _all.Count; i++) _all[i].Dispose(force: true);

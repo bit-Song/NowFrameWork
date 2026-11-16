@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace NowFrameWork.Assets
         /// <summary>卸载场景；幂等。</summary>
         public UniTask UnloadAsync()
         {
+            MainThreadGuard.Assert("SceneLease.UnloadAsync");
             if (IsUnloaded) return UniTask.CompletedTask;
             if (_unloading != null) return _unloading.Task;
             var completion = new UniTaskCompletionSource();

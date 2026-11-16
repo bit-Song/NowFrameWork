@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 
 namespace NowFrameWork.Assets
@@ -40,6 +41,7 @@ namespace NowFrameWork.Assets
         {
             get
             {
+                MainThreadGuard.Assert("AssetLease.Asset");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (IsReleased) throw new InvalidOperationException("租约已释放，不能再使用 Asset: " + CanonicalKey);
 #endif
@@ -60,6 +62,7 @@ namespace NowFrameWork.Assets
 
         public void Dispose()
         {
+            MainThreadGuard.Assert("AssetLease.Dispose");
             if (IsReleased) return;
 
             IsReleased = true;

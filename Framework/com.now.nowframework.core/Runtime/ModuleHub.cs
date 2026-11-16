@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -51,14 +52,23 @@ namespace NowFrameWork.Core
         /// <param name="log">可选日志；为空时使用 <see cref="Logs.Null"/>，不产生任何开销。</param>
         public ModuleHub(ILog log = null)
         {
+            MainThreadGuard.Assert("ModuleHub.ModuleHub");
             _log = log ?? Logs.Null;
             _modulesView = _modules.AsReadOnly();   // 构造一次，之后每次访问都复用
         }
 
-        public IReadOnlyList<IAppModule> Modules => _modulesView;
+        public IReadOnlyList<IAppModule> Modules
+        {
+            get
+            {
+                MainThreadGuard.Assert("ModuleHub.Modules");
+                return _modulesView;
+            }
+        }
 
         public void Register(IAppModule module)
         {
+            MainThreadGuard.Assert("ModuleHub.Register");
             if (module == null) throw new ModuleRegistrationException("Register 收到 null 模块");
             if (string.IsNullOrEmpty(module.Id)) throw new ModuleRegistrationException("模块 Id 不能为空: " + module.GetType().Name);
             if (_hasStarted || _starting || _shutdownFinished != null)
@@ -77,6 +87,7 @@ namespace NowFrameWork.Core
         /// </summary>
         public async UniTask StartupAsync(CancellationToken ct, IStartupProgress progress)
         {
+            MainThreadGuard.Assert("ModuleHub.StartupAsync");
             if (_hasStarted || _starting || _shutdownFinished != null)
                 throw new InvalidOperationException("ModuleHub 已启动或正在启停");
 
@@ -146,6 +157,7 @@ namespace NowFrameWork.Core
 
         public UniTask ShutdownAsync(CancellationToken ct = default)
         {
+            MainThreadGuard.Assert("ModuleHub.ShutdownAsync");
             if (_shutdownFinished != null) return _shutdownFinished.Task;
             var completion = new UniTaskCompletionSource();
             _shutdownFinished = completion;
@@ -260,6 +272,7 @@ namespace NowFrameWork.Core
 
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
+            MainThreadGuard.Assert("ModuleHub.Tick");
             List<ITickable> list = _tickables;
             for (int i = 0; i < list.Count; i++)
             {
@@ -270,6 +283,7 @@ namespace NowFrameWork.Core
 
         public void LateTick()
         {
+            MainThreadGuard.Assert("ModuleHub.LateTick");
             List<ILateTickable> list = _lateTickables;
             for (int i = 0; i < list.Count; i++)
             {
@@ -280,6 +294,7 @@ namespace NowFrameWork.Core
 
         public void FixedTick(float fixedDeltaTime)
         {
+            MainThreadGuard.Assert("ModuleHub.FixedTick");
             List<IFixedTickable> list = _fixedTickables;
             for (int i = 0; i < list.Count; i++)
             {
@@ -303,12 +318,14 @@ namespace NowFrameWork.Core
 
         public T Get<T>() where T : class
         {
+            MainThreadGuard.Assert("ModuleHub.Get");
             if (TryGet<T>(out T module)) return module;
             throw new InvalidOperationException("模块未注册: " + typeof(T).Name);
         }
 
         public bool TryGet<T>(out T module) where T : class
         {
+            MainThreadGuard.Assert("ModuleHub.TryGet");
             for (int i = 0; i < _modules.Count; i++)
             {
                 if (_modules[i] is T found)
@@ -324,6 +341,7 @@ namespace NowFrameWork.Core
 
         public int TryGetAll<T>(List<T> buffer) where T : class
         {
+            MainThreadGuard.Assert("ModuleHub.TryGetAll");
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             buffer.Clear();

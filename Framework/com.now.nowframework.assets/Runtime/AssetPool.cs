@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -72,6 +73,7 @@ namespace NowFrameWork.Assets
             Func<T> create, Action<T> destroy, IClock clock, ILog log = null, int maxSize = 0,
             int settleFrames = 60, Func<UniTask> frameWaiter = null, CancellationToken ct = default)
         {
+            MainThreadGuard.Assert("AssetPool.CreateAsync");
             if (service == null) throw new ArgumentNullException(nameof(service));
             if (create == null) throw new ArgumentNullException(nameof(create));
             if (destroy == null) throw new ArgumentNullException(nameof(destroy));
@@ -95,6 +97,7 @@ namespace NowFrameWork.Assets
 
         public UniTask<T> RentAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AssetPool.RentAsync");
             ct.ThrowIfCancellationRequested();
             return UniTask.FromResult(_pool.Get());
         }
@@ -106,6 +109,7 @@ namespace NowFrameWork.Assets
         /// <summary>销毁全部实例 → 等它们真的消失 → 释放保活租约。</summary>
         public UniTask DisposeAsync()
         {
+            MainThreadGuard.Assert("AssetPool.DisposeAsync");
             if (_disposed) return UniTask.CompletedTask;
             if (_disposing != null) return _disposing.Task;
             var completion = new UniTaskCompletionSource();

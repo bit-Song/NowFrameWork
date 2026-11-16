@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Threading;
 
@@ -20,27 +21,48 @@ namespace NowFrameWork.Core.Async
 
         public CancellationScope(CancellationToken parent = default)
         {
+            MainThreadGuard.Assert("CancellationScope.CancellationScope");
             _cts = parent.CanBeCanceled
                 ? CancellationTokenSource.CreateLinkedTokenSource(parent)
                 : new CancellationTokenSource();
         }
 
-        public CancellationToken Token => _cts.Token;
+        public CancellationToken Token
+        {
+            get
+            {
+                MainThreadGuard.Assert("CancellationScope.Token");
+                return _cts.Token;
+            }
+        }
 
-        public bool IsCancellationRequested => _cts.IsCancellationRequested;
+        public bool IsCancellationRequested
+        {
+            get
+            {
+                MainThreadGuard.Assert("CancellationScope.IsCancellationRequested");
+                return _cts.IsCancellationRequested;
+            }
+        }
 
         /// <summary>派生一个子范围；父范围取消时它随之取消。</summary>
-        public CancellationScope CreateChild() => new CancellationScope(Token);
+        public CancellationScope CreateChild()
+        {
+            MainThreadGuard.Assert("CancellationScope.CreateChild");
+            return new CancellationScope(Token);
+        }
 
         /// <summary>主动取消（不释放）。</summary>
         public void Cancel()
         {
+            MainThreadGuard.Assert("CancellationScope.Cancel");
             if (_disposed) return;
             _cts.Cancel();
         }
 
         public void Dispose()
         {
+            MainThreadGuard.Assert("CancellationScope.Dispose");
             if (_disposed) return;
             _disposed = true;
 

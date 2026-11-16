@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -29,14 +30,23 @@ namespace NowFrameWork.Assets
 
         public ConfigService(IAssetService assets)
         {
+            MainThreadGuard.Assert("ConfigService.ConfigService");
             _assets = Guard.NotNull(assets, nameof(assets));
         }
 
-        public int Count => _values.Count;
+        public int Count
+        {
+            get
+            {
+                MainThreadGuard.Assert("ConfigService.Count");
+                return _values.Count;
+            }
+        }
 
         /// <summary>加载配置；同一 key 只会真正加载一次。类型不匹配会抛 InvalidCastException。</summary>
         public async UniTask<T> LoadAsync<T>(object key, CancellationToken ct = default) where T : UnityEngine.Object
         {
+            MainThreadGuard.Assert("ConfigService.LoadAsync");
             if (_disposed) throw new ObjectDisposedException(nameof(ConfigService));
             ct.ThrowIfCancellationRequested();
 
@@ -78,6 +88,7 @@ namespace NowFrameWork.Assets
         /// <summary>归还全部配置租约；幂等。</summary>
         public UniTask DisposeAsync()
         {
+            MainThreadGuard.Assert("ConfigService.DisposeAsync");
             if (_disposed) return UniTask.CompletedTask;
             _disposed = true;
 

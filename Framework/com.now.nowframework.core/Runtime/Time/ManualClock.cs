@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using NowFrameWork.Core;
 
 namespace NowFrameWork.Core.Time
@@ -13,23 +14,52 @@ namespace NowFrameWork.Core.Time
         float _delta;
         float _unscaledDelta;
 
-        public double Now => _now;
-        public double UnscaledNow => _unscaledNow;
-        public float DeltaTime => _delta;
-        public float UnscaledDeltaTime => _unscaledDelta;
+        public double Now
+        {
+            get
+            {
+                MainThreadGuard.Assert("ManualClock.Now");
+                return _now;
+            }
+        }
+        public double UnscaledNow
+        {
+            get
+            {
+                MainThreadGuard.Assert("ManualClock.UnscaledNow");
+                return _unscaledNow;
+            }
+        }
+        public float DeltaTime
+        {
+            get
+            {
+                MainThreadGuard.Assert("ManualClock.DeltaTime");
+                return _delta;
+            }
+        }
+        public float UnscaledDeltaTime
+        {
+            get
+            {
+                MainThreadGuard.Assert("ManualClock.UnscaledDeltaTime");
+                return _unscaledDelta;
+            }
+        }
 
         float _timeScale = 1f;
 
         /// <summary>时间缩放；设为 0 可模拟暂停，负值按 0 处理（时间不倒退）。</summary>
         public float TimeScale
         {
-            get => _timeScale;
-            set => _timeScale = value < 0f ? 0f : value;
+            get { MainThreadGuard.Assert("ManualClock.TimeScale"); return _timeScale; }
+            set { MainThreadGuard.Assert("ManualClock.TimeScale"); _timeScale = value < 0f ? 0f : value; }
         }
 
         /// <summary>推进一帧：先更新增量，再累加两个时间轴。</summary>
         public void Advance(float unscaledDelta)
         {
+            MainThreadGuard.Assert("ManualClock.Advance");
             if (unscaledDelta < 0f) unscaledDelta = 0f;
 
             _unscaledDelta = unscaledDelta;

@@ -1,0 +1,50 @@
+using System;
+using System.IO;
+using System.Text;
+using NowFrameWork.Core.Storage;
+using NowFrameWork.Core.Threading;
+
+sealed class Options { public int Number { get; set; } }
+sealed class Codec : ISettingsCodec<Options>
+{
+    public int Version { get; set; } = 1;
+    public byte[] Encode(Options value) => Encoding.UTF8.GetBytes(value.Number.ToString());
+    public Options Decode(byte[] payload, int version) => new Options { Number = int.Parse(Encoding.UTF8.GetString(payload)) };
+}
+static class Program
+{
+    static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    static int Main()
+    {
+        MainThreadGuard.BindCurrentThread();
+        string directory = Path.Combine(Path.GetTempPath(), "nwf-storage-probe-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var first = new FileSettingsStore<Options>(directory, "test", new Codec());
+            Check(first.Load(() => new Options { Number = 1 }).Source == SettingsLoadSource.Defaults, "defaults");
+            first.Save(); first.Value.Number = 2; first.Save();
+            var primary = File.ReadAllBytes(first.FilePath); var backup = File.ReadAllBytes(first.BackupPath);
+            Directory.CreateDirectory(first.TemporaryPath);
+            bool writeRejected = false;
+            try { first.Save(); } catch (IOException) { writeRejected = true; } catch (UnauthorizedAccessException) { writeRejected = true; }
+            Check(writeRejected, "write failure must propagate");
+            Check(Convert.ToBase64String(primary) == Convert.ToBase64String(File.ReadAllBytes(first.FilePath)), "primary preserved");
+            Directory.Delete(first.TemporaryPath);
+            File.WriteAllText(first.FilePath, "broken");
+            var recovered = new FileSettingsStore<Options>(directory, "test", new Codec());
+            Check(recovered.Load(() => throw new Exception("no reset")).Source == SettingsLoadSource.Backup, "backup recovery");
+            Check(recovered.Value.Number == 1, "backup value");
+            recovered.Value.Number = 3; recovered.Save();
+            Check(Convert.ToBase64String(backup) == Convert.ToBase64String(File.ReadAllBytes(first.BackupPath)), "valid backup preserved");
+            var future = new FileSettingsStore<Options>(directory, "test", new Codec { Version = 2 });
+            Check(future.Load(() => null).Migrated, "schema migration flag"); future.Save();
+            var old = new FileSettingsStore<Options>(directory, "test", new Codec());
+            bool compatibility = false;
+            try { old.Load(() => null); } catch (SettingsCompatibilityException) { compatibility = true; }
+            Check(compatibility, "old client must reject future data");
+            Console.WriteLine("PASS: Core-only .NET build; roundtrip; write failure preserves files; backup recovery/repair; schema migration; future-schema protection");
+            return 0;
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+}

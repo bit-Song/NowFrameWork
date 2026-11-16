@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,12 +34,14 @@ namespace NowFrameWork.Unity
 
         public CrashDump(Logger log, string directory)
         {
+            MainThreadGuard.Assert("CrashDump.CrashDump");
             _log = log ?? throw new ArgumentNullException(nameof(log));
             _directory = directory;
         }
 
         public void Install()
         {
+            MainThreadGuard.Assert("CrashDump.Install");
             if (_installed) return;
 
             Application.logMessageReceived += OnLogMessage;
@@ -48,6 +51,7 @@ namespace NowFrameWork.Unity
 
         public void Dispose()
         {
+            MainThreadGuard.Assert("CrashDump.Dispose");
             if (!_installed) return;
 
             Application.logMessageReceived -= OnLogMessage;
@@ -58,6 +62,7 @@ namespace NowFrameWork.Unity
         /// <summary>把最近的日志写到文件，返回路径；失败返回 null。</summary>
         public string Dump(string reason)
         {
+            MainThreadGuard.Assert("CrashDump.Dump");
             try
             {
                 if (string.IsNullOrEmpty(_directory)) return null;

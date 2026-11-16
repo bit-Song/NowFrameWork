@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="206" result="Passed" total="206" passed="206" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.6051835">
+  <test-suite type="TestSuite" id="1261" name="NowFrameWork" fullname="NowFrameWork" runstate="Runnable" testcasecount="206" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.605184" total="206" passed="206" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties />
+    <test-suite type="SetUpFixture" id="1262" name="NowFrameWork.Assets.Addressables.Tests.dll" fullname="AddressablesMainThreadTestHost" classname="AddressablesMainThreadTestHost" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.089156" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="40344" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+      </properties>
+      <test-suite type="TestSuite" id="1273" name="NowFrameWork" fullname="NowFrameWork" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.086553" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1274" name="Assets" fullname="NowFrameWork.Assets" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.083822" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1275" name="Adapter" fullname="NowFrameWork.Assets.Adapter" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.080448" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1276" name="Tests" fullname="NowFrameWork.Assets.Adapter.Tests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.077264" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1263" name="MainThreadGuardTests" fullname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests" classname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.027438" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1264" name="WorkerInitialize_IsRejectedBeforeAddressables" fullname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests.WorkerInitialize_IsRejectedBeforeAddressables" methodname="WorkerInitialize_IsRejectedBeforeAddressables" classname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests" runstate="Runnable" seed="2078685327" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.013758" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1265" name="WorkerSceneLoad_IsRejectedBeforeAddressables" fullname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests.WorkerSceneLoad_IsRejectedBeforeAddressables" methodname="WorkerSceneLoad_IsRejectedBeforeAddressables" classname="NowFrameWork.Assets.Adapter.Tests.MainThreadGuardTests" runstate="Runnable" seed="1608022400" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002912" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1266" name="OperationTests" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.046198" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1268" name="CancelledWait_DoesNotReleaseOrCancelUnderlyingOperation" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests.CancelledWait_DoesNotReleaseOrCancelUnderlyingOperation" methodname="CancelledWait_DoesNotReleaseOrCancelUnderlyingOperation" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" seed="772103613" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.030627" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  </properties>
+                </test-case>
+                <test-case id="1267" name="CompletedWait_LeavesReleaseToOwner" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests.CompletedWait_LeavesReleaseToOwner" methodname="CompletedWait_LeavesReleaseToOwner" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" seed="2119214376" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000701" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1271" name="FailedWait_LeavesHandleForSingleOwnerRelease" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests.FailedWait_LeavesHandleForSingleOwnerRelease" methodname="FailedWait_LeavesHandleForSingleOwnerRelease" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" seed="859814137" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003955" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1270" name="PreCancelledCompletedWait_PreservesCancellationType" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests.PreCancelledCompletedWait_PreservesCancellationType" methodname="PreCancelledCompletedWait_PreservesCancellationType" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" seed="123113942" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000991" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1269" name="Timeout_DoesNotReleaseHandle_AndLateCompletionIsSafe" fullname="NowFrameWork.Assets.Adapter.Tests.OperationTests.Timeout_DoesNotReleaseHandle_AndLateCompletionIsSafe" methodname="Timeout_DoesNotReleaseHandle_AndLateCompletionIsSafe" classname="NowFrameWork.Assets.Adapter.Tests.OperationTests" runstate="Runnable" seed="446832590" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.007911" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="SetUpFixture" id="1277" name="NowFrameWork.Assets.Tests.dll" fullname="AssetsMainThreadTestHost" classname="AssetsMainThreadTestHost" runstate="Runnable" testcasecount="54" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.142806" total="54" passed="54" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="40344" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+      </properties>
+      <test-suite type="TestSuite" id="1341" name="NowFrameWork" fullname="NowFrameWork" runstate="Runnable" testcasecount="54" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.139186" total="54" passed="54" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1342" name="Assets" fullname="NowFrameWork.Assets" runstate="Runnable" testcasecount="54" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.134853" total="54" passed="54" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1343" name="Tests" fullname="NowFrameWork.Assets.Tests" runstate="Runnable" testcasecount="54" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.131270" total="54" passed="54" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1278" name="AssetPoolTests" fullname="NowFrameWork.Assets.Tests.AssetPoolTests" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.028874" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1279" name="CreateAsync_AcquiresKeepAlive_AndRents" fullname="NowFrameWork.Assets.Tests.AssetPoolTests.CreateAsync_AcquiresKeepAlive_AndRents" methodname="CreateAsync_AcquiresKeepAlive_AndRents" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" seed="1931840575" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.016953" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1281" name="DisposeAsync_DestroysInstances_ThenReleasesKeepAlive" fullname="NowFrameWork.Assets.Tests.AssetPoolTests.DisposeAsync_DestroysInstances_ThenReleasesKeepAlive" methodname="DisposeAsync_DestroysInstances_ThenReleasesKeepAlive" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" seed="507738061" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002521" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1283" name="DisposeAsync_IsIdempotent" fullname="NowFrameWork.Assets.Tests.AssetPoolTests.DisposeAsync_IsIdempotent" methodname="DisposeAsync_IsIdempotent" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" seed="1752466415" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001095" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1282" name="DisposeAsync_TimeoutRetainsLease_AndCanRetryAfterDestruction" fullname="NowFrameWork.Assets.Tests.AssetPoolTests.DisposeAsync_TimeoutRetainsLease_AndCanRetryAfterDestruction" methodname="DisposeAsync_TimeoutRetainsLease_AndCanRetryAfterDestruction" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" seed="1277732478" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001717" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1280" name="Rent_ReusesIdleInstance" fullname="NowFrameWork.Assets.Tests.AssetPoolTests.Rent_ReusesIdleInstance" methodname="Rent_ReusesIdleInstance" classname="NowFrameWork.Assets.Tests.AssetPoolTests" runstate="Runnable" seed="971455054" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001320" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1284" name="AssetServiceTests" fullname="NowFrameWork.Assets.Tests.AssetServiceTests" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.023109" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1285" name="Acquire_LoadsOnce_AndReturnsLease" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.Acquire_LoadsOnce_AndReturnsLease" methodname="Acquire_LoadsOnce_AndReturnsLease" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="2062217979" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002508" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1289" name="AddressAndGuid_ShareOneLoad" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.AddressAndGuid_ShareOneLoad" methodname="AddressAndGuid_ShareOneLoad" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="397002465" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001401" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1293" name="AllWaitersCancelled_LoadCompletes_ReleasesHandle" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.AllWaitersCancelled_LoadCompletes_ReleasesHandle" methodname="AllWaitersCancelled_LoadCompletes_ReleasesHandle" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1689580259" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.007704" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1292" name="CacheAndBusiness_Mixed_OneLoadTwoLeases" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.CacheAndBusiness_Mixed_OneLoadTwoLeases" methodname="CacheAndBusiness_Mixed_OneLoadTwoLeases" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1441391043" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002043" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1295" name="CountingInvariants_HoldAfterFailureAndCancel" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.CountingInvariants_HoldAfterFailureAndCancel" methodname="CountingInvariants_HoldAfterFailureAndCancel" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1555799311" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002181" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1294" name="CountingInvariants_HoldAfterMixedOperations" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.CountingInvariants_HoldAfterMixedOperations" methodname="CountingInvariants_HoldAfterMixedOperations" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="192501446" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000942" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1290" name="LoadFailure_ProducesNoLease_AndCanRetry" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.LoadFailure_ProducesNoLease_AndCanRetry" methodname="LoadFailure_ProducesNoLease_AndCanRetry" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1307253048" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001033" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1296" name="PendingRequests_ReturnsToZero" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.PendingRequests_ReturnsToZero" methodname="PendingRequests_ReturnsToZero" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1524620487" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000562" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1291" name="PreCancelledToken_FailsWithoutLoading" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.PreCancelledToken_FailsWithoutLoading" methodname="PreCancelledToken_FailsWithoutLoading" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1056444472" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000398" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1287" name="ReleaseOne_KeepsHandle_ReleaseAll_Releases" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.ReleaseOne_KeepsHandle_ReleaseAll_Releases" methodname="ReleaseOne_KeepsHandle_ReleaseAll_Releases" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="591540479" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000682" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1288" name="ReleaseTwice_IsIdempotent" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.ReleaseTwice_IsIdempotent" methodname="ReleaseTwice_IsIdempotent" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="1286102134" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000646" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1286" name="SameKey_TwoLeases_OneLoad" fullname="NowFrameWork.Assets.Tests.AssetServiceTests.SameKey_TwoLeases_OneLoad" methodname="SameKey_TwoLeases_OneLoad" classname="NowFrameWork.Assets.Tests.AssetServiceTests" runstate="Runnable" seed="255087471" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000788" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1297" name="AssetsModuleTests" fullname="NowFrameWork.Assets.Tests.AssetsModuleTests" classname="NowFrameWork.Assets.Tests.AssetsModuleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003939" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1298" name="Initialize_DelegatesToService" fullname="NowFrameWork.Assets.Tests.AssetsModuleTests.Initialize_DelegatesToService" methodname="Initialize_DelegatesToService" classname="NowFrameWork.Assets.Tests.AssetsModuleTests" runstate="Runnable" seed="47869290" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000629" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1299" name="Shutdown_WithLease_DoesNotThrow" fullname="NowFrameWork.Assets.Tests.AssetsModuleTests.Shutdown_WithLease_DoesNotThrow" methodname="Shutdown_WithLease_DoesNotThrow" classname="NowFrameWork.Assets.Tests.AssetsModuleTests" runstate="Runnable" seed="462584887" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002156" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1300" name="ConfigServiceTests" fullname="NowFrameWork.Assets.Tests.ConfigServiceTests" classname="NowFrameWork.Assets.Tests.ConfigServiceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.008846" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1302" name="DisposeAsync_ReleasesAllLeases" fullname="NowFrameWork.Assets.Tests.ConfigServiceTests.DisposeAsync_ReleasesAllLeases" methodname="DisposeAsync_ReleasesAllLeases" classname="NowFrameWork.Assets.Tests.ConfigServiceTests" runstate="Runnable" seed="211442942" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.005551" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1301" name="Load_SameKey_LoadsOnce" fullname="NowFrameWork.Assets.Tests.ConfigServiceTests.Load_SameKey_LoadsOnce" methodname="Load_SameKey_LoadsOnce" classname="NowFrameWork.Assets.Tests.ConfigServiceTests" runstate="Runnable" seed="670637574" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001257" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1303" name="Load_TypeMismatch_Throws_AndReleasesLease" fullname="NowFrameWork.Assets.Tests.ConfigServiceTests.Load_TypeMismatch_Throws_AndReleasesLease" methodname="Load_TypeMismatch_Throws_AndReleasesLease" classname="NowFrameWork.Assets.Tests.ConfigServiceTests" runstate="Runnable" seed="377131790" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000971" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1304" name="HotUpdateServiceTests" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.008153" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1307" name="Check_DoesNotActivateCatalog" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.Check_DoesNotActivateCatalog" methodname="Check_DoesNotActivateCatalog" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="26486364" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001673" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1308" name="Download_WithoutPreparedMatchingKey_IsRejected" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.Download_WithoutPreparedMatchingKey_IsRejected" methodname="Download_WithoutPreparedMatchingKey_IsRejected" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="2136035026" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002100" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1310" name="DownloadFailure_CanRetryPreparedPlan" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.DownloadFailure_CanRetryPreparedPlan" methodname="DownloadFailure_CanRetryPreparedPlan" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="1684847569" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000848" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1306" name="Prepare_NoCatalogUpdate_StillMeasuresMissingCache" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.Prepare_NoCatalogUpdate_StillMeasuresMissingCache" methodname="Prepare_NoCatalogUpdate_StillMeasuresMissingCache" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="109499620" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000700" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1305" name="Prepare_UpdatesCatalogBeforeSizeAndDownload" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.Prepare_UpdatesCatalogBeforeSizeAndDownload" methodname="Prepare_UpdatesCatalogBeforeSizeAndDownload" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="1777234731" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000472" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1309" name="PrepareFailure_ResetsState_AndCanRetry" fullname="NowFrameWork.Assets.Tests.HotUpdateServiceTests.PrepareFailure_ResetsState_AndCanRetry" methodname="PrepareFailure_ResetsState_AndCanRetry" classname="NowFrameWork.Assets.Tests.HotUpdateServiceTests" runstate="Runnable" seed="503616267" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001058" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1311" name="MainThreadGuardTests" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.023252" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1312" name="WorkerAcquire_IsRejectedBeforeProviderOrCounters" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerAcquire_IsRejectedBeforeProviderOrCounters" methodname="WorkerAcquire_IsRejectedBeforeProviderOrCounters" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="581625840" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.004877" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1315" name="WorkerConfigLoad_DoesNotReachProvider" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerConfigLoad_DoesNotReachProvider" methodname="WorkerConfigLoad_DoesNotReachProvider" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="471726691" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002255" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1314" name="WorkerLeaseAssetAccess_IsRejectedBeforeUnityObjectUse" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerLeaseAssetAccess_IsRejectedBeforeUnityObjectUse" methodname="WorkerLeaseAssetAccess_IsRejectedBeforeUnityObjectUse" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="1491879525" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001546" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1313" name="WorkerLeaseDispose_DoesNotConsumeLease" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerLeaseDispose_DoesNotConsumeLease" methodname="WorkerLeaseDispose_DoesNotConsumeLease" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="485313006" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001271" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1317" name="WorkerSceneUnload_DoesNotStartBackend" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerSceneUnload_DoesNotStartBackend" methodname="WorkerSceneUnload_DoesNotStartBackend" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="1075574483" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001918" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1316" name="WorkerScopeClose_DoesNotChangeState" fullname="NowFrameWork.Assets.Tests.MainThreadGuardTests.WorkerScopeClose_DoesNotChangeState" methodname="WorkerScopeClose_DoesNotChangeState" classname="NowFrameWork.Assets.Tests.MainThreadGuardTests" runstate="Runnable" seed="1295091737" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009415" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1318" name="ReviewRegressionTests" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.021967" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1323" name="AssetsModule_InitializesProvider" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.AssetsModule_InitializesProvider" methodname="AssetsModule_InitializesProvider" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1415827925" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000614" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1322" name="Config_AliasesAndVariants_ShareCanonicalLease" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.Config_AliasesAndVariants_ShareCanonicalLease" methodname="Config_AliasesAndVariants_ShareCanonicalLease" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1257082439" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001798" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1320" name="Config_ConcurrentSameKey_KeepsOneLease" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.Config_ConcurrentSameKey_KeepsOneLease" methodname="Config_ConcurrentSameKey_KeepsOneLease" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1461320417" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.004843" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1321" name="Config_DisposedDuringLoad_ReleasesLateLease" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.Config_DisposedDuringLoad_ReleasesLateLease" methodname="Config_DisposedDuringLoad_ReleasesLateLease" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1946453295" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001868" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1319" name="FirstWaiter_ReleasesImmediately_SecondStillReceivesLease" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.FirstWaiter_ReleasesImmediately_SecondStillReceivesLease" methodname="FirstWaiter_ReleasesImmediately_SecondStillReceivesLease" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="439978841" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.004057" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1327" name="SceneLease_ConcurrentUnload_CallsBackendOnce" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.SceneLease_ConcurrentUnload_CallsBackendOnce" methodname="SceneLease_ConcurrentUnload_CallsBackendOnce" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1617500197" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001492" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1328" name="SceneLease_Failure_CanRetry" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.SceneLease_Failure_CanRetry" methodname="SceneLease_Failure_CanRetry" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="1515240050" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000490" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1325" name="Scope_ClosingParent_WaitsForStartingChild" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.Scope_ClosingParent_WaitsForStartingChild" methodname="Scope_ClosingParent_WaitsForStartingChild" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="727638871" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003460" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1326" name="Scope_ConcurrentClose_WaitsForSameCleanup" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.Scope_ConcurrentClose_WaitsForSameCleanup" methodname="Scope_ConcurrentClose_WaitsForSameCleanup" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="718399186" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000461" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1324" name="SubObjectResolution_ForwardsRequestedTypeAndName" fullname="NowFrameWork.Assets.Tests.ReviewRegressionTests.SubObjectResolution_ForwardsRequestedTypeAndName" methodname="SubObjectResolution_ForwardsRequestedTypeAndName" classname="NowFrameWork.Assets.Tests.ReviewRegressionTests" runstate="Runnable" seed="2124444927" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001011" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1329" name="ScopeTests" fullname="NowFrameWork.Assets.Tests.ScopeTests" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009160" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1331" name="CreateChild_AfterRunning_Works" fullname="NowFrameWork.Assets.Tests.ScopeTests.CreateChild_AfterRunning_Works" methodname="CreateChild_AfterRunning_Works" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="938350762" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000383" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1330" name="CreateChild_BeforeRunning_Throws" fullname="NowFrameWork.Assets.Tests.ScopeTests.CreateChild_BeforeRunning_Throws" methodname="CreateChild_BeforeRunning_Throws" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1325029188" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000258" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1335" name="DisposeAsync_ClosesChildrenBeforeParent" fullname="NowFrameWork.Assets.Tests.ScopeTests.DisposeAsync_ClosesChildrenBeforeParent" methodname="DisposeAsync_ClosesChildrenBeforeParent" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1976683503" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001101" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1338" name="DisposeAsync_DuringStartup_IsDeferredUntilRunning" fullname="NowFrameWork.Assets.Tests.ScopeTests.DisposeAsync_DuringStartup_IsDeferredUntilRunning" methodname="DisposeAsync_DuringStartup_IsDeferredUntilRunning" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="285726596" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000451" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1339" name="DisposeAsync_IsIdempotent" fullname="NowFrameWork.Assets.Tests.ScopeTests.DisposeAsync_IsIdempotent" methodname="DisposeAsync_IsIdempotent" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1297074753" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000432" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1336" name="DisposeAsync_StopsModulesBeforePools" fullname="NowFrameWork.Assets.Tests.ScopeTests.DisposeAsync_StopsModulesBeforePools" methodname="DisposeAsync_StopsModulesBeforePools" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="955960137" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001596" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1337" name="DisposeAsync_WaitsOneFrame_OncePerScope" fullname="NowFrameWork.Assets.Tests.ScopeTests.DisposeAsync_WaitsOneFrame_OncePerScope" methodname="DisposeAsync_WaitsOneFrame_OncePerScope" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="835603916" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000356" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1332" name="Startup_MovesToRunning_AndReportsProgress" fullname="NowFrameWork.Assets.Tests.ScopeTests.Startup_MovesToRunning_AndReportsProgress" methodname="Startup_MovesToRunning_AndReportsProgress" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1571751000" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001901" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1334" name="Startup_Twice_Throws" fullname="NowFrameWork.Assets.Tests.ScopeTests.Startup_Twice_Throws" methodname="Startup_Twice_Throws" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1612891835" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000413" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1333" name="StartupFailure_MovesToFaulted" fullname="NowFrameWork.Assets.Tests.ScopeTests.StartupFailure_MovesToFaulted" methodname="StartupFailure_MovesToFaulted" classname="NowFrameWork.Assets.Tests.ScopeTests" runstate="Runnable" seed="1811341336" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000396" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="SetUpFixture" id="1344" name="NowFrameWork.Core.Tests.dll" fullname="CoreMainThreadTestHost" classname="CoreMainThreadTestHost" runstate="Runnable" testcasecount="133" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.115976" total="133" passed="133" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="40344" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+      </properties>
+      <test-suite type="TestSuite" id="1492" name="NowFrameWork" fullname="NowFrameWork" runstate="Runnable" testcasecount="133" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.114424" total="133" passed="133" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1493" name="Core" fullname="NowFrameWork.Core" runstate="Runnable" testcasecount="133" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.110797" total="133" passed="133" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1494" name="Tests" fullname="NowFrameWork.Core.Tests" runstate="Runnable" testcasecount="133" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.106153" total="133" passed="133" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1345" name="AsyncTests" fullname="NowFrameWork.Core.Tests.AsyncTests" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009005" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1347" name="CancellationScope_ChildCancel_DoesNotAffectParent" fullname="NowFrameWork.Core.Tests.AsyncTests.CancellationScope_ChildCancel_DoesNotAffectParent" methodname="CancellationScope_ChildCancel_DoesNotAffectParent" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="1917187232" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001016" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1348" name="CancellationScope_Dispose_CancelsAndIsIdempotent" fullname="NowFrameWork.Core.Tests.AsyncTests.CancellationScope_Dispose_CancelsAndIsIdempotent" methodname="CancellationScope_Dispose_CancelsAndIsIdempotent" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="1562907400" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000259" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1349" name="CancellationScope_LinkedToExternalToken" fullname="NowFrameWork.Core.Tests.AsyncTests.CancellationScope_LinkedToExternalToken" methodname="CancellationScope_LinkedToExternalToken" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="1045720759" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000287" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1346" name="CancellationScope_ParentCancel_PropagatesToChild" fullname="NowFrameWork.Core.Tests.AsyncTests.CancellationScope_ParentCancel_PropagatesToChild" methodname="CancellationScope_ParentCancel_PropagatesToChild" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="68994164" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000188" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1350" name="TaskRunner_Canceled_DoesNotLogError" fullname="NowFrameWork.Core.Tests.AsyncTests.TaskRunner_Canceled_DoesNotLogError" methodname="TaskRunner_Canceled_DoesNotLogError" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="1180174033" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001702" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1353" name="TaskRunner_Dispose_CancelsToken" fullname="NowFrameWork.Core.Tests.AsyncTests.TaskRunner_Dispose_CancelsToken" methodname="TaskRunner_Dispose_CancelsToken" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="2137874438" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000283" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1351" name="TaskRunner_Faulted_LogsError" fullname="NowFrameWork.Core.Tests.AsyncTests.TaskRunner_Faulted_LogsError" methodname="TaskRunner_Faulted_LogsError" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="1541931827" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000990" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1352" name="TaskRunner_RunningCount_ReturnsToZero" fullname="NowFrameWork.Core.Tests.AsyncTests.TaskRunner_RunningCount_ReturnsToZero" methodname="TaskRunner_RunningCount_ReturnsToZero" classname="NowFrameWork.Core.Tests.AsyncTests" runstate="Runnable" seed="805936851" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000227" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1354" name="ErrorBudgetTests" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.007260" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1359" name="AsLogSink_IgnoresBelowError" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.AsLogSink_IgnoresBelowError" methodname="AsLogSink_IgnoresBelowError" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="2046331404" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000369" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1360" name="Logger_WritesError_ReachesBudget" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Logger_WritesError_ReachesBudget" methodname="Logger_WritesError_ReachesBudget" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="1424348185" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001434" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1358" name="Report_BeyondMaxBuckets_IsDroppedButCounted" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Report_BeyondMaxBuckets_IsDroppedButCounted" methodname="Report_BeyondMaxBuckets_IsDroppedButCounted" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="183489478" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000274" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1356" name="Report_DifferentMessages_AreSeparateBuckets" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Report_DifferentMessages_AreSeparateBuckets" methodname="Report_DifferentMessages_AreSeparateBuckets" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="877207287" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000154" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1357" name="Report_ReachesThreshold_EscalatesOnce" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Report_ReachesThreshold_EscalatesOnce" methodname="Report_ReachesThreshold_EscalatesOnce" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="514323179" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000943" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1355" name="Report_SameModuleAndMessage_AggregatesIntoOne" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Report_SameModuleAndMessage_AggregatesIntoOne" methodname="Report_SameModuleAndMessage_AggregatesIntoOne" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="2123401217" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001528" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1361" name="Reset_ClearsState" fullname="NowFrameWork.Core.Tests.ErrorBudgetTests.Reset_ClearsState" methodname="Reset_ClearsState" classname="NowFrameWork.Core.Tests.ErrorBudgetTests" runstate="Runnable" seed="786959904" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000440" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1362" name="EventBusTests" fullname="NowFrameWork.Core.Tests.EventBusTests" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009428" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1372" name="Clear_RemovesAllSubscriptionsAndQueue" fullname="NowFrameWork.Core.Tests.EventBusTests.Clear_RemovesAllSubscriptionsAndQueue" methodname="Clear_RemovesAllSubscriptionsAndQueue" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1787158367" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002421" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1370" name="Deferred_FlushPreservesPerTypeOrder" fullname="NowFrameWork.Core.Tests.EventBusTests.Deferred_FlushPreservesPerTypeOrder" methodname="Deferred_FlushPreservesPerTypeOrder" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="810827223" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001120" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1371" name="Deferred_HandlerEnqueuesMore_IsProcessedInSameFlush" fullname="NowFrameWork.Core.Tests.EventBusTests.Deferred_HandlerEnqueuesMore_IsProcessedInSameFlush" methodname="Deferred_HandlerEnqueuesMore_IsProcessedInSameFlush" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1910043800" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000260" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1369" name="Deferred_IsNotInvokedUntilFlush" fullname="NowFrameWork.Core.Tests.EventBusTests.Deferred_IsNotInvokedUntilFlush" methodname="Deferred_IsNotInvokedUntilFlush" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1613000412" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000213" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1365" name="Dispose_StopsReceiving_AndIsIdempotent" fullname="NowFrameWork.Core.Tests.EventBusTests.Dispose_StopsReceiving_AndIsIdempotent" methodname="Dispose_StopsReceiving_AndIsIdempotent" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1679306015" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000436" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1366" name="HandlerThrows_OthersStillInvoked_AndErrorLogged" fullname="NowFrameWork.Core.Tests.EventBusTests.HandlerThrows_OthersStillInvoked_AndErrorLogged" methodname="HandlerThrows_OthersStillInvoked_AndErrorLogged" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1527357892" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000465" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1375" name="NestedPublish_DifferentTypes_WorksWithinLimit" fullname="NowFrameWork.Core.Tests.EventBusTests.NestedPublish_DifferentTypes_WorksWithinLimit" methodname="NestedPublish_DifferentTypes_WorksWithinLimit" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1355547288" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001110" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1364" name="Publish_WithNoSubscriber_DoesNothing" fullname="NowFrameWork.Core.Tests.EventBusTests.Publish_WithNoSubscriber_DoesNothing" methodname="Publish_WithNoSubscriber_DoesNothing" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1588143681" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000199" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1373" name="RecursivePublish_IsTruncatedAtDepthLimit" fullname="NowFrameWork.Core.Tests.EventBusTests.RecursivePublish_IsTruncatedAtDepthLimit" methodname="RecursivePublish_IsTruncatedAtDepthLimit" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1332551203" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000367" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1374" name="RecursivePublish_LogsOneError" fullname="NowFrameWork.Core.Tests.EventBusTests.RecursivePublish_LogsOneError" methodname="RecursivePublish_LogsOneError" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="316971848" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000267" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1363" name="Subscribe_ThenPublish_InvokesHandler" fullname="NowFrameWork.Core.Tests.EventBusTests.Subscribe_ThenPublish_InvokesHandler" methodname="Subscribe_ThenPublish_InvokesHandler" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="904258725" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000182" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1367" name="SubscribeDuringPublish_IsSafeAndTakesEffectNextRound" fullname="NowFrameWork.Core.Tests.EventBusTests.SubscribeDuringPublish_IsSafeAndTakesEffectNextRound" methodname="SubscribeDuringPublish_IsSafeAndTakesEffectNextRound" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1669872933" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000253" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1368" name="UnsubscribeDuringPublish_StillReceivesCurrentRound" fullname="NowFrameWork.Core.Tests.EventBusTests.UnsubscribeDuringPublish_StillReceivesCurrentRound" methodname="UnsubscribeDuringPublish_StillReceivesCurrentRound" classname="NowFrameWork.Core.Tests.EventBusTests" runstate="Runnable" seed="1070985250" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000267" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1376" name="LoggingTests" fullname="NowFrameWork.Core.Tests.LoggingTests" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002957" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1381" name="DumpRecent_KeepsNewestEntriesInOrder" fullname="NowFrameWork.Core.Tests.LoggingTests.DumpRecent_KeepsNewestEntriesInOrder" methodname="DumpRecent_KeepsNewestEntriesInOrder" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="313164152" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000784" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1377" name="IsEnabled_RespectsMinLevel" fullname="NowFrameWork.Core.Tests.LoggingTests.IsEnabled_RespectsMinLevel" methodname="IsEnabled_RespectsMinLevel" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="319328668" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000165" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1383" name="LogsNull_IsAlwaysDisabledAndSilent" fullname="NowFrameWork.Core.Tests.LoggingTests.LogsNull_IsAlwaysDisabledAndSilent" methodname="LogsNull_IsAlwaysDisabledAndSilent" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="1522315966" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000137" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1380" name="Sink_FilteringIsAppliedPerSink" fullname="NowFrameWork.Core.Tests.LoggingTests.Sink_FilteringIsAppliedPerSink" methodname="Sink_FilteringIsAppliedPerSink" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="272227755" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000232" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1382" name="SinkThrows_DoesNotBreakCaller" fullname="NowFrameWork.Core.Tests.LoggingTests.SinkThrows_DoesNotBreakCaller" methodname="SinkThrows_DoesNotBreakCaller" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="2047014396" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000227" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1378" name="Write_BelowMinLevel_DoesNotReachSink" fullname="NowFrameWork.Core.Tests.LoggingTests.Write_BelowMinLevel_DoesNotReachSink" methodname="Write_BelowMinLevel_DoesNotReachSink" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="633077223" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000125" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1379" name="Write_PassesLevelTagAndMessage" fullname="NowFrameWork.Core.Tests.LoggingTests.Write_PassesLevelTagAndMessage" methodname="Write_PassesLevelTagAndMessage" classname="NowFrameWork.Core.Tests.LoggingTests" runstate="Runnable" seed="1942792327" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000248" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1384" name="MainThreadGuardTests" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.016181" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1387" name="Assert_IsConditionalOnEditorOrDevelopment" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.Assert_IsConditionalOnEditorOrDevelopment" methodname="Assert_IsConditionalOnEditorOrDevelopment" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="782488343" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001375" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1386" name="Assert_ReportsOperationAndThreadIds_WithoutBindingWorker" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.Assert_ReportsOperationAndThreadIds_WithoutBindingWorker" methodname="Assert_ReportsOperationAndThreadIds_WithoutBindingWorker" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="388074834" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001503" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1385" name="HostBinding_IsIdempotent_AndWorkerCannotRebind" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.HostBinding_IsIdempotent_AndWorkerCannotRebind" methodname="HostBinding_IsIdempotent_AndWorkerCannotRebind" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="618381455" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000670" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1388" name="WorkerConstruction_IsRejectedBeforeServiceUse" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerConstruction_IsRejectedBeforeServiceUse" methodname="WorkerConstruction_IsRejectedBeforeServiceUse" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="168228136" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001895" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1395" name="WorkerLogging_DoesNotReadClockOrWriteRing" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerLogging_DoesNotReadClockOrWriteRing" methodname="WorkerLogging_DoesNotReadClockOrWriteRing" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="1587361960" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000613" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1394" name="WorkerPoolRentAndDispose_DoNotChangePool" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerPoolRentAndDispose_DoNotChangePool" methodname="WorkerPoolRentAndDispose_DoNotChangePool" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="682310636" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002889" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1391" name="WorkerPublish_DoesNotInvokeSubscribers" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerPublish_DoesNotInvokeSubscribers" methodname="WorkerPublish_DoesNotInvokeSubscribers" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="1364769404" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001820" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1389" name="WorkerRegister_DoesNotModifyHub" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerRegister_DoesNotModifyHub" methodname="WorkerRegister_DoesNotModifyHub" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="1623102793" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000656" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1390" name="WorkerTick_IsRejected_ThenMainThreadTickStillWorks" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerTick_IsRejected_ThenMainThreadTickStillWorks" methodname="WorkerTick_IsRejected_ThenMainThreadTickStillWorks" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="2054074881" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000930" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1393" name="WorkerTimerRegistration_DoesNotCreateTimer" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerTimerRegistration_DoesNotCreateTimer" methodname="WorkerTimerRegistration_DoesNotCreateTimer" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="1058560147" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001250" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1392" name="WorkerUnsubscribe_DoesNotInvalidateToken" fullname="NowFrameWork.Core.Tests.MainThreadGuardTests.WorkerUnsubscribe_DoesNotInvalidateToken" methodname="WorkerUnsubscribe_DoesNotInvalidateToken" classname="NowFrameWork.Core.Tests.MainThreadGuardTests" runstate="Runnable" seed="1067479706" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000625" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1396" name="ModuleHubTests" fullname="NowFrameWork.Core.Tests.ModuleHubTests" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009873" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1406" name="Get_And_TryGet_Work" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Get_And_TryGet_Work" methodname="Get_And_TryGet_Work" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="257812990" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001166" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1400" name="Register_DuplicateId_Throws" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Register_DuplicateId_Throws" methodname="Register_DuplicateId_Throws" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="739386964" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000367" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1411" name="Shutdown_ModuleThrows_LogsErrorWithModuleId" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Shutdown_ModuleThrows_LogsErrorWithModuleId" methodname="Shutdown_ModuleThrows_LogsErrorWithModuleId" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1655180112" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000580" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1405" name="Shutdown_OneModuleThrows_OthersStillCleaned" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Shutdown_OneModuleThrows_OthersStillCleaned" methodname="Shutdown_OneModuleThrows_OthersStillCleaned" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1493435404" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000549" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1401" name="Shutdown_RunsInReverseOrder" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Shutdown_RunsInReverseOrder" methodname="Shutdown_RunsInReverseOrder" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="2038518676" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000273" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1404" name="Startup_CancelledBeforeInit_InitializesNothing" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_CancelledBeforeInit_InitializesNothing" methodname="Startup_CancelledBeforeInit_InitializesNothing" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1688647940" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000878" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1399" name="Startup_CircularDependency_Throws" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_CircularDependency_Throws" methodname="Startup_CircularDependency_Throws" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="200683212" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000407" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1397" name="Startup_InitializesInDependencyOrder" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_InitializesInDependencyOrder" methodname="Startup_InitializesInDependencyOrder" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="2072746950" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000223" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1402" name="Startup_InitializeThrows_CleansUpEarlierModules" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_InitializeThrows_CleansUpEarlierModules" methodname="Startup_InitializeThrows_CleansUpEarlierModules" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1389540575" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000302" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1398" name="Startup_MissingDependency_ThrowsAndInitializesNothing" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_MissingDependency_ThrowsAndInitializesNothing" methodname="Startup_MissingDependency_ThrowsAndInitializesNothing" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="233584655" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000388" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1403" name="Startup_StartThrows_CleansUpAllInitializedModules" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Startup_StartThrows_CleansUpAllInitializedModules" methodname="Startup_StartThrows_CleansUpAllInitializedModules" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="25271552" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000304" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1409" name="Tick_AfterShutdown_DoesNothing" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Tick_AfterShutdown_DoesNothing" methodname="Tick_AfterShutdown_DoesNothing" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="18139152" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000439" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1408" name="Tick_LateTick_FixedTick_OnlyDispatchToMatchingModules" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Tick_LateTick_FixedTick_OnlyDispatchToMatchingModules" methodname="Tick_LateTick_FixedTick_OnlyDispatchToMatchingModules" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1197784681" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000432" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1410" name="Tick_OneModuleThrows_OtherModulesStillTick" fullname="NowFrameWork.Core.Tests.ModuleHubTests.Tick_OneModuleThrows_OtherModulesStillTick" methodname="Tick_OneModuleThrows_OtherModulesStillTick" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1143856324" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000473" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1407" name="TryGetAll_ReturnsAllMatchesInRegisterOrder" fullname="NowFrameWork.Core.Tests.ModuleHubTests.TryGetAll_ReturnsAllMatchesInRegisterOrder" methodname="TryGetAll_ReturnsAllMatchesInRegisterOrder" classname="NowFrameWork.Core.Tests.ModuleHubTests" runstate="Runnable" seed="1156011726" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000817" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1412" name="PerformanceTests" fullname="NowFrameWork.Core.Tests.PerformanceTests" classname="NowFrameWork.Core.Tests.PerformanceTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003797" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1413" name="Tick_40Modules_10000Frames_UnderTimeBudget" fullname="NowFrameWork.Core.Tests.PerformanceTests.Tick_40Modules_10000Frames_UnderTimeBudget" methodname="Tick_40Modules_10000Frames_UnderTimeBudget" classname="NowFrameWork.Core.Tests.PerformanceTests" runstate="Runnable" seed="2097379951" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003127" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1414" name="PlatformTests" fullname="NowFrameWork.Core.Tests.PlatformTests" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.003241" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1415" name="Lifecycle_StartsInStartingState" fullname="NowFrameWork.Core.Tests.PlatformTests.Lifecycle_StartsInStartingState" methodname="Lifecycle_StartsInStartingState" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="1561295546" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000228" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1420" name="PauseFromStarting_GoesStraightToBackground" fullname="NowFrameWork.Core.Tests.PlatformTests.PauseFromStarting_GoesStraightToBackground" methodname="PauseFromStarting_GoesStraightToBackground" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="1795176593" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000942" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1416" name="PauseThenResume_EmitsBothTransitions" fullname="NowFrameWork.Core.Tests.PlatformTests.PauseThenResume_EmitsBothTransitions" methodname="PauseThenResume_EmitsBothTransitions" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="622141387" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000351" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1419" name="Quit_IsFinal" fullname="NowFrameWork.Core.Tests.PlatformTests.Quit_IsFinal" methodname="Quit_IsFinal" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="845500805" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000230" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1417" name="RepeatedPause_EmitsOnce" fullname="NowFrameWork.Core.Tests.PlatformTests.RepeatedPause_EmitsOnce" methodname="RepeatedPause_EmitsOnce" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="1459710863" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000240" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1418" name="ResumeWhileForeground_IsIgnored" fullname="NowFrameWork.Core.Tests.PlatformTests.ResumeWhileForeground_IsIgnored" methodname="ResumeWhileForeground_IsIgnored" classname="NowFrameWork.Core.Tests.PlatformTests" runstate="Runnable" seed="2125248026" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000152" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1421" name="PoolTests" fullname="NowFrameWork.Core.Tests.PoolTests" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" testcasecount="26" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.013592" total="26" passed="26" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1432" name="Clear_WithoutActive_KeepsActiveObjects" fullname="NowFrameWork.Core.Tests.PoolTests.Clear_WithoutActive_KeepsActiveObjects" methodname="Clear_WithoutActive_KeepsActiveObjects" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1453900405" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001022" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1438" name="Dispose_Force_DestroysEverything" fullname="NowFrameWork.Core.Tests.PoolTests.Dispose_Force_DestroysEverything" methodname="Dispose_Force_DestroysEverything" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="18126385" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000275" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1437" name="Dispose_WithActiveObjects_Throws" fullname="NowFrameWork.Core.Tests.PoolTests.Dispose_WithActiveObjects_Throws" methodname="Dispose_WithActiveObjects_Throws" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="339348356" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000272" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1436" name="Factory_IsUsedForCreateAndDestroy" fullname="NowFrameWork.Core.Tests.PoolTests.Factory_IsUsedForCreateAndDestroy" methodname="Factory_IsUsedForCreateAndDestroy" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="94336289" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000234" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1426" name="Get_AtMaxSize_ThrowsExhausted" fullname="NowFrameWork.Core.Tests.PoolTests.Get_AtMaxSize_ThrowsExhausted" methodname="Get_AtMaxSize_ThrowsExhausted" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="673365236" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000231" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1433" name="Get_SkipsInvalidObjects" fullname="NowFrameWork.Core.Tests.PoolTests.Get_SkipsInvalidObjects" methodname="Get_SkipsInvalidObjects" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1447393096" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000407" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1422" name="Get_WhenEmpty_CreatesNew" fullname="NowFrameWork.Core.Tests.PoolTests.Get_WhenEmpty_CreatesNew" methodname="Get_WhenEmpty_CreatesNew" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="167830232" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000194" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1431" name="Poolable_ReceivesSpawnAndDespawn" fullname="NowFrameWork.Core.Tests.PoolTests.Poolable_ReceivesSpawnAndDespawn" methodname="Poolable_ReceivesSpawnAndDespawn" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="576855455" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000137" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1442" name="PoolService_Dispose_ReleasesAllPools" fullname="NowFrameWork.Core.Tests.PoolTests.PoolService_Dispose_ReleasesAllPools" methodname="PoolService_Dispose_ReleasesAllPools" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="946671154" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000386" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1441" name="PoolService_DisposePool_RemovesAndReleases" fullname="NowFrameWork.Core.Tests.PoolTests.PoolService_DisposePool_RemovesAndReleases" methodname="PoolService_DisposePool_RemovesAndReleases" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1533044229" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000491" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1434" name="PoolService_SameKey_ReturnsSamePool" fullname="NowFrameWork.Core.Tests.PoolTests.PoolService_SameKey_ReturnsSamePool" methodname="PoolService_SameKey_ReturnsSamePool" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="454248428" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000219" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1435" name="PoolService_Tick_DrivesAllPools" fullname="NowFrameWork.Core.Tests.PoolTests.PoolService_Tick_DrivesAllPools" methodname="PoolService_Tick_DrivesAllPools" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1664164194" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000816" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1428" name="Prewarm_CreatesIdle_AndRespectsMaxSize" fullname="NowFrameWork.Core.Tests.PoolTests.Prewarm_CreatesIdle_AndRespectsMaxSize" methodname="Prewarm_CreatesIdle_AndRespectsMaxSize" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="2070553948" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000213" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1439" name="Release_AfterDispose_Throws" fullname="NowFrameWork.Core.Tests.PoolTests.Release_AfterDispose_Throws" methodname="Release_AfterDispose_Throws" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1812314177" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000287" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1425" name="Release_ForeignObject_Throws" fullname="NowFrameWork.Core.Tests.PoolTests.Release_ForeignObject_Throws" methodname="Release_ForeignObject_Throws" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="316012818" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000216" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1423" name="Release_ThenGet_ReusesSameInstance" fullname="NowFrameWork.Core.Tests.PoolTests.Release_ThenGet_ReusesSameInstance" methodname="Release_ThenGet_ReusesSameInstance" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="2142126057" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000169" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1424" name="Release_Twice_Throws" fullname="NowFrameWork.Core.Tests.PoolTests.Release_Twice_Throws" methodname="Release_Twice_Throws" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1542529437" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000189" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1445" name="RentAsync_Concurrent_CannotExceedMaxSize" fullname="NowFrameWork.Core.Tests.PoolTests.RentAsync_Concurrent_CannotExceedMaxSize" methodname="RentAsync_Concurrent_CannotExceedMaxSize" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1542277639" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002402" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1446" name="RentAsync_CreateFails_ReleasesReservation" fullname="NowFrameWork.Core.Tests.PoolTests.RentAsync_CreateFails_ReleasesReservation" methodname="RentAsync_CreateFails_ReleasesReservation" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="150667260" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000644" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1443" name="RentAsync_CreatesItem_WhenEmpty" fullname="NowFrameWork.Core.Tests.PoolTests.RentAsync_CreatesItem_WhenEmpty" methodname="RentAsync_CreatesItem_WhenEmpty" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1479323593" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000378" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1444" name="RentAsync_PrefersIdleObjects" fullname="NowFrameWork.Core.Tests.PoolTests.RentAsync_PrefersIdleObjects" methodname="RentAsync_PrefersIdleObjects" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="37687049" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000297" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1447" name="RentAsync_WithoutAsyncFactory_Throws" fullname="NowFrameWork.Core.Tests.PoolTests.RentAsync_WithoutAsyncFactory_Throws" methodname="RentAsync_WithoutAsyncFactory_Throws" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="192663428" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000294" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1440" name="Stats_CreatedEqualsDestroyed_AfterDispose" fullname="NowFrameWork.Core.Tests.PoolTests.Stats_CreatedEqualsDestroyed_AfterDispose" methodname="Stats_CreatedEqualsDestroyed_AfterDispose" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1768985927" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000235" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1430" name="Tick_NeverRecyclesActiveObjects" fullname="NowFrameWork.Core.Tests.PoolTests.Tick_NeverRecyclesActiveObjects" methodname="Tick_NeverRecyclesActiveObjects" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="854790966" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000200" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1429" name="Tick_RecyclesIdleAfterTimeout" fullname="NowFrameWork.Core.Tests.PoolTests.Tick_RecyclesIdleAfterTimeout" methodname="Tick_RecyclesIdleAfterTimeout" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="1766117426" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000235" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1427" name="TryGet_WhenEmpty_DoesNotCreate" fullname="NowFrameWork.Core.Tests.PoolTests.TryGet_WhenEmpty_DoesNotCreate" methodname="TryGet_WhenEmpty_DoesNotCreate" classname="NowFrameWork.Core.Tests.PoolTests" runstate="Runnable" seed="553173139" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000228" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1448" name="ReviewRegressionTests" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.010111" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1451" name="AsyncItems_AreDestroyedByCreatingFactory" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.AsyncItems_AreDestroyedByCreatingFactory" methodname="AsyncItems_AreDestroyedByCreatingFactory" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="1534458738" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000991" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1453" name="DespawnFailure_DestroysRemovedItem" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.DespawnFailure_DestroysRemovedItem" methodname="DespawnFailure_DestroysRemovedItem" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="783726492" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000379" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1450" name="Get_And_Prewarm_RespectAsyncReservations" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.Get_And_Prewarm_RespectAsyncReservations" methodname="Get_And_Prewarm_RespectAsyncReservations" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="1000875429" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.002041" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1455" name="NestedPublish_DoesNotRewriteOuterSnapshot" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.NestedPublish_DoesNotRewriteOuterSnapshot" methodname="NestedPublish_DoesNotRewriteOuterSnapshot" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="1362243723" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001969" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1449" name="RentAsync_DisposedWhileCreating_DestroysLateItem" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.RentAsync_DisposedWhileCreating_DestroysLateItem" methodname="RentAsync_DisposedWhileCreating_DestroysLateItem" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="375221197" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000682" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1454" name="RentAsync_PreCancelled_DoesNotTakeIdleItem" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.RentAsync_PreCancelled_DoesNotTakeIdleItem" methodname="RentAsync_PreCancelled_DoesNotTakeIdleItem" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="297421181" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000479" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1456" name="Shutdown_DuringStartup_WaitsAndPreventsStart" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.Shutdown_DuringStartup_WaitsAndPreventsStart" methodname="Shutdown_DuringStartup_WaitsAndPreventsStart" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="1736762419" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001616" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1452" name="SpawnFailure_DestroysUnreturnedItem" fullname="NowFrameWork.Core.Tests.ReviewRegressionTests.SpawnFailure_DestroysUnreturnedItem" methodname="SpawnFailure_DestroysUnreturnedItem" classname="NowFrameWork.Core.Tests.ReviewRegressionTests" runstate="Runnable" seed="1107324504" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000367" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1457" name="StartupProgressTests" fullname="NowFrameWork.Core.Tests.StartupProgressTests" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.004828" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1462" name="ScaledProgress_MapsIntoRange" fullname="NowFrameWork.Core.Tests.StartupProgressTests.ScaledProgress_MapsIntoRange" methodname="ScaledProgress_MapsIntoRange" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="7162919" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000899" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1463" name="Startup_EmptyHub_ReportsCompleted" fullname="NowFrameWork.Core.Tests.StartupProgressTests.Startup_EmptyHub_ReportsCompleted" methodname="Startup_EmptyHub_ReportsCompleted" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="136627402" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000492" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1459" name="Startup_InitializeFailure_ReportsPhaseAndModule" fullname="NowFrameWork.Core.Tests.StartupProgressTests.Startup_InitializeFailure_ReportsPhaseAndModule" methodname="Startup_InitializeFailure_ReportsPhaseAndModule" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="1381116722" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000550" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1458" name="Startup_ReportsPhasesAndMonotonicProgress" fullname="NowFrameWork.Core.Tests.StartupProgressTests.Startup_ReportsPhasesAndMonotonicProgress" methodname="Startup_ReportsPhasesAndMonotonicProgress" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="1289699963" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001044" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1460" name="Startup_StartFailure_ReportsStartPhase" fullname="NowFrameWork.Core.Tests.StartupProgressTests.Startup_StartFailure_ReportsStartPhase" methodname="Startup_StartFailure_ReportsStartPhase" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="1302325703" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000372" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1461" name="Startup_WithoutProgress_StillWorks" fullname="NowFrameWork.Core.Tests.StartupProgressTests.Startup_WithoutProgress_StillWorks" methodname="Startup_WithoutProgress_StillWorks" classname="NowFrameWork.Core.Tests.StartupProgressTests" runstate="Runnable" seed="1920396303" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000222" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1464" name="TimerServiceTests" fullname="NowFrameWork.Core.Tests.TimerServiceTests" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.006401" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1471" name="Cancel_InsideCallback_IsSafe" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Cancel_InsideCallback_IsSafe" methodname="Cancel_InsideCallback_IsSafe" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1372220444" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000645" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1469" name="Cancel_PreventsFiring" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Cancel_PreventsFiring" methodname="Cancel_PreventsFiring" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="19869334" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000234" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1470" name="Cancel_StaleHandle_DoesNotKillReusedSlot" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Cancel_StaleHandle_DoesNotKillReusedSlot" methodname="Cancel_StaleHandle_DoesNotKillReusedSlot" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="69660526" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000258" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1474" name="Clear_RemovesAllTimers" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Clear_RemovesAllTimers" methodname="Clear_RemovesAllTimers" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1067021110" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000197" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1465" name="Delay_FiresOnce_WhenTimeReached" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Delay_FiresOnce_WhenTimeReached" methodname="Delay_FiresOnce_WhenTimeReached" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1597678981" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000238" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1477" name="Execute_OneCallbackThrows_OtherTimersStillRun" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Execute_OneCallbackThrows_OtherTimersStillRun" methodname="Execute_OneCallbackThrows_OtherTimersStillRun" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="2090457578" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000386" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1468" name="Interval_BehindManyCycles_FiresOnlyOnce" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Interval_BehindManyCycles_FiresOnlyOnce" methodname="Interval_BehindManyCycles_FiresOnlyOnce" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="604948673" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000176" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1466" name="Interval_FiresEveryPeriod" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Interval_FiresEveryPeriod" methodname="Interval_FiresEveryPeriod" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1940715308" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000234" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1467" name="Interval_Immediate_FiresOnFirstUpdate" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Interval_Immediate_FiresOnFirstUpdate" methodname="Interval_Immediate_FiresOnFirstUpdate" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="557625456" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000210" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1478" name="ManualClock_NegativeTimeScale_ClampsToZero" fullname="NowFrameWork.Core.Tests.TimerServiceTests.ManualClock_NegativeTimeScale_ClampsToZero" methodname="ManualClock_NegativeTimeScale_ClampsToZero" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="575277989" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000926" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1473" name="PausedTimeScale_StopsScaledTimers" fullname="NowFrameWork.Core.Tests.TimerServiceTests.PausedTimeScale_StopsScaledTimers" methodname="PausedTimeScale_StopsScaledTimers" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1915049849" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000203" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1475" name="Slots_AreReused_WithoutGrowing" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Slots_AreReused_WithoutGrowing" methodname="Slots_AreReused_WithoutGrowing" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="1414072249" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000209" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1476" name="Timer_CreatedInsideCallback_DoesNotFireInSameUpdate" fullname="NowFrameWork.Core.Tests.TimerServiceTests.Timer_CreatedInsideCallback_DoesNotFireInSameUpdate" methodname="Timer_CreatedInsideCallback_DoesNotFireInSameUpdate" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="325687699" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000371" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1472" name="UnscaledDelay_IgnoresTimeScale" fullname="NowFrameWork.Core.Tests.TimerServiceTests.UnscaledDelay_IgnoresTimeScale" methodname="UnscaledDelay_IgnoresTimeScale" classname="NowFrameWork.Core.Tests.TimerServiceTests" runstate="Runnable" seed="229259882" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000244" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1479" name="UtilityTests" fullname="NowFrameWork.Core.Tests.UtilityTests" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.004171" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1486" name="As_ReturnsNullOnMismatch" fullname="NowFrameWork.Core.Tests.UtilityTests.As_ReturnsNullOnMismatch" methodname="As_ReturnsNullOnMismatch" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="678967597" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000197" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1490" name="Hash_Combine_IsOrderSensitive" fullname="NowFrameWork.Core.Tests.UtilityTests.Hash_Combine_IsOrderSensitive" methodname="Hash_Combine_IsOrderSensitive" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="1630210977" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000276" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1488" name="Hash_DifferentStrings_Differ" fullname="NowFrameWork.Core.Tests.UtilityTests.Hash_DifferentStrings_Differ" methodname="Hash_DifferentStrings_Differ" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="1651248852" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000166" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1489" name="Hash_EmptyOrNull_ReturnsZero" fullname="NowFrameWork.Core.Tests.UtilityTests.Hash_EmptyOrNull_ReturnsZero" methodname="Hash_EmptyOrNull_ReturnsZero" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="402078087" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000112" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1487" name="Hash_IsDeterministic" fullname="NowFrameWork.Core.Tests.UtilityTests.Hash_IsDeterministic" methodname="Hash_IsDeterministic" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="476794945" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000129" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1484" name="InRange_RejectsOutside" fullname="NowFrameWork.Core.Tests.UtilityTests.InRange_RejectsOutside" methodname="InRange_RejectsOutside" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="652698773" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000518" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1480" name="NotNull_ReturnsValue" fullname="NowFrameWork.Core.Tests.UtilityTests.NotNull_ReturnsValue" methodname="NotNull_ReturnsValue" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="1188931723" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000139" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1481" name="NotNull_ThrowsWithParameterName" fullname="NowFrameWork.Core.Tests.UtilityTests.NotNull_ThrowsWithParameterName" methodname="NotNull_ThrowsWithParameterName" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="1675209715" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000311" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1482" name="NotNullOrEmpty_RejectsNullAndEmpty" fullname="NowFrameWork.Core.Tests.UtilityTests.NotNullOrEmpty_RejectsNullAndEmpty" methodname="NotNullOrEmpty_RejectsNullAndEmpty" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="2117706724" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000292" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1483" name="Positive_RejectsZeroAndNegative" fullname="NowFrameWork.Core.Tests.UtilityTests.Positive_RejectsZeroAndNegative" methodname="Positive_RejectsZeroAndNegative" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="2031143781" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000276" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1485" name="TryCast_HandlesMatchAndMismatch" fullname="NowFrameWork.Core.Tests.UtilityTests.TryCast_HandlesMatchAndMismatch" methodname="TryCast_HandlesMatchAndMismatch" classname="NowFrameWork.Core.Tests.UtilityTests" runstate="Runnable" seed="857592200" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000247" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1510" name="NowFrameWork.Unity.Tests.dll" fullname="D:/UnityProject/TMP/NowFrameWork/Library/ScriptAssemblies/NowFrameWork.Unity.Tests.dll" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.225452" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="40344" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+      </properties>
+      <test-suite type="TestSuite" id="1511" name="NowFrameWork" fullname="NowFrameWork" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.224948" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1512" name="Unity" fullname="NowFrameWork.Unity" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.221344" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1513" name="Tests" fullname="NowFrameWork.Unity.Tests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.217848" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1496" name="AppTests" fullname="NowFrameWork.Unity.Tests.AppTests" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.009167" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1497" name="Create_WiresAllServices" fullname="NowFrameWork.Unity.Tests.AppTests.Create_WiresAllServices" methodname="Create_WiresAllServices" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="2026101313" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000852" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1503" name="GameBootstrap_Initialize_CreatesApp_AndIsIdempotent" fullname="NowFrameWork.Unity.Tests.AppTests.GameBootstrap_Initialize_CreatesApp_AndIsIdempotent" methodname="GameBootstrap_Initialize_CreatesApp_AndIsIdempotent" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="1676639481" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000904" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1501" name="Shutdown_RunsModulesBeforeDisposingPools" fullname="NowFrameWork.Unity.Tests.AppTests.Shutdown_RunsModulesBeforeDisposingPools" methodname="Shutdown_RunsModulesBeforeDisposingPools" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="438220548" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.001442" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1500" name="Startup_ForwardsProgressToReceiver" fullname="NowFrameWork.Unity.Tests.AppTests.Startup_ForwardsProgressToReceiver" methodname="Startup_ForwardsProgressToReceiver" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="2096672602" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000406" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1498" name="StartupAndShutdown_WithNoModules_Completes" fullname="NowFrameWork.Unity.Tests.AppTests.StartupAndShutdown_WithNoModules_Completes" methodname="StartupAndShutdown_WithNoModules_Completes" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="1210744716" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000340" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1499" name="Tick_WithNoModules_DoesNotThrow" fullname="NowFrameWork.Unity.Tests.AppTests.Tick_WithNoModules_DoesNotThrow" methodname="Tick_WithNoModules_DoesNotThrow" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="1098579753" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000511" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1502" name="UnityClock_ReportsNonNegativeTime" fullname="NowFrameWork.Unity.Tests.AppTests.UnityClock_ReportsNonNegativeTime" methodname="UnityClock_ReportsNonNegativeTime" classname="NowFrameWork.Unity.Tests.AppTests" runstate="Runnable" seed="1658046917" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:06Z" duration="0.000489" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1504" name="CrashDumpTests" fullname="NowFrameWork.Unity.Tests.CrashDumpTests" classname="NowFrameWork.Unity.Tests.CrashDumpTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.196449" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1505" name="Dump_WritesRecentLogsToFile" fullname="NowFrameWork.Unity.Tests.CrashDumpTests.Dump_WritesRecentLogsToFile" methodname="Dump_WritesRecentLogsToFile" classname="NowFrameWork.Unity.Tests.CrashDumpTests" runstate="Runnable" seed="1657524920" result="Passed" start-time="2026-11-16 03:51:06Z" end-time="2026-11-16 03:51:07Z" duration="1.194729" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1506" name="Install_AndDispose_AreIdempotent" fullname="NowFrameWork.Unity.Tests.CrashDumpTests.Install_AndDispose_AreIdempotent" methodname="Install_AndDispose_AreIdempotent" classname="NowFrameWork.Unity.Tests.CrashDumpTests" runstate="Runnable" seed="258244015" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.000836" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1507" name="MainThreadGuardTests" fullname="NowFrameWork.Unity.Tests.MainThreadGuardTests" classname="NowFrameWork.Unity.Tests.MainThreadGuardTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.008408" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1509" name="UnityClockAndPlatform_AreRejectedBeforeNativeApi" fullname="NowFrameWork.Unity.Tests.MainThreadGuardTests.UnityClockAndPlatform_AreRejectedBeforeNativeApi" methodname="UnityClockAndPlatform_AreRejectedBeforeNativeApi" classname="NowFrameWork.Unity.Tests.MainThreadGuardTests" runstate="Runnable" seed="1432024994" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.005395" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1508" name="UnityHost_IsBound_AndWorkerTickIsRejectedBeforeUnityTime" fullname="NowFrameWork.Unity.Tests.MainThreadGuardTests.UnityHost_IsBound_AndWorkerTickIsRejectedBeforeUnityTime" methodname="UnityHost_IsBound_AndWorkerTickIsRejectedBeforeUnityTime" classname="NowFrameWork.Unity.Tests.MainThreadGuardTests" runstate="Runnable" seed="1284617166" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.001143" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1516" name="Unity.Addressables.Editor.Tests.DocExampleCode.dll" fullname="D:/UnityProject/TMP/NowFrameWork/Library/ScriptAssemblies/Unity.Addressables.Editor.Tests.DocExampleCode.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.013109" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="40344" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+      </properties>
+      <test-suite type="TestSuite" id="1517" name="AddressableAssets" fullname="AddressableAssets" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.012573" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1518" name="DocExampleCode" fullname="AddressableAssets.DocExampleCode" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.008172" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1514" name="TestStub" fullname="AddressableAssets.DocExampleCode.TestStub" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.004903" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1515" name="RequiredTest" fullname="AddressableAssets.DocExampleCode.TestStub.RequiredTest" methodname="RequiredTest" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" seed="2021267635" result="Passed" start-time="2026-11-16 03:51:07Z" end-time="2026-11-16 03:51:07Z" duration="0.000215" asserts="0">
+              <properties />
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

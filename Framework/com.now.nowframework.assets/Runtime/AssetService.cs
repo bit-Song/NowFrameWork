@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -44,16 +45,32 @@ namespace NowFrameWork.Assets
 
         public AssetService(IAssetProvider provider, ILog log = null)
         {
+            MainThreadGuard.Assert("AssetService.AssetService");
             _provider = Guard.NotNull(provider, nameof(provider));
             _log = log ?? Logs.Null;
         }
 
-        public int PendingRequests => _pending;
+        public int PendingRequests
+        {
+            get
+            {
+                MainThreadGuard.Assert("AssetService.PendingRequests");
+                return _pending;
+            }
+        }
 
-        public int ActiveLeases => _activeLeases;
+        public int ActiveLeases
+        {
+            get
+            {
+                MainThreadGuard.Assert("AssetService.ActiveLeases");
+                return _activeLeases;
+            }
+        }
 
         public UniTask InitializeAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AssetService.InitializeAsync");
             ct.ThrowIfCancellationRequested();
             return _provider is IAssetProviderLifecycle lifecycle
                 ? lifecycle.InitializeAsync(ct)
@@ -61,10 +78,16 @@ namespace NowFrameWork.Assets
         }
 
         public UniTask<AssetLease<T>> AcquireAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object
-            => AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Business, ct);
+        {
+            MainThreadGuard.Assert("AssetService.AcquireAsync");
+            return AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Business, ct);
+        }
 
         public UniTask<AssetLease<T>> AcquireCacheAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object
-            => AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Cache, ct);
+        {
+            MainThreadGuard.Assert("AssetService.AcquireCacheAsync");
+            return AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Cache, ct);
+        }
 
         async UniTask<AssetLease<T>> AcquireCoreAsync<T>(AssetKey key, AssetLeaseKind kind, CancellationToken ct)
             where T : UnityEngine.Object
@@ -178,6 +201,7 @@ namespace NowFrameWork.Assets
 
         void ILeaseOwner.ReleaseLease(string canonicalKey, long version)
         {
+            MainThreadGuard.Assert("AssetService.ReleaseLease");
             // 先扣总数：这个租约确实存在过，无论条目是否还在，总数都必须减一次。
             // 反过来（找不到条目就提前 return）会让 _activeLeases 永久偏高。
             _activeLeases--;
@@ -235,13 +259,17 @@ namespace NowFrameWork.Assets
         }
 
         IAssetUpdateProvider UpdateProvider()
-            => _provider as IAssetUpdateProvider
+        {
+            MainThreadGuard.Assert("AssetService.UpdateProvider");
+            return _provider as IAssetUpdateProvider
                ?? throw new NotSupportedException("当前 Provider 不支持热更: " + _provider.GetType().Name);
+        }
 
         public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct) => UpdateProvider().CheckForUpdatesAsync(ct);
 
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AssetService.UpdateCatalogsAsync");
             if (_entries.Count != 0 || _resolving != 0 || _updatingCatalog)
                 throw new InvalidOperationException("更新 Catalog 前必须归还全部租约并结束在途加载");
             _updatingCatalog = true;
@@ -262,6 +290,7 @@ namespace NowFrameWork.Assets
 
         public void DumpLeases(List<LeaseInfo> buffer)
         {
+            MainThreadGuard.Assert("AssetService.DumpLeases");
             Guard.NotNull(buffer, nameof(buffer));
             buffer.Clear();
 

@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace NowFrameWork.Assets
 
         public AssetsModule(IAssetService service, ILog log = null)
         {
+            MainThreadGuard.Assert("AssetsModule.AssetsModule");
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _log = log ?? Logs.Null;
         }
@@ -32,12 +34,21 @@ namespace NowFrameWork.Assets
 
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
 
-        public UniTask InitializeAsync(CancellationToken ct) => _service.InitializeAsync(ct);
+        public UniTask InitializeAsync(CancellationToken ct)
+        {
+            MainThreadGuard.Assert("AssetsModule.InitializeAsync");
+            return _service.InitializeAsync(ct);
+        }
 
-        public UniTask StartAsync(CancellationToken ct) => UniTask.CompletedTask;
+        public UniTask StartAsync(CancellationToken ct)
+        {
+            MainThreadGuard.Assert("AssetsModule.StartAsync");
+            return UniTask.CompletedTask;
+        }
 
         public UniTask ShutdownAsync(CancellationToken ct)
         {
+            MainThreadGuard.Assert("AssetsModule.ShutdownAsync");
             // 走到这里时 Scope 已经关过子级，池也销毁了实例；
             // 还有租约说明有人忘了释放——记下来，但不擅自释放（可能仍在被使用）。
             if (_service.ActiveLeases > 0 && _log.IsEnabled(LogLevel.Error))

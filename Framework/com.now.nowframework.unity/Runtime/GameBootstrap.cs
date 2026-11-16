@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Core;
@@ -39,6 +40,7 @@ namespace NowFrameWork.Unity
         /// </summary>
         public void Initialize()
         {
+            MainThreadGuard.Assert("GameBootstrap.Initialize");
             if (App != null) return;
 
             App = NowFrameWork.Unity.App.Create(_minLogLevel, _recentLogCapacity);

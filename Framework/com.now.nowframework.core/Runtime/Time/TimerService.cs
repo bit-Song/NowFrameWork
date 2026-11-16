@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 
 using NowFrameWork.Core;
@@ -40,6 +41,7 @@ namespace NowFrameWork.Core.Time
 
         public TimerService(IClock clock, ILog log = null, int initialCapacity = 16)
         {
+            MainThreadGuard.Assert("TimerService.TimerService");
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _log = log ?? Logs.Null;
             if (initialCapacity < 4) initialCapacity = 4;
@@ -48,7 +50,14 @@ namespace NowFrameWork.Core.Time
             _free = new int[initialCapacity];
         }
 
-        public int PendingCount => _activeCount;
+        public int PendingCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("TimerService.PendingCount");
+                return _activeCount;
+            }
+        }
 
         public TimerHandle Delay(double seconds, Action callback)
             => Add(seconds, 0d, repeating: false, unscaled: false, callback);
@@ -64,6 +73,7 @@ namespace NowFrameWork.Core.Time
 
         TimerHandle Add(double delay, double interval, bool repeating, bool unscaled, Action callback)
         {
+            MainThreadGuard.Assert("TimerService.Add");
             if (callback == null) throw new ArgumentNullException(nameof(callback));
             if (delay < 0d) delay = 0d;
             if (repeating && interval <= 0d) throw new ArgumentOutOfRangeException(nameof(interval), "循环计时器的间隔必须大于 0");
@@ -86,6 +96,7 @@ namespace NowFrameWork.Core.Time
 
         public bool Cancel(in TimerHandle handle)
         {
+            MainThreadGuard.Assert("TimerService.Cancel");
             int index = handle.Index;
             if (index < 0 || index >= _slotCount) return false;
             if (!_slots[index].Active) return false;
@@ -97,6 +108,7 @@ namespace NowFrameWork.Core.Time
 
         public void Clear()
         {
+            MainThreadGuard.Assert("TimerService.Clear");
             for (int i = 0; i < _slotCount; i++)
             {
                 if (!_slots[i].Active) continue;
@@ -112,6 +124,7 @@ namespace NowFrameWork.Core.Time
 
         public void Update()
         {
+            MainThreadGuard.Assert("TimerService.Update");
             if (_activeCount == 0) return;
 
             double now = _clock.Now;

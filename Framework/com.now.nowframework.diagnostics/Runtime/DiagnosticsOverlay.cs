@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System.Collections.Generic;
 using System.Text;
 using NowFrameWork.Assets;
@@ -36,6 +37,7 @@ namespace NowFrameWork.Diagnostics
         /// <summary>创建（或复用）诊断面板。重复调用安全。</summary>
         public static DiagnosticsOverlay Install(IAssetService assets, ErrorBudget errors = null)
         {
+            MainThreadGuard.Assert("DiagnosticsOverlay.Install");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (_instance != null)
             {

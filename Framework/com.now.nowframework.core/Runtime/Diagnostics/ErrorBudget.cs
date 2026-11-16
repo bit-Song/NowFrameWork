@@ -1,3 +1,4 @@
+using NowFrameWork.Core.Threading;
 using System;
 using System.Collections.Generic;
 
@@ -40,25 +41,52 @@ namespace NowFrameWork.Core.Diagnostics
         /// <param name="clock">时间源；为空时使用 0（测试友好）。</param>
         public ErrorBudget(int fatalThreshold = 50, int maxBuckets = 128, Func<double> clock = null)
         {
+            MainThreadGuard.Assert("ErrorBudget.ErrorBudget");
             _fatalThreshold = fatalThreshold;
             _maxBuckets = maxBuckets < 1 ? 1 : maxBuckets;
             _clock = clock;
         }
 
         /// <summary>累计错误次数（含被丢弃的）。</summary>
-        public int TotalCount => _total;
+        public int TotalCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ErrorBudget.TotalCount");
+                return _total;
+            }
+        }
 
         /// <summary>已跟踪的不同错误种类数。</summary>
-        public int DistinctCount => _buckets.Count;
+        public int DistinctCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ErrorBudget.DistinctCount");
+                return _buckets.Count;
+            }
+        }
 
         /// <summary>因超过 maxBuckets 未被单独跟踪的次数。</summary>
-        public int DroppedCount => _dropped;
+        public int DroppedCount
+        {
+            get
+            {
+                MainThreadGuard.Assert("ErrorBudget.DroppedCount");
+                return _dropped;
+            }
+        }
 
         /// <summary>是否已有错误被升级为 Fatal。</summary>
         public bool AnyFatal { get; private set; }
 
         /// <summary>某条错误首次越过阈值时触发一次（不会重复触发）。</summary>
-        public event Action<ErrorEntry> FatalRaised;
+        Action<ErrorEntry> _fatalRaised;
+        public event Action<ErrorEntry> FatalRaised
+        {
+            add { MainThreadGuard.Assert("ErrorBudget.FatalRaised.add"); _fatalRaised += value; }
+            remove { MainThreadGuard.Assert("ErrorBudget.FatalRaised.remove"); _fatalRaised -= value; }
+        }
 
         public bool IsEnabled(LogLevel level) => level >= LogLevel.Error;
 
@@ -67,6 +95,7 @@ namespace NowFrameWork.Core.Diagnostics
         /// <summary>记录一条错误；module 与 message 相同视为同类。</summary>
         public void Report(string module, string message)
         {
+            MainThreadGuard.Assert("ErrorBudget.Report");
             _total++;
 
             string key = (module ?? string.Empty) + "|" + (message ?? string.Empty);
@@ -96,6 +125,7 @@ namespace NowFrameWork.Core.Diagnostics
         /// <summary>导出全部聚合结果（供崩溃报告或调试面板）。</summary>
         public void Snapshot(List<ErrorEntry> buffer)
         {
+            MainThreadGuard.Assert("ErrorBudget.Snapshot");
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
             buffer.Clear();
@@ -112,6 +142,7 @@ namespace NowFrameWork.Core.Diagnostics
 
         public void Reset()
         {
+            MainThreadGuard.Assert("ErrorBudget.Reset");
             _buckets.Clear();
             _total = 0;
             _dropped = 0;
@@ -127,7 +158,7 @@ namespace NowFrameWork.Core.Diagnostics
             _buckets[key] = bucket;
             AnyFatal = true;
 
-            FatalRaised?.Invoke(ToEntry(key, bucket));
+            _fatalRaised?.Invoke(ToEntry(key, bucket));
         }
 
         static ErrorEntry ToEntry(string key, Bucket bucket)
