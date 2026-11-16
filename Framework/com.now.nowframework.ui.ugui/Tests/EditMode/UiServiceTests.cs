@@ -163,8 +163,13 @@ namespace NowFrameWork.UI.Tests
 
             cts.Cancel();
 
+            // 假工厂不响应取消：模拟"取消之后实例才晚到"，验证它被回收而不是变成孤儿
+            var go = new GameObject("LateUiView");
+            pending.TrySetResult(go.AddComponent<UiView>());
+
             Assert.Throws<OperationCanceledException>(() => opening.GetAwaiter().GetResult());
-            Assert.AreEqual(0, service.SessionCount, "取消失败的会话必须清理");
+            Assert.AreEqual(1, factory.Released, "晚到实例必须被销毁");
+            Assert.AreEqual(0, service.SessionCount, "取消的会话必须清理");
             Assert.AreEqual(0, service.VisibleCount);
         }
 

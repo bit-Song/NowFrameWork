@@ -106,5 +106,6 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.31 | 2026-11-16 | **存储与设置**：`FileSettingsStore<T>` / `ISettingsCodec<T>` / `JsonSettingsCodec<T>`，备份恢复与迁移；新增 [19](19-存储与设置设计.md)、[20](20-存储Player验证.md)，256 项回归 + 独立 Windows IL2CPP 10 进程通过 |
 | v0.4.32 | 2026-11-16 | **PC 回归入口与实测**：`Build/PCRegression` 夹具、V1/V2 DLL、断网/取消/超时；七轮 Player 运行通过；新增 [17](17-PC回归入口与实测.md)；证据归档于 `docs/evidence/` |
 | v0.4.33 | 2026-11-16 | **Boot 启动整合**：`BootSession` / `BootContext`，设置→模块→资源→可选代码加载，取消与重试；279/279 通过；新增 [21](21-Boot启动整合.md) |
-| v0.4.35 | 2026-11-16 | **UI 设计评审定稿**：`TArgs : class`、一页一个 addressable Prefab（bundle 划分归项目）、新增 `IUiViewFactory` 可测接缝、`UiHandle`/`UiOpenOptions` 字段、输入阻挡与 `IUiBackSource`、`UnityObjectLifecycle` 复用；见 [22 §13](22-UI框架设计.md) |
 | v0.4.34 | 2026-11-16 | **UI 框架设计（待实现）**：动静 Canvas、显隐/动画生命周期、资源清理、`UiModule` 接入；新增 [22](22-UI框架设计.md)；记录 DOTween 1.3.045 安装 |
+| v0.4.35 | 2026-11-16 | **UI 设计评审定稿**：`TArgs : class`、一页一个 addressable Prefab（bundle 划分归项目）、新增 `IUiViewFactory` 可测接缝、`UiHandle`/`UiOpenOptions` 字段、输入阻挡与 `IUiBackSource`、`UnityObjectLifecycle` 复用；见 [22 §13](22-UI框架设计.md) |
+| v0.4.36 | 2026-11-16 | **UI-1 第 1–2 步落地**：`com.now.nowframework.ui.ugui`（`UiKey`/`UiHandle`/`UiDefinition`/`IUiViewFactory`/`UiService`/`ImmediateUiTransition`），单实例合并、忙状态、晚到结果回收、取消回滚；8 条用例，全量 287/287；修正"假设工厂观察 ct"的缺口 |

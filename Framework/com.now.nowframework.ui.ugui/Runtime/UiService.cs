@@ -119,6 +119,9 @@ namespace NowFrameWork.UI
             {
                 session.View = await _factory.CreateAsync(definition, null, ct);
 
+                // 工厂不保证观察 ct：实例已拿到但已被取消时必须回滚，不能继续显示
+                ct.ThrowIfCancellationRequested();
+
                 // 晚到结果：等待期间可能已被关闭
                 if (session.State != UiState.Opening)
                 {
