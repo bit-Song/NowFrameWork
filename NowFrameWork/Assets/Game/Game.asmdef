@@ -9,7 +9,9 @@
     "NowFrameWork.Boot",
     "NowFrameWork.Boot.Addressables",
     "NowFrameWork.Generated.AssetKeys",
-    "UniTask"
+    "UniTask",
+    "NowFrameWork.UI.UGUI",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

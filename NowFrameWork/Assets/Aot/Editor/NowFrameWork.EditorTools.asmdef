@@ -10,7 +10,12 @@
     "Unity.Addressables.Editor",
     "HybridCLR.Editor",
     "NowFrameWork.Boot.Addressables",
-    "NowFrameWork.Boot"
+    "NowFrameWork.Boot",
+    "Game",
+    "NowFrameWork.UI.UGUI.Editor",
+    "NowFrameWork.UI.UGUI",
+    "Unity.InputSystem",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [
     "Editor"

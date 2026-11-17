@@ -12,6 +12,20 @@ namespace NowFrameWork.UI.Tests
     /// <summary>UI-1：打开/关闭/显隐状态机（假工厂，不碰 Prefab 与布局）。</summary>
     public class UiServiceTests
     {
+        sealed class LifecycleView : UiView
+        {
+            public readonly List<string> Calls = new List<string>();
+            public object Args;
+            protected override void OnCreate() { Calls.Add("Create"); }
+            protected override UniTask OnOpenAsync(object args, CancellationToken ct) { Args = args; Calls.Add("Open"); return UniTask.CompletedTask; }
+            protected override void OnShowing() { Calls.Add("Showing"); }
+            protected override void OnShown() { Calls.Add("Shown"); }
+            protected override void OnHiding() { Calls.Add("Hiding"); }
+            protected override void OnHidden() { Calls.Add("Hidden"); }
+            protected override UniTask OnCloseAsync() { Calls.Add("Close"); return UniTask.CompletedTask; }
+            protected override void OnDispose() { Calls.Add("Dispose"); }
+        }
+
         sealed class Args
         {
             public int Value;
@@ -494,10 +508,136 @@ namespace NowFrameWork.UI.Tests
             Assert.AreEqual(UniTaskStatus.Pending, close.Status);
             Assert.AreEqual(0, factory.Destroyed, "回调退出前不能销毁它仍在使用的实例");
             hiding.TrySetResult();
-            hide.GetAwaiter().GetResult();
+            Assert.Throws<OperationCanceledException>(() => hide.GetAwaiter().GetResult());
             close.GetAwaiter().GetResult();
             Assert.AreEqual(1, factory.Released);
             Assert.AreEqual(0, service.VisibleCount);
+        }
+
+        [Test]
+        public void Reverse_WaitsForOldCallbackExit_AndOldResultCannotCommit()
+        {
+            var (service, factory, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var oldHide = new UniTaskCompletionSource();
+            transition.OnHide = () => oldHide.Task; // 故意忽略取消，直到测试明确确认退出。
+            UniTask hiding = service.HideAsync(handle);
+            UniTask showing = service.ShowAsync(handle);
+            Assert.AreEqual(1, transition.Shows, "旧回调退出前不能启动新的属性写入");
+            Assert.AreEqual(UniTaskStatus.Pending, showing.Status);
+            oldHide.TrySetResult();
+            Assert.Throws<OperationCanceledException>(() => hiding.GetAwaiter().GetResult());
+            showing.GetAwaiter().GetResult();
+            Assert.AreEqual(2, transition.Shows);
+            Assert.AreEqual(UiVisibilityState.Visible, service.GetVisibilityState(handle));
+            Assert.AreEqual(1, service.VisibleCount);
+            Assert.IsTrue(factory.Views[0].VisualGroup.interactable);
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void SameDirection_UsesSharedCompletionAndDoesNotRepeatTransition()
+        {
+            var (service, _, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var gate = new UniTaskCompletionSource();
+            transition.OnHide = () => gate.Task;
+            UniTask first = service.HideAsync(handle);
+            UniTask second = service.HideAsync(handle);
+            Assert.AreEqual(1, transition.Hides);
+            Assert.AreEqual(UniTaskStatus.Pending, second.Status);
+            gate.TrySetResult(); first.GetAwaiter().GetResult(); second.GetAwaiter().GetResult();
+            service.HideAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(1, transition.Hides, "稳定隐藏也不能再通知一次 Hidden");
+            Assert.AreEqual(1, service.HiddenCount);
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void MultipleReversals_SkipQueuedOldDirection()
+        {
+            var (service, _, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var gate = new UniTaskCompletionSource();
+            transition.OnHide = () => gate.Task;
+            UniTask first = service.HideAsync(handle);
+            UniTask second = service.ShowAsync(handle);
+            UniTask third = service.HideAsync(handle);
+            gate.TrySetResult();
+            Assert.Throws<OperationCanceledException>(() => first.GetAwaiter().GetResult());
+            Assert.Throws<OperationCanceledException>(() => second.GetAwaiter().GetResult());
+            third.GetAwaiter().GetResult();
+            Assert.AreEqual(1, transition.Shows, "已被替代的排队 Show 根本不应启动");
+            Assert.AreEqual(UiVisibilityState.Hidden, service.GetVisibilityState(handle));
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void VisibilityWaiterCancellation_DoesNotCancelAnotherWaiter()
+        {
+            var (service, _, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var gate = new UniTaskCompletionSource();
+            transition.OnHide = () => gate.Task;
+            using (var cancellation = new CancellationTokenSource())
+            {
+                UniTask first = service.HideAsync(handle, cancellation.Token);
+                UniTask second = service.HideAsync(handle);
+                cancellation.Cancel();
+                Assert.Throws<OperationCanceledException>(() => first.GetAwaiter().GetResult());
+                Assert.AreEqual(UniTaskStatus.Pending, second.Status);
+                gate.TrySetResult(); second.GetAwaiter().GetResult();
+            }
+            Assert.AreEqual(UiVisibilityState.Hidden, service.GetVisibilityState(handle));
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void TransitionFailure_ConvergesToHiddenAndCanShowAgain()
+        {
+            var (service, factory, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            transition.OnHide = () => throw new InvalidOperationException("animation failed");
+            Assert.Throws<InvalidOperationException>(() => service.HideAsync(handle).GetAwaiter().GetResult());
+            Assert.AreEqual(0, service.VisibleCount);
+            Assert.IsFalse(factory.Views[0].VisualGroup.blocksRaycasts);
+            Assert.AreEqual(UiVisibilityState.Hidden, service.GetVisibilityState(handle));
+            service.ShowAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(1, service.VisibleCount);
+            transition.OnHide = null;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void Lifecycle_HideCancelsVisibleWork_CloseCancelsSession_AndCallbacksHaveFixedOrder()
+        {
+            var (service, factory, _) = Create();
+            var view = new GameObject("Lifecycle").AddComponent<LifecycleView>();
+            factory.OnCreate = () => UniTask.FromResult<UiView>(view);
+            var args = new Args { Value = 42 };
+            UiHandle handle = service.OpenAsync(SettingsKey, args).GetAwaiter().GetResult().Handle;
+            Assert.AreSame(args, view.Args);
+            CancellationToken visible = view.VisibleToken, session = view.SessionToken;
+            service.HideAsync(handle).GetAwaiter().GetResult();
+            Assert.IsTrue(visible.IsCancellationRequested);
+            Assert.IsFalse(session.IsCancellationRequested);
+            service.ShowAsync(handle).GetAwaiter().GetResult();
+            Assert.IsFalse(view.VisibleToken.IsCancellationRequested);
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            Assert.IsTrue(session.IsCancellationRequested);
+            CollectionAssert.AreEqual(new[] { "Create", "Open", "Showing", "Shown", "Hiding", "Hidden", "Showing", "Shown", "Hiding", "Hidden", "Close", "Dispose" }, view.Calls);
+        }
+
+        [Test]
+        public void Close_AlreadyHidden_DoesNotRepeatHiddenCallbacks()
+        {
+            var (service, factory, _) = Create();
+            var view = new GameObject("Lifecycle").AddComponent<LifecycleView>();
+            factory.OnCreate = () => UniTask.FromResult<UiView>(view);
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.HideAsync(handle).GetAwaiter().GetResult();
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            CollectionAssert.AreEqual(new[] { "Create", "Open", "Showing", "Shown", "Hiding", "Hidden", "Close", "Dispose" }, view.Calls);
         }
     }
 }

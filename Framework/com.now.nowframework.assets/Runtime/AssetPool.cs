@@ -124,14 +124,7 @@ namespace NowFrameWork.Assets
             {
                 _pool.Dispose(force: true);
 
-                int frames = 0;
-                while (!AllDestroyed() && frames < _settleFrames)
-                {
-                    await _frameWaiter();
-                    frames++;
-                }
-
-                if (!AllDestroyed())
+                if (!await UnityObjectLifecycle.WaitAllDestroyedAsync(_tracked, _settleFrames, _frameWaiter))
                     throw new TimeoutException("实例未销毁，保留资源租约；销毁完成后须重试 DisposeAsync: " + CanonicalKey);
 
                 _keepAlive.Dispose();
@@ -150,14 +143,5 @@ namespace NowFrameWork.Assets
 
         public void Dispose() => DisposeAsync().Forget();
 
-        bool AllDestroyed()
-        {
-            for (int i = 0; i < _tracked.Count; i++)
-            {
-                if (_tracked[i] != null) return false;   // Unity 伪空：Destroy 后 == null 为真
-            }
-
-            return true;
-        }
     }
 }

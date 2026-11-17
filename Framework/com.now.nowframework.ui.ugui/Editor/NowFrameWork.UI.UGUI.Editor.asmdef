@@ -1,0 +1,6 @@
+{
+  "name": "NowFrameWork.UI.UGUI.Editor",
+  "references": ["NowFrameWork.UI.UGUI", "UnityEngine.UI"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

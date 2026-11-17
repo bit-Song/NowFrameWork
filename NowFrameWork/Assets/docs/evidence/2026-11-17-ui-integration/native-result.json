@@ -1,0 +1,4 @@
+{
+    "passed": true,
+    "detail": "100 real Addressables/UI factory open-close cycles; timeout retains lease; retry releases; Boot success/stop and UI startup failure rollback; offscreen Camera UI rendering"
+}

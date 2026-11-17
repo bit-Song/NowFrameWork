@@ -4,6 +4,7 @@
 
 | 目录 | 内容 |
 |---|---|
+| `2026-11-17-ui-integration/` | UI 真实工厂、反向/生命周期与模块接入（EditMode 330、UI 35，Windows Mono Player 100 次循环及失败收尾） |
 | `2026-11-17-ui-fixes/` | UI 所有权、关闭失败重试与取消隔离（EditMode 301，其中 UI 22，全部通过） |
 | `2026-11-16-boot-integration/` | Boot 启动整合回归（EditMode 279，全部通过） |
 | `2026-11-16-settings/` | 存储与设置回归（EditMode 256，全部通过） |

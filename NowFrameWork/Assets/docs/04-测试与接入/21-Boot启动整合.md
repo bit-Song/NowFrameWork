@@ -59,3 +59,5 @@ BootFlow 默认不启用代码热更，编辑器也拒绝真实 HybridCLR 加载
 团结 1.8.2 全量 EditMode **279/279 通过，0 失败、0 跳过**；本轮新增 **23 项**启动整合用例。报告见 [归档证据](../evidence/2026-11-16-boot-integration/README.md)，本地原始日志在 `Build/BootIntegration-20261116/editmode-verified.log`。新场景已通过编辑器菜单命令生成；未自动进入 Play。新增用例验证真实 App、模块、ConfigService、AssetService 与文件设置的组合；Provider、场景失败点、代码加载器和项目入口用可控替身注入。覆盖成功保持资源、失败清理、普通重试、启动取消、并发停止、备份恢复/未来 schema、更新顺序、代码不可回滚以及晚到资源的收尾。
 
 本阶段尚未对新 Boot 场景重新构建 Player，实际 Addressables 目录、场景切换及 HybridCLR 元数据/DLL 在新流程下的端到端验收仍待执行。文档 17/20 既有 Windows 资源与存储证据不等价于新 Boot 流程已经通过 Native 验证。Android/iOS 真机继续按用户安排后置。
+
+后续验证（2026-11-17）：UI-1 接入的最小普通 BootSession 已在独立 Windows Mono Player 跑通（基础资源初始化 → 项目 UI Scope → 100 次开关 → 退出及故障回滚），见 [25](25-UI最小流程与接入.md)。这不覆盖本节可选配置、场景、资源更新和 HybridCLR 的全部 Player 组合。

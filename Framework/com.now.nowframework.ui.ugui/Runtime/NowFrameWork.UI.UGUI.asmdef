@@ -4,7 +4,8 @@
   "references": [
     "NowFrameWork.Core",
     "NowFrameWork.Assets",
-    "UniTask"
+    "UniTask",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

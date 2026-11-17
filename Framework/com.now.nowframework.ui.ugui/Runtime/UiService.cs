@@ -19,9 +19,9 @@ namespace NowFrameWork.UI
     /// <summary>
     /// 仅主线程的 UI-1 服务；服务拥有实例和清理任务，调用者只拥有等待。
     /// 单实例在打开、关闭或清理失败期间保留预留；失败资源由 Close/Shutdown 重试。
-    /// 无每帧热路径。动画反向、导航和缓存仍待后续实现。
+    /// 无每帧热路径。显隐按操作版本提交，反向等待旧过渡退出；导航和缓存仍待实现。
     /// </summary>
-    public sealed class UiService
+    public sealed class UiService : IUiService
     {
         sealed class UiSession
         {
@@ -36,7 +36,26 @@ namespace NowFrameWork.UI
             public CancellationTokenSource OpeningCancellation;
             public readonly UniTaskCompletionSource OpeningFinished = new UniTaskCompletionSource();
             public UniTaskCompletionSource Closing;
-            public UniTaskCompletionSource TransitionFinished;
+            public VisibilityOperation Transition;
+            public long OperationVersion;
+            public UiVisibilityState Visibility = UiVisibilityState.Hidden;
+        }
+
+        sealed class VisibilityOperation
+        {
+            public bool Visible;
+            public long Version;
+            public readonly CancellationTokenSource Cancellation = new CancellationTokenSource();
+            public readonly UniTaskCompletionSource Completion = new UniTaskCompletionSource();
+            public readonly UniTaskCompletionSource Finished = new UniTaskCompletionSource();
+            public CancellationToken Token;
+
+            public Exception Cancel()
+            {
+                if (Finished.Task.Status != UniTaskStatus.Pending) return null;
+                try { Cancellation.Cancel(); return null; }
+                catch (Exception error) { return error; }
+            }
         }
 
         static int _ownerSeed;
@@ -51,13 +70,15 @@ namespace NowFrameWork.UI
         int _visibleCount;
         int _faultedCount;
         bool _shuttingDown;
+        bool _ready;
         UniTaskCompletionSource _shutdown;
 
-        public UiService(IUiViewFactory factory, IEnumerable<UiDefinition> definitions, IUiTransition defaultTransition = null)
+        public UiService(IUiViewFactory factory, IEnumerable<UiDefinition> definitions, IUiTransition defaultTransition = null, bool startReady = true)
         {
             MainThreadGuard.Assert("UiService.ctor");
             _factory = Guard.NotNull(factory, nameof(factory));
             _defaultTransition = defaultTransition ?? ImmediateUiTransition.Instance;
+            _ready = startReady;
             _owner = Interlocked.Increment(ref _ownerSeed);
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
             foreach (UiDefinition definition in definitions)
@@ -83,6 +104,7 @@ namespace NowFrameWork.UI
             if (args == null) throw new ArgumentNullException(nameof(args));
             ct.ThrowIfCancellationRequested();
             if (_shuttingDown) throw new InvalidOperationException("UI 服务已开始关闭");
+            if (!_ready) throw new InvalidOperationException("UI 模块尚未启动");
             if (!_definitions.TryGetValue(key.Id, out UiDefinition definition))
                 throw new InvalidOperationException("未注册的界面: " + key);
             if (!definition.MultiInstance)
@@ -95,10 +117,10 @@ namespace NowFrameWork.UI
                     return UniTask.FromResult(new UiOpenResult(UiOpenStatus.Busy, default));
                 }
             }
-            return OpenCoreAsync(definition, ct);
+            return OpenCoreAsync(definition, args, ct);
         }
 
-        async UniTask<UiOpenResult> OpenCoreAsync(UiDefinition definition, CancellationToken ct)
+        async UniTask<UiOpenResult> OpenCoreAsync(UiDefinition definition, object args, CancellationToken ct)
         {
             var session = new UiSession
             {
@@ -118,10 +140,16 @@ namespace NowFrameWork.UI
                 if (session.View == null) throw new InvalidOperationException("UI 工厂返回空视图: " + definition);
                 session.View.UiId = definition.Id;
                 session.View.Session = session.Handle.Session;
+                session.View.PrepareHidden();
+                await session.View.OpenSessionAsync(args, openingToken);
+                session.Visibility = UiVisibilityState.Showing;
+                session.View.BeginVisibility(true);
                 await _defaultTransition.ShowAsync(session.View, openingToken);
                 openingToken.ThrowIfCancellationRequested();
                 session.State = UiState.Open;
                 SetVisible(session, true);
+                session.Visibility = UiVisibilityState.Visible;
+                session.View.CommitVisible();
                 return new UiOpenResult(UiOpenStatus.Ok, session.Handle);
             }
             catch (Exception error)
@@ -154,28 +182,95 @@ namespace NowFrameWork.UI
             return ChangeVisibilityAsync(handle, false, ct);
         }
 
-        async UniTask ChangeVisibilityAsync(UiHandle handle, bool visible, CancellationToken ct)
+        UniTask ChangeVisibilityAsync(UiHandle handle, bool visible, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            if (!TryGet(handle, out UiSession session) || session.State != UiState.Open) return;
-            // UI-1 暂不反向播放；在旧回调退出前拒绝同对象的新过渡，避免并发写属性。
-            if (session.TransitionFinished != null) throw new InvalidOperationException("UI 过渡忙: " + handle);
-            var finished = new UniTaskCompletionSource();
-            session.TransitionFinished = finished;
+            if (!TryGet(handle, out UiSession session) || session.State != UiState.Open) return UniTask.CompletedTask;
+            VisibilityOperation previous = session.Transition;
+            if (previous != null && previous.Visible == visible)
+                return previous.Completion.Task.AttachExternalCancellation(ct);
+            UiVisibilityState target = visible ? UiVisibilityState.Visible : UiVisibilityState.Hidden;
+            if (previous == null && session.Visibility == target) return UniTask.CompletedTask;
+            var operation = new VisibilityOperation { Visible = visible, Version = ++session.OperationVersion };
+            operation.Token = operation.Cancellation.Token;
+            session.Transition = operation; // 先交出提交权，再取消旧回调（取消可能同步完成旧操作）。
+            Exception stopError = previous?.Cancel();
+            RunVisibilityAsync(session, operation, previous, stopError).Forget();
+            return operation.Completion.Task.AttachExternalCancellation(ct);
+        }
+
+        async UniTask RunVisibilityAsync(UiSession session, VisibilityOperation operation,
+            VisibilityOperation previous, Exception stopError)
+        {
+            Exception failure = null;
             try
             {
-                if (visible) await _defaultTransition.ShowAsync(session.View, ct);
-                else await _defaultTransition.HideAsync(session.View, ct);
-                ct.ThrowIfCancellationRequested();
-                if (session.State == UiState.Open) SetVisible(session, visible);
+                if (previous != null) await previous.Finished.Task;
+                if (stopError != null) throw stopError;
+                operation.Token.ThrowIfCancellationRequested();
+                if (!IsCurrent(session, operation)) throw new OperationCanceledException("UI 操作已替代");
+                SetVisible(session, false);
+                session.Visibility = operation.Visible ? UiVisibilityState.Showing : UiVisibilityState.Hiding;
+                session.View.BeginVisibility(operation.Visible);
+                operation.Token.ThrowIfCancellationRequested();
+                if (operation.Visible) await _defaultTransition.ShowAsync(session.View, operation.Token);
+                else await _defaultTransition.HideAsync(session.View, operation.Token);
+                operation.Token.ThrowIfCancellationRequested();
+                if (!IsCurrent(session, operation)) throw new OperationCanceledException("旧 UI 过渡不能提交");
+                SetVisible(session, operation.Visible);
+                session.Visibility = operation.Visible ? UiVisibilityState.Visible : UiVisibilityState.Hidden;
+                if (operation.Visible) session.View.CommitVisible(); else session.View.CommitHidden();
+            }
+            catch (Exception error)
+            {
+                failure = error;
+                if (IsCurrent(session, operation))
+                {
+                    SetVisible(session, false);
+                    session.Visibility = UiVisibilityState.Hidden;
+                    try { session.View.ApplyHidden(); }
+                    catch (Exception cleanupError) { failure = new AggregateException(error, cleanupError); }
+                }
             }
             finally
             {
-                session.TransitionFinished = null;
-                finished.TrySetResult();
+                if (ReferenceEquals(session.Transition, operation)) session.Transition = null;
+                operation.Cancellation.Dispose();
+                operation.Finished.TrySetResult(); // 确认属性写入已停止后，才允许下一次过渡/销毁。
+            }
+            if (failure == null) operation.Completion.TrySetResult();
+            else if (failure is OperationCanceledException) operation.Completion.TrySetCanceled(operation.Token);
+            else operation.Completion.TrySetException(failure);
+        }
+
+        static bool IsCurrent(UiSession session, VisibilityOperation operation)
+            => session.State == UiState.Open && session.OperationVersion == operation.Version
+                && ReferenceEquals(session.Transition, operation);
+
+        public UiVisibilityState GetVisibilityState(UiHandle handle)
+        {
+            MainThreadGuard.Assert("UiService.GetVisibilityState");
+            return TryGet(handle, out UiSession session) ? session.Visibility : UiVisibilityState.Unknown;
+        }
+
+        public int HiddenCount
+        {
+            get
+            {
+                MainThreadGuard.Assert();
+                int count = 0;
+                foreach (UiSession session in _sessions.Values)
+                    if (session.State == UiState.Open && session.Visibility == UiVisibilityState.Hidden) count++;
+                return count;
             }
         }
 
+        internal void StartService()
+        {
+            MainThreadGuard.Assert();
+            if (_shuttingDown) throw new InvalidOperationException("已关闭的 UI 服务不能重新启动");
+            _ready = true;
+        }
         /// <summary>取消仅结束本次等待；服务持有的清理仍继续。失败后可再次调用。</summary>
         public UniTask CloseAsync(UiHandle handle, CancellationToken ct = default)
         {
@@ -202,9 +297,16 @@ namespace NowFrameWork.UI
                 Exception cancelError = null;
                 try { session.OpeningCancellation?.Cancel(); }
                 catch (Exception error) { cancelError = error; }
+                VisibilityOperation transition = session.Transition;
+                Exception transitionCancelError = transition?.Cancel();
+                if (cancelError == null) cancelError = transitionCancelError;
                 await session.OpeningFinished.Task;
-                if (session.TransitionFinished != null) await session.TransitionFinished.Task;
-                if (session.State != UiState.Closed) await DiscardAsync(session);
+                if (transition != null) await transition.Finished.Task;
+                if (session.State != UiState.Closed)
+                {
+                    await HideForCloseAsync(session);
+                    await DiscardAsync(session);
+                }
                 if (cancelError != null) throw cancelError;
                 completion.TrySetResult();
             }
@@ -213,6 +315,26 @@ namespace NowFrameWork.UI
                 if (session.State != UiState.Closed) MarkFaulted(session);
                 session.Closing = null;
                 completion.TrySetException(error);
+            }
+        }
+
+        async UniTask HideForCloseAsync(UiSession session)
+        {
+            if (session.Visibility == UiVisibilityState.Hidden || session.View == null) return;
+            bool alreadyHiding = session.Visibility == UiVisibilityState.Hiding;
+            session.Visibility = UiVisibilityState.Hiding;
+            try
+            {
+                if (!alreadyHiding) session.View.BeginVisibility(false);
+                await _defaultTransition.HideAsync(session.View, CancellationToken.None);
+                session.Visibility = UiVisibilityState.Hidden;
+                session.View.CommitHidden();
+            }
+            catch
+            {
+                session.Visibility = UiVisibilityState.Hidden;
+                session.View.ApplyHidden();
+                throw;
             }
         }
 
@@ -225,6 +347,7 @@ namespace NowFrameWork.UI
                 {
                     if (!session.DestroyRequested)
                     {
+                        await session.View.CloseSessionAsync();
                         _factory.Destroy(session.View);
                         session.DestroyRequested = true;
                     }
@@ -234,6 +357,7 @@ namespace NowFrameWork.UI
                 }
                 SetVisible(session, false);
                 if (session.Faulted) { session.Faulted = false; _faultedCount--; }
+                session.Visibility = UiVisibilityState.Hidden;
                 session.State = UiState.Closed;
                 _sessions.Remove(session.Id);
             }
