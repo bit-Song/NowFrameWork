@@ -21,6 +21,7 @@ namespace NowFrameWork.UI
 
         readonly IAssetService _assets;
         readonly int _maxFrames;
+        readonly int _maxTracked;
         readonly Func<UniTask> _frameWaiter;
         readonly Action<GameObject> _destroy;
         readonly List<Record> _records = new List<Record>();
@@ -30,12 +31,13 @@ namespace NowFrameWork.UI
         UniTaskCompletionSource _disposing;
 
         public UnityUiViewFactory(IAssetService assets, UiRoot root = null, int maxDestroyFrames = 60,
-            Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null)
+            Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null, int maxTrackedRecords = 512)
         {
             MainThreadGuard.Assert("UnityUiViewFactory.ctor");
             _assets = assets ?? throw new ArgumentNullException(nameof(assets));
             if (maxDestroyFrames < 0) throw new ArgumentOutOfRangeException(nameof(maxDestroyFrames));
-            _root = root; _maxFrames = maxDestroyFrames; _frameWaiter = frameWaiter;
+            if (maxTrackedRecords <= 0) throw new ArgumentOutOfRangeException(nameof(maxTrackedRecords));
+            _root = root; _maxFrames = maxDestroyFrames; _frameWaiter = frameWaiter; _maxTracked = maxTrackedRecords;
             _destroy = destroy ?? (go => UnityEngine.Object.Destroy(go));
         }
 
@@ -49,6 +51,13 @@ namespace NowFrameWork.UI
             if (_closing) throw new ObjectDisposedException(nameof(UnityUiViewFactory));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (_root == null) throw new InvalidOperationException("UI 根尚未初始化");
+
+            // 清理超时会保留记录等待重试；没有上限的话，反复失败会静默累积租约
+            if (_records.Count >= _maxTracked)
+            {
+                throw new InvalidOperationException(
+                    "UI 工厂跟踪的记录已达上限 " + _maxTracked + "（可能有销毁超时未重试的记录），拒绝新建: " + definition);
+            }
             Transform layer = parent != null ? parent : _root.GetLayer(definition.Layer);
             AssetLease<GameObject> lease = await _assets.AcquireAsync<GameObject>(definition.Prefab, ct);
             var record = new Record { Lease = lease };
@@ -76,7 +85,8 @@ namespace NowFrameWork.UI
                 try
                 {
                     DestroyRecord(record);
-                    if (!await ReleaseRecordAsync(record)) throw new TimeoutException("UI 部分创建失败，销毁等待超时，保留租约");
+                    if (!await ReleaseRecordAsync(record))
+                        throw new TimeoutException("UI 部分创建失败，销毁等待超时，保留租约（当前跟踪 " + _records.Count + " 条）");
                 }
                 catch (Exception cleanupError) { throw new AggregateException("UI 创建与回滚同时失败: " + definition, error, cleanupError); }
                 throw;

@@ -66,6 +66,32 @@ namespace NowFrameWork.UI.Tests
         }
 
         [Test]
+        public void Create_ExceedsTrackedLimit_ThrowsAndKeepsLeaseCount()
+        {
+            // 上限 2：前两个实例不关闭，第三个必须被拒绝，避免清理超时的记录无限累积
+            var factory = new UnityUiViewFactory(_assets, _root, destroy: ImmediateDestroy, maxTrackedRecords: 2);
+            var service = new UiService(factory, new[] { Definition });
+
+            UiOpenResult first = service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult();
+
+            var multi = new UiDefinition(2, "Multi", AssetKey.From("panel")) { MultiInstance = true };
+            var service2 = new UiService(factory, new[] { multi });
+            var key2 = new UiKey<EmptyArgs>(2, "Multi");
+
+            service2.OpenAsync(key2, EmptyArgs.Default).GetAwaiter().GetResult();
+            Assert.AreEqual(2, factory.TrackedCount);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                service2.OpenAsync(key2, EmptyArgs.Default).GetAwaiter().GetResult());
+
+            Assert.AreEqual(2, factory.TrackedCount, "被拒绝的创建不应留下记录");
+            Assert.AreEqual(2, _assets.ActiveLeases, "被拒绝时不应额外占用租约");
+
+            service.CloseAsync(first.Handle).GetAwaiter().GetResult();
+            factory.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
         public void DestroyTimeout_KeepsLeaseUntilRetryAfterGameObjectGone()
         {
             var factory = new UnityUiViewFactory(_assets, _root, maxDestroyFrames: 0, destroy: go => { });
