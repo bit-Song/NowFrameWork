@@ -116,3 +116,23 @@ await update.DownloadAsync("PCProbe/Prefab",
 编辑器默认不加载真实 HybridCLR DLL。需要测试代码热更时，在 Player 上使用现有 `HybridClrBootLoader`/BootFlow Code Loader 接入，或运行文档 17 的 V1/V2 回归；它和资源 Prepare/Download 是两个独立步骤，DLL 进入进程后不能同进程回滚替换。
 
 本次交付增加可调用示例、场景及菜单，已通过编辑器编译和场景创建；随后全量 EditMode **301/301 通过，0 失败、0 跳过**，本机报告 `Build/ApiSample-20261117/editmode.xml`。实际 Play 操作由用户按以上步骤执行；没有把自动 EditMode 回归当作新场景端到端通过的证明。默认流程不引用 UI 包、不创建 UGUI 页面。
+
+## 7. 统一业务程序集 Game
+
+已建立 `Assets/Game/Game.asmdef`，程序集名称为 `Game`。今后项目业务脚本放在 `Assets/Game/` 或其子目录，共用这一个程序集；不必给每个脚本文件夹再创建 asmdef。
+
+```text
+Assets/Game/
+├─ Game.asmdef
+├─ GeneratedTextLoadSample.cs
+├─ Player/          ← 可以自行建立的业务分类目录
+└─ Enemy/           ← 共用 Game 程序集
+```
+
+原 `Assets/Aot/AssetKeySamples/GeneratedTextLoadSample.cs` 已移入此目录，保留原脚本 `.meta` / GUID；示例原有命名空间保留，程序集名称与 C# 命名空间是不同概念。原独立的 `NowFrameWork.AssetKeySamples` 程序集已由 Game 接替。
+
+Game 已显式引用 Core、Unity、Assets、Addressables 适配、Boot、Boot.Addressables、生成的 AssetKeys 和 UniTask。可以继续在代码中 `using NowFrameWork.Generated;`，并通过 `AssetKeys.Tests.PCRegression.Config_txt` 使用已生成的资源键。新增 UI 或其它能力时，再按实际需求给 Game 增加引用。
+
+这是普通业务代码的程序集划分，不会自动启用热更新。现有 HotUpdate 与 AotRuntime 保持独立；业务 Editor 工具应使用单独的 Editor 程序集，不要直接混入 Game。
+
+本轮按 Game.asmdef 声明的依赖编译了迁移后的脚本，0 错误，并核对程序集名称唯一、依赖已存在及脚本 GUID 保持。编译日志：`Build/GameAssembly-20261117/compile.txt`；本轮未重跑 Unity 全量测试或进入 Play。

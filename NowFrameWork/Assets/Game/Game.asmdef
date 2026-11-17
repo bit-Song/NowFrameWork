@@ -1,0 +1,23 @@
+{
+  "name": "Game",
+  "rootNamespace": "Game",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Unity",
+    "NowFrameWork.Assets",
+    "NowFrameWork.Assets.Addressables",
+    "NowFrameWork.Boot",
+    "NowFrameWork.Boot.Addressables",
+    "NowFrameWork.Generated.AssetKeys",
+    "UniTask"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
