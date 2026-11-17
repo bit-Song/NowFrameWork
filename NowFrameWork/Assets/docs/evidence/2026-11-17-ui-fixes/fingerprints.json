@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-17",
+  "editMode": {
+    "total": 301,
+    "passed": 301,
+    "failed": 0,
+    "skipped": 0,
+    "uiTotal": 22,
+    "uiAdded": 14
+  },
+  "fileHashNormalization": "XML original bytes; source text UTF-8 with CRLF normalized to LF",
+  "files": {
+    "editmode.xml": "d8f01e8b5a68249e88c84bd0e20746c7b5ce4fbf58edbb723247586990be1976"
+  },
+  "sources": {
+    "Framework/com.now.nowframework.ui.ugui/package.json": "b71169ed7094eb390204de3300163c4db236d7c65b875d82a23439b506af6bfa",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/EmptyArgs.cs": "69d96e83c12c9341012e575f52816e5a74f2fd2aaceb4aa72ab1ba80fb73b050",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/IUiTransition.cs": "9bab95590576ec97056e508c845c4f46f801b112e2c44747a19b41bf54cab284",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/IUiViewFactory.cs": "8ecb2765c74d65c6240abd2b88119989a52755049d71cee64de494636d5bf873",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/NowFrameWork.UI.UGUI.asmdef": "5aea65b303331c8c63b32c1a66aa063d6fd0639f72e8aadcccd2f888f6629b05",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiDefinition.cs": "77151e1c6621d9accf52886416a1291e736f96bcf79a33b48a3abee30fad290c",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiHandle.cs": "eb92100472a9ea8213ee6d26088dea198dc394fcb55892d9ad5a54d765a44819",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiKey.cs": "8ca57501eee2cad99e2f8f43b24c46391b030da602e30f24fa95061c85507d6d",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiOpenResult.cs": "49a685c8a10f09f5698bf0cffd6b1d316ffb3266d5b948dbaa3698cc79cf6956",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiService.cs": "e8f8fc0bc2f0b7111139426992ea674798f19eb11f9a78364ebe452623d38934",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UiView.cs": "09fecc71b8e7d630c13740ba1b53f4ab0eac8c06c8e0d633473aa8443e008488",
+    "Framework/com.now.nowframework.ui.ugui/Tests/EditMode/NowFrameWork.UI.Tests.asmdef": "4762c862f16a9cd5d2d5345782920016469e5a6adc9e3e002a54d7534fa3c695",
+    "Framework/com.now.nowframework.ui.ugui/Tests/EditMode/UiServiceTests.cs": "02aa7ec2fb09615ece28f2728ba5ddda3a59dab8504af02503e0a9849ba05659"
+  }
+}

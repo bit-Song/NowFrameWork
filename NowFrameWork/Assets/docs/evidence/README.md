@@ -4,6 +4,7 @@
 
 | 目录 | 内容 |
 |---|---|
+| `2026-11-17-ui-fixes/` | UI 所有权、关闭失败重试与取消隔离（EditMode 301，其中 UI 22，全部通过） |
 | `2026-11-16-boot-integration/` | Boot 启动整合回归（EditMode 279，全部通过） |
 | `2026-11-16-settings/` | 存储与设置回归（EditMode 256，全部通过） |
 | `2026-11-16-thread-guard/` | 主线程断言回归（EditMode 206，全部通过） |

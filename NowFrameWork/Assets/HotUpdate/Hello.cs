@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-
 // 热更程序集（HotUpdate.asmdef）里的测试入口。
 // 注意：这里不能直接引用 AotTest —— AotTest 目前在 Assembly-CSharp 里，
 // 热更程序集引用不到它。等给 Assets/Aot 建了 asmdef 并让 HotUpdate 引用后再接回来。

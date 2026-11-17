@@ -21,8 +21,16 @@ namespace NowFrameWork.UI
     {
         public static readonly ImmediateUiTransition Instance = new ImmediateUiTransition();
 
-        public UniTask ShowAsync(UiView view, CancellationToken ct) => UniTask.CompletedTask;
+        public UniTask ShowAsync(UiView view, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return UniTask.CompletedTask;
+        }
 
-        public UniTask HideAsync(UiView view, CancellationToken ct) => UniTask.CompletedTask;
+        public UniTask HideAsync(UiView view, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            return UniTask.CompletedTask;
+        }
     }
 }

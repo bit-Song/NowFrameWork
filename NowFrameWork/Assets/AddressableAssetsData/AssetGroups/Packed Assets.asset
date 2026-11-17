@@ -16,32 +16,7 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 8b445ce95999a354bbf9f870bb469cdf
-  m_SerializeEntries:
-  - m_GUID: 0f5f224a8f6888544b221d6e89c2f3f0
-    m_Address: Assets/AOTMeta/System.Core.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 133a338c5e5ef854d948e5f24cad98d1
-    m_Address: Assets/AOTMeta/System.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 17d03ef149658e148b3927c13a56c9bc
-    m_Address: Assets/AOTMeta/mscorlib.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4b505ad13a5262141a516e52f5260dab
-    m_Address: Assets/AOTMeta/UnityEngine.CoreModule.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 850d9d41d22badf4c8137867ebf38634
-    m_Address: Assets/AOTMeta/AotRuntime.dll.bytes
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e87353e72cb2aa34a84ba04388143dd3, type: 2}
   m_SchemaSet:

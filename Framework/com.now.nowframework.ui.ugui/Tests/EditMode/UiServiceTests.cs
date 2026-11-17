@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using NowFrameWork.Assets;
+using NowFrameWork.Core.Threading;
 using UnityEngine;
 
 namespace NowFrameWork.UI.Tests
@@ -20,6 +21,10 @@ namespace NowFrameWork.UI.Tests
         {
             public int Created;
             public int Released;
+            public int Destroyed;
+            public readonly List<UiView> Views = new List<UiView>();
+            public Func<UiView, UniTask<bool>> OnRelease;
+            public Action<UiView> OnDestroy;
             public Func<UniTask<UiView>> OnCreate;
 
             public FakeFactory()
@@ -34,19 +39,22 @@ namespace NowFrameWork.UI.Tests
             public async UniTask<UiView> CreateAsync(UiDefinition definition, Transform parent, CancellationToken ct)
             {
                 Created++;
-                return await OnCreate();
+                UiView view = await OnCreate();
+                Views.Add(view);
+                return view;
             }
 
             public void Destroy(UiView view)
             {
+                Destroyed++;
+                OnDestroy?.Invoke(view);
                 if (view != null) UnityEngine.Object.DestroyImmediate(view.gameObject);
             }
 
             public UniTask<bool> ReleaseAsync(UiView view)
             {
                 Released++;
-                Destroy(view);
-                return UniTask.FromResult(true);
+                return OnRelease == null ? UniTask.FromResult(true) : OnRelease(view);
             }
         }
 
@@ -54,25 +62,42 @@ namespace NowFrameWork.UI.Tests
         {
             public int Shows;
             public int Hides;
+            public Func<UniTask> OnShow;
+            public Func<UniTask> OnHide;
 
             public UniTask ShowAsync(UiView view, CancellationToken ct)
             {
                 Shows++;
-                return UniTask.CompletedTask;
+                return OnShow == null ? UniTask.CompletedTask : OnShow();
             }
 
             public UniTask HideAsync(UiView view, CancellationToken ct)
             {
                 Hides++;
-                return UniTask.CompletedTask;
+                return OnHide == null ? UniTask.CompletedTask : OnHide();
             }
         }
 
         static readonly UiKey<Args> SettingsKey = new UiKey<Args>(1001, "Settings");
 
-        static (UiService service, FakeFactory factory, FakeTransition transition) Create(bool multi = false)
+        readonly List<FakeFactory> _factories = new List<FakeFactory>();
+
+        [SetUp]
+        public void SetUp() => MainThreadGuard.BindCurrentThread();
+
+        [TearDown]
+        public void TearDown()
+        {
+            foreach (FakeFactory factory in _factories)
+                foreach (UiView view in factory.Views)
+                    if (view != null) UnityEngine.Object.DestroyImmediate(view.gameObject);
+            _factories.Clear();
+        }
+
+        (UiService service, FakeFactory factory, FakeTransition transition) Create(bool multi = false)
         {
             var factory = new FakeFactory();
+            _factories.Add(factory);
             var transition = new FakeTransition();
             var definitions = new List<UiDefinition>
             {
@@ -197,6 +222,7 @@ namespace NowFrameWork.UI.Tests
 
             Assert.AreEqual(1, transition.Hides);
             Assert.AreEqual(2, transition.Shows, "打开一次 + 显式 Show 一次");
+            Assert.AreEqual(1, service.VisibleCount);
 
             service.CloseAsync(result.Handle).GetAwaiter().GetResult();
         }
@@ -213,6 +239,265 @@ namespace NowFrameWork.UI.Tests
             service.CloseAsync(result.Handle).GetAwaiter().GetResult();
 
             Assert.AreEqual(1, factory.Released);
+        }
+
+        [Test]
+        public void ForeignHandle_CannotCloseOrChangeAnotherService()
+        {
+            var (first, _, _) = Create();
+            var (second, factory, transition) = Create();
+            UiHandle a = first.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            UiHandle b = second.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            Assert.AreNotEqual(a.Owner, b.Owner, "每个服务必须有独立身份");
+            second.CloseAsync(a).GetAwaiter().GetResult();
+            second.HideAsync(a).GetAwaiter().GetResult();
+            second.ShowAsync(a).GetAwaiter().GetResult();
+            second.CloseAsync(new UiHandle(a.Owner, b.Id, b.Session)).GetAwaiter().GetResult();
+            Assert.AreEqual(0, factory.Released);
+            Assert.AreEqual(0, transition.Hides);
+            Assert.AreEqual(1, transition.Shows);
+            Assert.AreEqual(1, second.SessionCount);
+            first.ShutdownAsync().GetAwaiter().GetResult();
+            second.ShutdownAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void Close_ReleaseTimeout_RetainsDestroyedViewForRetry()
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            factory.OnRelease = view => UniTask.FromResult(false);
+            Assert.Throws<TimeoutException>(() => service.CloseAsync(handle).GetAwaiter().GetResult());
+            Assert.AreEqual(1, service.SessionCount);
+            Assert.AreEqual(1, service.FaultedCount);
+            Assert.AreEqual(0, service.VisibleCount);
+            Assert.IsTrue(factory.Views[0] == null, "已销毁的 Unity 对象仍可能有未归还的租约");
+            Assert.AreEqual(UiOpenStatus.Busy,
+                service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Status);
+            factory.OnRelease = null;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(2, factory.Released, "重试必须处理 Unity 伪空的原视图");
+            Assert.AreEqual(1, factory.Destroyed, "已受理的销毁不重复发起");
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(0, service.FaultedCount);
+        }
+
+        [Test]
+        public void Close_ReleaseThrows_CanRetryWithoutCreatingReplacement()
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            factory.OnRelease = view => throw new InvalidOperationException("release failed");
+            Assert.Throws<InvalidOperationException>(() => service.CloseAsync(handle).GetAwaiter().GetResult());
+            Assert.AreEqual(1, service.FaultedCount);
+            Assert.AreEqual(UiOpenStatus.Busy,
+                service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Status);
+            Assert.AreEqual(1, factory.Created);
+            factory.OnRelease = null;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(2, factory.Released);
+            Assert.AreEqual(0, service.FaultedCount);
+            Assert.AreEqual(0, service.SessionCount);
+        }
+
+        [Test]
+        public void Close_DestroyThrows_DoesNotReleaseLeaseAndCanRetry()
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            factory.OnDestroy = view => throw new InvalidOperationException("destroy failed");
+            Assert.Throws<InvalidOperationException>(() => service.CloseAsync(handle).GetAwaiter().GetResult());
+            Assert.AreEqual(0, factory.Released, "销毁尚未受理时不应归还租约");
+            Assert.AreEqual(1, service.FaultedCount);
+            factory.OnDestroy = null;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(1, factory.Released);
+            Assert.AreEqual(0, service.SessionCount);
+        }
+
+        [Test]
+        public void Close_ConcurrentWaiters_WaitForSameCleanup()
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var release = new UniTaskCompletionSource<bool>();
+            factory.OnRelease = view => release.Task;
+            UniTask first = service.CloseAsync(handle);
+            UniTask second = service.CloseAsync(handle);
+            Assert.AreEqual(UniTaskStatus.Pending, first.Status);
+            Assert.AreEqual(UniTaskStatus.Pending, second.Status, "重复关闭不能提前报告完成");
+            Assert.AreEqual(1, factory.Released);
+            release.TrySetResult(true);
+            first.GetAwaiter().GetResult();
+            second.GetAwaiter().GetResult();
+            Assert.AreEqual(0, service.SessionCount);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Close_CancelOneWaiter_DoesNotCancelSharedCleanup(bool cancelFirst)
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var release = new UniTaskCompletionSource<bool>();
+            factory.OnRelease = view => release.Task;
+            using (var cancellation = new CancellationTokenSource())
+            {
+                UniTask first = service.CloseAsync(handle, cancelFirst ? cancellation.Token : default);
+                UniTask second = service.CloseAsync(handle, cancelFirst ? default : cancellation.Token);
+                cancellation.Cancel();
+                UniTask canceled = cancelFirst ? first : second;
+                UniTask remaining = cancelFirst ? second : first;
+                Assert.Throws<OperationCanceledException>(() => canceled.GetAwaiter().GetResult());
+                Assert.AreEqual(UniTaskStatus.Pending, remaining.Status);
+                Assert.AreEqual(1, service.SessionCount);
+                release.TrySetResult(true);
+                remaining.GetAwaiter().GetResult();
+                Assert.AreEqual(1, factory.Released);
+                Assert.AreEqual(0, service.SessionCount);
+            }
+        }
+
+        [Test]
+        public void Open_WhileClosing_IsBusyUntilReleaseCompletes()
+        {
+            var (service, factory, _) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var release = new UniTaskCompletionSource<bool>();
+            factory.OnRelease = view => release.Task;
+            UniTask closing = service.CloseAsync(handle);
+            UiOpenResult busy = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult();
+            Assert.AreEqual(UiOpenStatus.Busy, busy.Status);
+            Assert.IsFalse(busy.Handle.IsValid);
+            Assert.AreEqual(1, factory.Created);
+            release.TrySetResult(true);
+            closing.GetAwaiter().GetResult();
+            factory.OnRelease = null;
+            UiOpenResult reopened = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult();
+            Assert.AreEqual(UiOpenStatus.Ok, reopened.Status);
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            Assert.AreEqual(1, service.SessionCount, "旧句柄不能关闭重新打开的实例");
+            service.CloseAsync(reopened.Handle).GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void HideAndClose_OnlyChangeTheirOwnVisibilityCount()
+        {
+            var (service, _, _) = Create(multi: true);
+            UiHandle first = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            UiHandle second = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.HideAsync(first).GetAwaiter().GetResult();
+            service.HideAsync(first).GetAwaiter().GetResult();
+            Assert.AreEqual(1, service.VisibleCount);
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            Assert.AreEqual(1, service.VisibleCount, "关闭已隐藏项不能扣除另一个实例的计数");
+            service.CloseAsync(second).GetAwaiter().GetResult();
+            Assert.AreEqual(0, service.VisibleCount);
+        }
+
+        [Test]
+        public void Open_CanceledDuringShow_RollsBackEvenIfTransitionIgnoresToken()
+        {
+            var (service, factory, transition) = Create();
+            var showing = new UniTaskCompletionSource();
+            transition.OnShow = () => showing.Task;
+            using (var cancellation = new CancellationTokenSource())
+            {
+                UniTask<UiOpenResult> opening = service.OpenAsync(SettingsKey, new Args(), cancellation.Token);
+                cancellation.Cancel();
+                showing.TrySetResult();
+                Assert.Throws<OperationCanceledException>(() => opening.GetAwaiter().GetResult());
+            }
+            Assert.AreEqual(1, factory.Destroyed);
+            Assert.AreEqual(1, factory.Released);
+            Assert.AreEqual(0, service.OpeningCount);
+            Assert.AreEqual(0, service.VisibleCount);
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(0, service.FaultedCount);
+        }
+
+        [Test]
+        public void Open_RollbackFails_PreservesBothErrorsAndShutdownCanRetry()
+        {
+            var (service, factory, transition) = Create();
+            var showError = new InvalidOperationException("show failed");
+            var releaseError = new InvalidOperationException("release failed");
+            transition.OnShow = () => throw showError;
+            factory.OnRelease = view => throw releaseError;
+            AggregateException error = Assert.Throws<AggregateException>(() =>
+                service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult());
+            Assert.AreSame(showError, error.InnerExceptions[0]);
+            Assert.AreSame(releaseError, error.InnerExceptions[1]);
+            Assert.AreEqual(0, service.OpeningCount);
+            Assert.AreEqual(1, service.SessionCount);
+            Assert.AreEqual(1, service.FaultedCount);
+            factory.OnRelease = null;
+            service.ShutdownAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(2, factory.Released);
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(0, service.FaultedCount);
+        }
+
+        [Test]
+        public void Shutdown_CancelsOpeningAndWaitsForLateView()
+        {
+            var (service, factory, transition) = Create();
+            var created = new UniTaskCompletionSource<UiView>();
+            factory.OnCreate = () => created.Task;
+            UniTask<UiOpenResult> opening = service.OpenAsync(SettingsKey, new Args());
+            UniTask shutdown = service.ShutdownAsync();
+            UniTask duplicate = service.ShutdownAsync();
+            Assert.AreEqual(UniTaskStatus.Pending, shutdown.Status);
+            Assert.AreEqual(UniTaskStatus.Pending, duplicate.Status);
+            Assert.Throws<InvalidOperationException>(() => service.OpenAsync(SettingsKey, new Args()));
+            created.TrySetResult(new GameObject("LateView").AddComponent<UiView>());
+            Assert.Throws<OperationCanceledException>(() => opening.GetAwaiter().GetResult());
+            shutdown.GetAwaiter().GetResult();
+            duplicate.GetAwaiter().GetResult();
+            Assert.AreEqual(0, transition.Shows);
+            Assert.AreEqual(1, factory.Destroyed);
+            Assert.AreEqual(1, factory.Released);
+            Assert.AreEqual(0, service.OpeningCount);
+            Assert.AreEqual(0, service.SessionCount);
+        }
+
+        [Test]
+        public void Shutdown_OneReleaseFails_StillCleansOthersAndCanRetry()
+        {
+            var (service, factory, _) = Create(multi: true);
+            UiHandle first = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult();
+            UiView failedView = factory.Views[0];
+            factory.OnRelease = view => UniTask.FromResult(!ReferenceEquals(view, failedView));
+            Assert.Throws<AggregateException>(() => service.ShutdownAsync().GetAwaiter().GetResult());
+            Assert.AreEqual(2, factory.Released, "单项失败不能阻断其它实例的清理");
+            Assert.AreEqual(1, service.SessionCount);
+            Assert.AreEqual(1, service.FaultedCount);
+            factory.OnRelease = null;
+            service.ShutdownAsync().GetAwaiter().GetResult();
+            service.ShutdownAsync().GetAwaiter().GetResult();
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            Assert.AreEqual(3, factory.Released);
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(0, service.FaultedCount);
+        }
+
+        [Test]
+        public void Close_WaitsForInFlightVisibilityCallbackBeforeDestroying()
+        {
+            var (service, factory, transition) = Create();
+            UiHandle handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var hiding = new UniTaskCompletionSource();
+            transition.OnHide = () => hiding.Task;
+            UniTask hide = service.HideAsync(handle);
+            UniTask close = service.CloseAsync(handle);
+            Assert.AreEqual(UniTaskStatus.Pending, close.Status);
+            Assert.AreEqual(0, factory.Destroyed, "回调退出前不能销毁它仍在使用的实例");
+            hiding.TrySetResult();
+            hide.GetAwaiter().GetResult();
+            close.GetAwaiter().GetResult();
+            Assert.AreEqual(1, factory.Released);
+            Assert.AreEqual(0, service.VisibleCount);
         }
     }
 }

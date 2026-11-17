@@ -1,0 +1,8 @@
+{
+  "name": "NowFrameWork.AssetKeys.Editor",
+  "rootNamespace": "NowFrameWork.EditorTools.AssetKeys",
+  "references": ["Unity.Addressables", "Unity.Addressables.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false,
+  "noEngineReferences": false
+}

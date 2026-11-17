@@ -14,10 +14,13 @@ namespace NowFrameWork.UI
     {
         UniTask<UiView> CreateAsync(UiDefinition definition, Transform parent, CancellationToken ct);
 
-        /// <summary>发起销毁（Unity 的 Destroy 延迟到帧末）。</summary>
+        /// <summary>发起销毁（Unity 的 Destroy 延迟到帧末）；重复调用应安全。</summary>
         void Destroy(UiView view);
 
-        /// <summary>等实例真的消失后再归还租约；返回 false 表示超时未销毁。</summary>
+        /// <summary>
+        /// 服务先调用 Destroy，再等待本方法确认销毁并归还租约。
+        /// 返回 false 或抛异常时保留租约，允许用同一 view 重试；view 可能已是 Unity 伪空。
+        /// </summary>
         UniTask<bool> ReleaseAsync(UiView view);
     }
 }

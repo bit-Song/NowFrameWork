@@ -1,0 +1,13 @@
+{
+  "name": "NowFrameWork.AssetKeySamples",
+  "rootNamespace": "NowFrameWork.AssetKeySamples",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Assets",
+    "NowFrameWork.Assets.Addressables",
+    "NowFrameWork.Generated.AssetKeys",
+    "UniTask"
+  ],
+  "autoReferenced": false,
+  "noEngineReferences": false
+}
