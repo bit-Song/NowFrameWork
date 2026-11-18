@@ -23,6 +23,7 @@ namespace NowFrameWork.Boot.Tests
             public readonly List<string> Calls = new List<string>();
             public TextAsset Asset;
             public int Released;
+            public Action<ProviderHandle> OnRelease;
             public bool ResolveFails;
             public Func<CancellationToken, UniTask> Init;
             public Func<CancellationToken, UniTask> Download;
@@ -36,7 +37,7 @@ namespace NowFrameWork.Boot.Tests
             }
             public UniTask<ProviderHandle> LoadAsync(string canonical, CancellationToken ct)
             { Calls.Add("load"); return LoadGate != null ? LoadGate.Task : UniTask.FromResult(new ProviderHandle(canonical, Asset)); }
-            public void Release(ProviderHandle handle) { Released++; Calls.Add("release"); }
+            public void Release(ProviderHandle handle) { Released++; Calls.Add("release"); OnRelease?.Invoke(handle); }
             public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct) { Calls.Add("check"); return UniTask.FromResult(true); }
             public UniTask<int> UpdateCatalogsAsync(CancellationToken ct) { Calls.Add("catalog"); return UniTask.FromResult(1); }
             public UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct) { Calls.Add("size"); return UniTask.FromResult(10L); }
@@ -305,6 +306,41 @@ namespace NowFrameWork.Boot.Tests
             var session = Session(); Exception error = null;
             var thread = new Thread(() => { try { session.StartAsync(); } catch (Exception e) { error = e; } }) { IsBackground = true };
             thread.Start(); Assert.IsTrue(thread.Join(3000)); Assert.IsInstanceOf<InvalidOperationException>(error); Assert.AreEqual(0, _created);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Stop_RetriesUnclaimedHandleAndKeepsContextIfReleaseFails(bool failFirstStop)
+        {
+            var session = Session(new BootOptions());
+            Complete(session.StartAsync());
+            var context = session.Context;
+            ProviderHandle unclaimed = null;
+            _provider.OnRelease = handle =>
+            {
+                if (unclaimed == null) unclaimed = handle;
+                Assert.That(handle, Is.SameAs(unclaimed));
+                if (_provider.Released == 1 || (_provider.Released == 2 && failFirstStop))
+                    throw new InvalidOperationException("Provider release failed");
+            };
+
+            Assert.Throws<InvalidOperationException>(() =>
+                context.Assets.AcquireAsync<Texture2D>("unclaimed", default).GetAwaiter().GetResult());
+            Assert.That(context.Assets.PendingRequests, Is.Zero);
+            Assert.That(context.Assets.ActiveLeases, Is.Zero);
+            if (failFirstStop)
+            {
+                Assert.Throws<InvalidOperationException>(() => Complete(session.StopAsync()));
+                Assert.That(session.State, Is.EqualTo(BootState.CleanupFailed));
+                Assert.That(session.Context, Is.SameAs(context));
+                Assert.That(session.CanStart, Is.False);
+            }
+
+            Complete(session.StopAsync());
+            Assert.That(_provider.Released, Is.EqualTo(failFirstStop ? 3 : 2));
+            Assert.That(session.State, Is.EqualTo(BootState.Stopped));
+            Assert.That(session.Context, Is.Null);
+            Assert.That(session.CanStart, Is.True);
         }
 
         [Test] public void InvalidOptionalConfiguration_FailsBeforeAnyFactoryInvocation()

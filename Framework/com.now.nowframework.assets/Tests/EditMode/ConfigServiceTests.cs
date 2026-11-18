@@ -21,6 +21,8 @@ namespace NowFrameWork.Assets.Tests
         {
             public int LoadCalls;
             public int ReleaseCalls;
+            public int ReleaseFailures;
+            public ProviderHandle LastReleased;
 
             public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
                 => UniTask.FromResult(key.Address);
@@ -36,7 +38,12 @@ namespace NowFrameWork.Assets.Tests
                 return UniTask.FromResult(new ProviderHandle(canonicalKey, asset));
             }
 
-            public void Release(ProviderHandle handle) => ReleaseCalls++;
+            public void Release(ProviderHandle handle)
+            {
+                ReleaseCalls++;
+                LastReleased = handle;
+                if (ReleaseCalls <= ReleaseFailures) throw new InvalidOperationException("Provider release failed");
+            }
         }
 
         static (ConfigService config, FakeProvider provider, AssetService service) Create()
@@ -93,6 +100,34 @@ namespace NowFrameWork.Assets.Tests
             Assert.AreEqual(0, service.ActiveLeases, "类型不匹配时必须归还刚拿到的租约");
             Assert.AreEqual(1, provider.ReleaseCalls);
             Assert.AreEqual(0, config.Count);
+        }
+
+        [Test]
+        public void Load_TypeMismatchAndReleaseFailure_DisposeRetriesTemporaryLease()
+        {
+            var (config, provider, service) = Create();
+            provider.ReleaseFailures = 2;
+            var failure = Assert.Throws<AggregateException>(() =>
+                config.LoadAsync<StatConfig>("other").GetAwaiter().GetResult());
+            var handle = provider.LastReleased;
+            try
+            {
+                Assert.That(failure.InnerExceptions[0], Is.TypeOf<InvalidCastException>());
+                Assert.That(failure.InnerExceptions[1], Is.TypeOf<InvalidOperationException>());
+                Assert.That(config.Count, Is.Zero);
+                Assert.That(service.ActiveLeases, Is.EqualTo(1));
+
+                Assert.Throws<InvalidOperationException>(() => config.DisposeAsync().GetAwaiter().GetResult());
+                Assert.That(provider.LastReleased, Is.SameAs(handle));
+                Assert.That(service.ActiveLeases, Is.EqualTo(1));
+
+                config.DisposeAsync().GetAwaiter().GetResult();
+                config.DisposeAsync().GetAwaiter().GetResult();
+                Assert.That(provider.ReleaseCalls, Is.EqualTo(3));
+                Assert.That(provider.LastReleased, Is.SameAs(handle));
+                Assert.That(service.ActiveLeases, Is.Zero);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(handle.Asset); }
         }
     }
 }

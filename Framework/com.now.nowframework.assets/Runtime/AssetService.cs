@@ -218,6 +218,19 @@ namespace NowFrameWork.Assets
                 ReleaseEntry(entry);
         }
 
+        /// <summary>重试无人接手的句柄释放。仍有租约的资源由原持有者归还。</summary>
+        public void RetryUnclaimedReleases()
+        {
+            MainThreadGuard.Assert("AssetService.RetryUnclaimedReleases");
+            // Provider 回调可能重入服务，遍历快照并在释放前重新确认条目归属。
+            foreach (Entry entry in new List<Entry>(_entries.Values))
+            {
+                if (entry.Release == ReleaseState.Failed && entry.Leases == 0 &&
+                    _entries.TryGetValue(entry.Canonical, out Entry current) && ReferenceEquals(entry, current))
+                    ReleaseEntry(entry);
+            }
+        }
+
         void ILeaseOwner.ReleaseLease(string canonicalKey, long version)
         {
             MainThreadGuard.Assert("AssetService.ReleaseLease");

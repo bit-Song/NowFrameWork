@@ -14,15 +14,24 @@ namespace NowFrameWork.UI.Tests
 {
     public class UiWindowTests
     {
+        sealed class ShownView : UiView
+        {
+            public Action Shown;
+            protected override void OnShown() => Shown?.Invoke();
+        }
+
         sealed class Factory : IUiViewFactory
         {
             public readonly List<UiView> Views = new List<UiView>();
             public bool FailRelease;
             public Action<UiView> Configure;
+            public Action OnShown;
             public UniTask<UiView> CreateAsync(UiDefinition d, Transform parent, CancellationToken ct)
             {
-                var go = new GameObject(d.Name, typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup), typeof(GraphicRaycaster), typeof(UiView));
-                var view = go.GetComponent<UiView>(); Configure?.Invoke(view); Views.Add(view); return UniTask.FromResult(view);
+                var go = new GameObject(d.Name, typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup), typeof(GraphicRaycaster));
+                var view = OnShown == null ? go.AddComponent<UiView>() : go.AddComponent<ShownView>();
+                if (view is ShownView shown) shown.Shown = OnShown;
+                Configure?.Invoke(view); Views.Add(view); return UniTask.FromResult(view);
             }
             public void Destroy(UiView view) { if (view != null) UnityEngine.Object.DestroyImmediate(view.gameObject); }
             public UniTask<bool> ReleaseAsync(UiView view) => UniTask.FromResult(!FailRelease);
@@ -166,6 +175,23 @@ namespace NowFrameWork.UI.Tests
             Assert.IsTrue(Done(service.Navigation.BackAsync())); Assert.AreEqual(root, service.Navigation.CurrentPage);
             Assert.AreSame(rootView, _factory.Views[0]); Assert.AreEqual(UiVisibilityState.Unknown, service.GetVisibilityState(next));
             Assert.IsFalse(Done(service.Navigation.BackAsync())); Assert.AreEqual(1, service.SessionCount);
+        }
+
+        [Test] public void Navigation_BackDuringFirstPushKeepsRoot()
+        {
+            var service = Service();
+            UniTask<bool> back = default;
+            _factory.OnShown = () => back = service.RequestBackAsync();
+
+            var opened = Done(service.Navigation.PushAsync(Key(1), EmptyArgs.Default));
+
+            Assert.That(Done(back), Is.True);
+            Assert.That(opened.Status, Is.EqualTo(UiOpenStatus.Ok));
+            Assert.That(service.Navigation.PageCount, Is.EqualTo(1));
+            Assert.That(service.Navigation.CurrentPage, Is.EqualTo(opened.Handle));
+            Assert.That(service.GetVisibilityState(opened.Handle), Is.EqualTo(UiVisibilityState.Visible));
+            Assert.That(service.SessionCount, Is.EqualTo(1));
+            Assert.That(Done(service.RequestBackAsync()), Is.False);
         }
 
         [Test] public void Navigation_BackClosesPopupBeforePoppingPage()

@@ -1,0 +1,11 @@
+{
+  "platform": "Windows x64",
+  "backend": "IL2CPP",
+  "build": "Development",
+  "managedStripping": "Low",
+  "content": "Local Addressables",
+  "hotUpdateEnabled": false,
+  "exitCode": 0,
+  "executableSha256": "be2f2e2d46d5d210e01eb559d85554d370d2f4e411eac6a055aa891869b63972",
+  "gameAssemblySha256": "d7bf6a4a449ba2afa3699f588921181c420b8f89e08022d0449369e28448179a"
+}

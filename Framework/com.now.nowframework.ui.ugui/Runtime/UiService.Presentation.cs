@@ -109,7 +109,7 @@ namespace NowFrameWork.UI
 
         /// <summary>返回请求按视觉顺序分发，Toast 不参与。动画中消费但不继续向下；ct 只取消等待。</summary>
         public UniTask<bool> RequestBackAsync(CancellationToken ct = default)
-            => Navigation.PageCount > 0 ? Navigation.BackAsync(ct) : RequestBackAsync(false, ct);
+            => Navigation.IsBusy || Navigation.PageCount > 0 ? Navigation.BackAsync(ct) : RequestBackAsync(false, ct);
 
         internal UniTask<bool> RequestPopupBackAsync(CancellationToken ct)
             => RequestBackAsync(true, ct);

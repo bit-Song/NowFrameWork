@@ -4,6 +4,7 @@
 
 | 目录 | 内容 |
 |---|---|
+| [`2026-11-18-ui-acceptance/`](2026-11-18-ui-acceptance/README.md) | 主工程 Play 与 Windows x64 IL2CPP 的 UI 样例验收，附主工程 EditMode 396/396 |
 | `2026-11-18-failure-path-fixes/` | 退页与资源释放失败后的重试回归（主工程和独立消费工程均 392/392） |
 | `2026-11-18-ui-cache/` | 面板缓存阶段（独立消费工程 388/388，Windows Mono 缓存与租约验证） |
 | `2026-11-18-ui-tween/` | 面板独立动画与 DOTween 可选适配（无插件基础 364；完整 377；Windows Mono 动画反向/循环/退出） |

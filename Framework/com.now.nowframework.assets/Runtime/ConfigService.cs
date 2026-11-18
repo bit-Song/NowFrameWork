@@ -25,6 +25,8 @@ namespace NowFrameWork.Assets
             new Dictionary<string, AssetLease<UnityEngine.Object>>(StringComparer.Ordinal);
         readonly Dictionary<AssetKey, UnityEngine.Object> _values =
             new Dictionary<AssetKey, UnityEngine.Object>();
+        readonly List<AssetLease<UnityEngine.Object>> _failedTemporaryReleases =
+            new List<AssetLease<UnityEngine.Object>>();
 
         bool _disposed, _disposing;
 
@@ -61,6 +63,7 @@ namespace NowFrameWork.Assets
             }
 
             AssetLease<UnityEngine.Object> lease = await _assets.AcquireCacheAsync<UnityEngine.Object>(key, ct);
+            Exception loadError = null;
             try
             {
                 ct.ThrowIfCancellationRequested();
@@ -79,9 +82,21 @@ namespace NowFrameWork.Assets
                 _values[cacheKey] = value;
                 return value;
             }
+            catch (Exception error)
+            {
+                loadError = error;
+                throw;
+            }
             finally
             {
-                lease?.Dispose();
+                try { lease?.Dispose(); }
+                catch (Exception releaseError)
+                {
+                    _failedTemporaryReleases.Add(lease);
+                    if (loadError != null)
+                        throw new AggregateException("配置加载与临时租约释放均失败: " + cacheKey, loadError, releaseError);
+                    throw;
+                }
             }
         }
 
@@ -99,6 +114,12 @@ namespace NowFrameWork.Assets
                     pair.Value.Dispose();
 
                 _leases.Clear();
+                while (_failedTemporaryReleases.Count > 0)
+                {
+                    int index = _failedTemporaryReleases.Count - 1;
+                    _failedTemporaryReleases[index].Dispose();
+                    _failedTemporaryReleases.RemoveAt(index);
+                }
             }
             finally { _disposing = false; }
             return UniTask.CompletedTask;

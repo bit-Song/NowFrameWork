@@ -1,0 +1,11 @@
+{
+    "scene": "UIWindows",
+    "passed": true,
+    "graphics": "Direct3D11",
+    "steps": [
+        "Boot, real uGUI hit testing and pointer events, page history, nested modal, shared backdrop, focus restoration",
+        "10 complete page/modal cycles",
+        "Boot stop, GameEntry unbound, zero sessions/cache/leases/pending"
+    ],
+    "error": ""
+}

@@ -198,6 +198,7 @@ namespace NowFrameWork.Boot
                 await _cleanupWait();
             }
             if (Context.Assets.ActiveLeases != 0) throw new InvalidOperationException("Boot 关闭时仍有资源租约：" + Context.Assets.ActiveLeases);
+            Context.Assets.RetryUnclaimedReleases();
             await Context.App.ShutdownAsync();
             Context = null;
             _entryAttempted = false;

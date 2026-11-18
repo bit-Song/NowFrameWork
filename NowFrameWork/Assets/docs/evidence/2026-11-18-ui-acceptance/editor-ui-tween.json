@@ -1,0 +1,11 @@
+{
+    "scene": "UITween",
+    "passed": true,
+    "graphics": "Direct3D11",
+    "steps": [
+        "Boot, real uGUI hit testing and pointer events, page history, nested modal, shared backdrop, focus restoration",
+        "DOTween reversal at timeScale=0, cache reuse and stale handle, manual trim, unscaled idle expiry, parked instance at stop",
+        "Boot stop, GameEntry unbound, zero sessions/cache/leases/pending"
+    ],
+    "error": ""
+}
