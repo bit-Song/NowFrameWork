@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace NowFrameWork.UI
 {
@@ -16,9 +17,50 @@ namespace NowFrameWork.UI
         [SerializeField] EventSystem _eventSystem;
         Rect _lastSafeArea, _lastViewport;
         bool _layoutReady;
+        [SerializeField] Color _modalColor = new Color(0, 0, 0, 0.55f);
+        Canvas _backdrop, _transitionBlocker;
+        Action _backdropClicked;
 
         public Canvas Canvas => _canvas;
         public EventSystem EventSystem => _eventSystem;
+        public bool BackdropVisible => _backdrop != null && _backdrop.gameObject.activeSelf;
+        public int BackdropSortingOrder => _backdrop == null ? 0 : _backdrop.sortingOrder;
+        public bool NavigationBlocked => _transitionBlocker != null && _transitionBlocker.gameObject.activeSelf;
+
+        internal void PreparePresentation(Action backdropClicked)
+        {
+            if (_canvas.sortingOrder < -32768 || _canvas.sortingOrder > 8191)
+                throw new InvalidOperationException("UiRoot sortingOrder 必须在 -32768–8191，为窗口与输入挡板保留排序范围。");
+            _backdropClicked = backdropClicked;
+            _backdrop = CreateOverlay("Shared Modal Backdrop", _modalColor, true);
+            _transitionBlocker = CreateOverlay("Navigation Input Blocker", Color.clear, false);
+        }
+
+        Canvas CreateOverlay(string name, Color color, bool clickable)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(Image));
+            var rect = (RectTransform)go.transform; rect.SetParent(transform, false);
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var canvas = go.GetComponent<Canvas>(); canvas.overrideSorting = true; canvas.sortingLayerID = _canvas.sortingLayerID;
+            var image = go.GetComponent<Image>(); image.color = color; image.raycastTarget = true;
+            if (clickable)
+            {
+                var button = go.AddComponent<Button>(); button.targetGraphic = image; button.transition = Selectable.Transition.None;
+                button.navigation = new Navigation { mode = Navigation.Mode.None };
+                button.onClick.AddListener(() => _backdropClicked?.Invoke());
+            }
+            go.SetActive(false);
+            return canvas;
+        }
+
+        internal void PresentBackdrop(bool visible, int order, bool blockAll)
+        {
+            if (_backdrop == null) return;
+            _backdrop.sortingOrder = order;
+            _backdrop.gameObject.SetActive(visible);
+            _transitionBlocker.sortingOrder = _canvas.sortingOrder + 24575;
+            _transitionBlocker.gameObject.SetActive(blockAll);
+        }
 
         public void Configure(Canvas canvas, RectTransform safeArea, Transform page, Transform popup, Transform toast,
             EventSystem eventSystem = null)

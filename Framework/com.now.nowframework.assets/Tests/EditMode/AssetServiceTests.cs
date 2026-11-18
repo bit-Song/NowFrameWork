@@ -21,6 +21,7 @@ namespace NowFrameWork.Assets.Tests
             public int ReleaseCalls;
             public Func<AssetKey, string> Canonical = k => k.Address;
             public Func<string, UniTask<ProviderHandle>> Load = null;
+            public Action<ProviderHandle> OnRelease;
 
             public FakeProvider()
             {
@@ -39,7 +40,11 @@ namespace NowFrameWork.Assets.Tests
                 return Load(canonicalKey);
             }
 
-            public void Release(ProviderHandle handle) => ReleaseCalls++;
+            public void Release(ProviderHandle handle)
+            {
+                ReleaseCalls++;
+                OnRelease?.Invoke(handle);
+            }
         }
 
         static FakeAsset Asset(ProviderHandle h) => (FakeAsset)h.Asset;
@@ -108,6 +113,94 @@ namespace NowFrameWork.Assets.Tests
 
             Assert.AreEqual(1, provider.ReleaseCalls, "重复释放不应重复归还");
             Assert.AreEqual(0, service.ActiveLeases);
+        }
+
+        [Test]
+        public void FailedLastRelease_RetainsLeaseAndRetriesSameHandle()
+        {
+            var asset = ScriptableObject.CreateInstance<FakeAsset>();
+            var handle = new ProviderHandle("enemy", asset);
+            var provider = new FakeProvider { Load = _ => UniTask.FromResult(handle) };
+            provider.OnRelease = released =>
+            {
+                Assert.AreSame(handle, released);
+                if (provider.ReleaseCalls == 1) throw new InvalidOperationException("release failed");
+            };
+            var service = new AssetService(provider);
+            try
+            {
+                var lease = service.AcquireAsync<FakeAsset>("enemy", default).GetAwaiter().GetResult();
+                Assert.Throws<InvalidOperationException>(() => lease.Dispose());
+
+                Assert.IsFalse(lease.IsReleased);
+                Assert.AreEqual(1, service.ActiveLeases);
+                Assert.IsTrue(service.Validate(out string error), error);
+                Assert.Throws<InvalidOperationException>(() => { _ = lease.Asset; });
+                Assert.Throws<InvalidOperationException>(() => service.AcquireAsync<FakeAsset>("enemy", default).GetAwaiter().GetResult());
+                Assert.AreEqual(1, provider.LoadCalls);
+
+                lease.Dispose();
+                lease.Dispose();
+                Assert.IsTrue(lease.IsReleased);
+                Assert.AreEqual(2, provider.ReleaseCalls);
+                Assert.AreEqual(0, service.ActiveLeases);
+                Assert.IsTrue(service.Validate(out error), error);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(asset); }
+        }
+
+        [Test]
+        public void FailedUnclaimedHandleRelease_IsRetriedBeforeReload()
+        {
+            var asset = ScriptableObject.CreateInstance<FakeAsset>();
+            var unclaimed = new ProviderHandle("enemy", asset);
+            var provider = new FakeProvider();
+            provider.Load = key => UniTask.FromResult(provider.LoadCalls == 1 ? unclaimed : new ProviderHandle(key, asset));
+            provider.OnRelease = released =>
+            {
+                if (provider.ReleaseCalls <= 2) Assert.AreSame(unclaimed, released);
+                if (provider.ReleaseCalls == 1) throw new InvalidOperationException("release failed");
+            };
+            var service = new AssetService(provider);
+            try
+            {
+                Assert.Throws<InvalidOperationException>(() => service.AcquireAsync<GameObject>("enemy", default).GetAwaiter().GetResult());
+                Assert.AreEqual(0, service.ActiveLeases);
+                Assert.AreEqual(1, provider.ReleaseCalls);
+
+                var lease = service.AcquireAsync<FakeAsset>("enemy", default).GetAwaiter().GetResult();
+                Assert.AreEqual(2, provider.ReleaseCalls);
+                Assert.AreEqual(2, provider.LoadCalls);
+                lease.Dispose();
+                Assert.AreEqual(3, provider.ReleaseCalls);
+                Assert.IsTrue(service.Validate(out string error), error);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(asset); }
+        }
+
+        [Test]
+        public void ConfigDispose_RetriesFailedProviderRelease()
+        {
+            var asset = ScriptableObject.CreateInstance<FakeAsset>();
+            var provider = new FakeProvider { Load = key => UniTask.FromResult(new ProviderHandle(key, asset)) };
+            provider.OnRelease = _ =>
+            {
+                if (provider.ReleaseCalls == 1) throw new InvalidOperationException("release failed");
+            };
+            var service = new AssetService(provider);
+            var configs = new ConfigService(service);
+            try
+            {
+                configs.LoadAsync<FakeAsset>("config").GetAwaiter().GetResult();
+                Assert.Throws<InvalidOperationException>(() => configs.DisposeAsync().GetAwaiter().GetResult());
+                Assert.AreEqual(1, service.ActiveLeases);
+                Assert.Throws<ObjectDisposedException>(() => configs.LoadAsync<FakeAsset>("config").GetAwaiter().GetResult());
+
+                configs.DisposeAsync().GetAwaiter().GetResult();
+                Assert.AreEqual(2, provider.ReleaseCalls);
+                Assert.AreEqual(0, service.ActiveLeases);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(asset); }
         }
 
         [Test]

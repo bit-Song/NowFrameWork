@@ -21,6 +21,8 @@ namespace NowFrameWork.Assets
     /// </summary>
     public sealed class AssetService : IAssetService, IAssetUpdateProvider, ILeaseOwner
     {
+        enum ReleaseState { None, Releasing, Failed }
+
         sealed class Entry
         {
             public string Canonical;
@@ -30,6 +32,7 @@ namespace NowFrameWork.Assets
             public int Leases;
             public int Waiters;
             public long Version;
+            public ReleaseState Release;
         }
 
         readonly IAssetProvider _provider;
@@ -99,7 +102,17 @@ namespace NowFrameWork.Assets
             string canonical = await ResolveCanonicalAsync(key, typeof(T), ct);
             ct.ThrowIfCancellationRequested();
 
-            if (!_entries.TryGetValue(canonical, out Entry entry))
+            _entries.TryGetValue(canonical, out Entry entry);
+            if (entry != null && entry.Release != ReleaseState.None)
+            {
+                if (entry.Release == ReleaseState.Releasing || entry.Leases != 0)
+                    throw new InvalidOperationException("资源正在释放或等待原租约重试释放: " + canonical);
+
+                // 无主句柄（例如所有等待者取消）没有租约可以重试，由同址下一次请求补做清理。
+                ReleaseEntry(entry);
+                entry = null;
+            }
+            if (entry == null)
             {
                 entry = new Entry { Canonical = canonical, Key = key, Version = ++_versionSeed };
                 _entries.Add(canonical, entry);
@@ -133,7 +146,7 @@ namespace NowFrameWork.Assets
 
                 // 取消恰好落在"加载完成"与"当前等待者恢复"之间时，StartLoad 里的检查会看到 Waiters == 1，
                 // 之后没人接手，句柄就悬挂了。这里补一次同样条件的检查。
-                if (entry.Waiters == 0 && entry.Leases == 0 && entry.Handle != null) ReleaseEntry(entry);
+                ReleaseUnclaimedEntry(entry);
             }
         }
 
@@ -196,25 +209,25 @@ namespace NowFrameWork.Assets
             entry.Pending = null;
             pending.TrySetResult(handle);
             // 完成通知可以同步恢复多个等待者；不能把通知/释放异常当作第二次加载失败。
-            if (entry.Waiters == 0 && entry.Leases == 0 && entry.Handle != null) ReleaseEntry(entry);
+            ReleaseUnclaimedEntry(entry);
+        }
+
+        void ReleaseUnclaimedEntry(Entry entry)
+        {
+            if (entry.Waiters == 0 && entry.Leases == 0 && entry.Handle != null && entry.Release == ReleaseState.None)
+                ReleaseEntry(entry);
         }
 
         void ILeaseOwner.ReleaseLease(string canonicalKey, long version)
         {
             MainThreadGuard.Assert("AssetService.ReleaseLease");
-            // 先扣总数：这个租约确实存在过，无论条目是否还在，总数都必须减一次。
-            // 反过来（找不到条目就提前 return）会让 _activeLeases 永久偏高。
+            if (_entries.TryGetValue(canonicalKey, out Entry entry) && entry.Version == version)
+            {
+                // 最后一个租约在底层释放成功后才提交归还，失败时仍由原持有者重试。
+                if (entry.Leases == 1 && entry.Waiters == 0) ReleaseEntry(entry);
+                entry.Leases--;
+            }
             _activeLeases--;
-
-            if (!_entries.TryGetValue(canonicalKey, out Entry entry)) return;
-
-            // 条目已被重建（旧租约在新世代才被释放）：只扣总数，不动新条目的计数
-            if (entry.Version != version) return;
-
-            entry.Leases--;
-
-            if (entry.Leases > 0 || entry.Waiters > 0) return;
-            ReleaseEntry(entry);
         }
 
         /// <summary>
@@ -251,11 +264,16 @@ namespace NowFrameWork.Assets
 
         void ReleaseEntry(Entry entry)
         {
-            ProviderHandle handle = entry.Handle;
+            entry.Release = ReleaseState.Releasing;
+            try { _provider.Release(entry.Handle); }
+            catch
+            {
+                entry.Release = ReleaseState.Failed;
+                throw;
+            }
             entry.Handle = null;
             if (_entries.TryGetValue(entry.Canonical, out Entry current) && ReferenceEquals(current, entry))
                 _entries.Remove(entry.Canonical);
-            if (handle != null) _provider.Release(handle);
         }
 
         IAssetUpdateProvider UpdateProvider()

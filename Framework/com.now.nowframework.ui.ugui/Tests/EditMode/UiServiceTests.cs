@@ -22,7 +22,7 @@ namespace NowFrameWork.UI.Tests
             protected override void OnShown() { Calls.Add("Shown"); }
             protected override void OnHiding() { Calls.Add("Hiding"); }
             protected override void OnHidden() { Calls.Add("Hidden"); }
-            protected override UniTask OnCloseAsync() { Calls.Add("Close"); return UniTask.CompletedTask; }
+            protected override UniTask OnCloseAsync() { Calls.Add("Close"); Args = null; return UniTask.CompletedTask; }
             protected override void OnDispose() { Calls.Add("Dispose"); }
         }
 
@@ -108,7 +108,7 @@ namespace NowFrameWork.UI.Tests
             _factories.Clear();
         }
 
-        (UiService service, FakeFactory factory, FakeTransition transition) Create(bool multi = false)
+        (UiService service, FakeFactory factory, FakeTransition transition) Create(bool multi = false, bool cache = false, UiCacheOptions options = null)
         {
             var factory = new FakeFactory();
             _factories.Add(factory);
@@ -119,10 +119,133 @@ namespace NowFrameWork.UI.Tests
                 {
                     Layer = UiLayer.Page,
                     MultiInstance = multi,
+                    CacheOnClose = cache,
                 },
             };
 
-            return (new UiService(factory, definitions, transition), factory, transition);
+            return (new UiService(factory, definitions, transition, cacheOptions: options), factory, transition);
+        }
+
+        [Test]
+        public void Cache_ReopenUsesSameInstanceWithNewSessionAndArgs()
+        {
+            var (service, factory, _) = Create(cache: true);
+            factory.OnCreate = () => UniTask.FromResult<UiView>(new GameObject("Cached view").AddComponent<LifecycleView>());
+            var first = service.OpenAsync(SettingsKey, new Args { Value = 1 }).GetAwaiter().GetResult().Handle;
+            var view = (LifecycleView)factory.Views[0];
+            CancellationToken oldSession = view.SessionToken;
+            CancellationToken oldVisibility = view.VisibleToken;
+            service.CloseAsync(first).GetAwaiter().GetResult();
+
+            Assert.IsFalse(view.gameObject.activeSelf);
+            Assert.IsTrue(oldSession.IsCancellationRequested);
+            Assert.IsTrue(oldVisibility.IsCancellationRequested);
+            Assert.IsNull(view.Args);
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(1, service.CachedCount);
+            Assert.AreEqual(0, factory.Released);
+            CollectionAssert.AreEqual(new[] { "Create", "Open", "Showing", "Shown", "Hiding", "Hidden", "Close" }, view.Calls);
+
+            var args = new Args { Value = 2 };
+            var second = service.OpenAsync(SettingsKey, args).GetAwaiter().GetResult().Handle;
+            Assert.AreEqual(1, factory.Created);
+            Assert.AreEqual(0, service.CachedCount);
+            Assert.AreNotEqual(first, second);
+            Assert.AreEqual(second.Session, view.Session);
+            Assert.IsFalse(view.SessionToken.IsCancellationRequested);
+            Assert.AreSame(args, view.Args);
+            Assert.AreEqual(UiVisibilityState.Unknown, service.GetVisibilityState(first));
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            Assert.AreEqual(UiVisibilityState.Visible, service.GetVisibilityState(second));
+            service.CloseAsync(second).GetAwaiter().GetResult();
+            service.TrimCacheAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(1, factory.Released);
+            CollectionAssert.AreEqual(new[] { "Create", "Open", "Showing", "Shown", "Hiding", "Hidden", "Close",
+                "Open", "Showing", "Shown", "Hiding", "Hidden", "Close", "Dispose" }, view.Calls);
+        }
+
+        [Test]
+        public void Cache_CapacityEvictsOldestAndTrimLeavesOpenHiddenSessionAlone()
+        {
+            var (service, factory, _) = Create(multi: true, cache: true, options: new UiCacheOptions(capacity: 2));
+            var first = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var second = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            var third = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            service.CloseAsync(second).GetAwaiter().GetResult();
+            service.CloseAsync(third).GetAwaiter().GetResult();
+            Assert.AreEqual(2, service.CachedCount);
+            Assert.AreEqual(1, factory.Released);
+            Assert.IsTrue(factory.Views[0] == null);
+            Assert.IsTrue(factory.Views[1] != null);
+
+            var reused = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            Assert.AreEqual(reused.Session, factory.Views[2].Session);
+            service.HideAsync(reused).GetAwaiter().GetResult();
+            service.TrimCacheAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(0, service.CachedCount);
+            Assert.AreEqual(UiVisibilityState.Hidden, service.GetVisibilityState(reused));
+            Assert.AreEqual(2, factory.Released);
+            service.ShutdownAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(3, factory.Released);
+        }
+
+        [Test]
+        public void Cache_CanceledTrimKeepsCleanupAndShutdownWaitsForSameRelease()
+        {
+            var (service, factory, _) = Create(cache: true);
+            var handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            var release = new UniTaskCompletionSource<bool>();
+            factory.OnRelease = _ => release.Task;
+            using (var caller = new CancellationTokenSource())
+            {
+                var trim = service.TrimCacheAsync(caller.Token);
+                caller.Cancel();
+                Assert.Throws<OperationCanceledException>(() => trim.GetAwaiter().GetResult());
+                var shutdown = service.ShutdownAsync();
+                Assert.AreEqual(UniTaskStatus.Pending, shutdown.Status);
+                Assert.AreEqual(0, service.CachedCount);
+                Assert.AreEqual(1, factory.Destroyed);
+                release.TrySetResult(true);
+                shutdown.GetAwaiter().GetResult();
+                Assert.AreEqual(1, factory.Released);
+            }
+        }
+
+        [Test]
+        public void Cache_FailedEvictionIsNotReusedAndTrimRetriesRelease()
+        {
+            var (service, factory, _) = Create(cache: true);
+            var first = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            factory.OnRelease = _ => UniTask.FromResult(false);
+            Assert.Throws<AggregateException>(() => service.TrimCacheAsync().GetAwaiter().GetResult());
+            Assert.AreEqual(1, service.FaultedCount);
+            Assert.AreEqual(0, service.CachedCount);
+            var replacement = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            Assert.AreEqual(2, factory.Created);
+            factory.OnRelease = null;
+            service.TrimCacheAsync().GetAwaiter().GetResult();
+            Assert.AreEqual(0, service.FaultedCount);
+            Assert.AreEqual(1, factory.Destroyed);
+            Assert.AreEqual(2, factory.Released);
+            Assert.AreEqual(UiVisibilityState.Visible, service.GetVisibilityState(replacement));
+            service.ShutdownAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void Cache_ReopenFailureDestroysInstanceAndClearsSession()
+        {
+            var (service, factory, transition) = Create(cache: true);
+            var handle = service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult().Handle;
+            service.CloseAsync(handle).GetAwaiter().GetResult();
+            transition.OnShow = () => UniTask.FromException(new InvalidOperationException("show failed"));
+            Assert.Throws<InvalidOperationException>(() => service.OpenAsync(SettingsKey, new Args()).GetAwaiter().GetResult());
+            Assert.AreEqual(0, service.SessionCount);
+            Assert.AreEqual(0, service.CachedCount);
+            Assert.AreEqual(1, factory.Created);
+            Assert.AreEqual(1, factory.Released);
         }
 
         [Test]

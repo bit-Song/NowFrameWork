@@ -18,7 +18,11 @@ namespace NowFrameWork.UI
         CanvasGroup _group;
         bool _interactable, _blocksRaycasts;
         float _alpha;
-        bool _created, _opened, _closed, _disposed;
+        bool _created, _opened, _disposed;
+        bool _shown, _inputBlocked;
+        int[] _sortingOffsets;
+        GameObject _lastFocus;
+        [SerializeField] Selectable _defaultFocus;
         CancellationTokenSource _session;
         CancellationTokenSource _visible;
 
@@ -27,7 +31,17 @@ namespace NowFrameWork.UI
         public CancellationToken SessionToken => _session == null ? new CancellationToken(true) : _session.Token;
         public CancellationToken VisibleToken => _visible == null ? new CancellationToken(true) : _visible.Token;
         public CanvasGroup VisualGroup { get { Capture(); return _group; } }
+        public bool InputBlocked => _inputBlocked;
+        public Selectable DefaultFocus { get => _defaultFocus; set => _defaultFocus = value; }
         internal float ShownAlpha { get { Capture(); return _alpha; } }
+        public float VisibleAlpha => ShownAlpha;
+
+        internal IUiTransition ResolveTransition(IUiTransition fallback)
+        {
+            var transitions = GetComponents<UiTransitionBehaviour>();
+            if (transitions.Length > 1) throw new InvalidOperationException("面板根只能配置一个 UiTransitionBehaviour。");
+            return transitions.Length == 1 && transitions[0].enabled ? (IUiTransition)transitions[0] : fallback;
+        }
 
         void Capture()
         {
@@ -39,11 +53,18 @@ namespace NowFrameWork.UI
             _raycasters = GetComponentsInChildren<GraphicRaycaster>(true);
             _animators = GetComponentsInChildren<Animator>(true);
             _canvasEnabled = new bool[_canvases.Length];
+            _sortingOffsets = new int[_canvases.Length];
+            int originalOrder = GetComponent<Canvas>().sortingOrder;
+            for (int i = 0; i < _canvases.Length; i++)
+                _sortingOffsets[i] = _canvases[i].sortingOrder - originalOrder;
             _raycasterEnabled = new bool[_raycasters.Length];
             _animatorEnabled = new bool[_animators.Length];
             for (int i = 0; i < _canvases.Length; i++) _canvasEnabled[i] = _canvases[i].transform == transform || _canvases[i].enabled;
             for (int i = 0; i < _raycasters.Length; i++) _raycasterEnabled[i] = _raycasters[i].enabled;
             for (int i = 0; i < _animators.Length; i++) _animatorEnabled[i] = _animators[i].enabled;
+            foreach (var group in GetComponentsInChildren<CanvasGroup>(true))
+                if (group.transform != transform && group.ignoreParentGroups)
+                    throw new InvalidOperationException("子 CanvasGroup 不能用 ignoreParentGroups 绕过窗口输入控制: " + group.name);
         }
 
         internal async UniTask OpenSessionAsync(object args, CancellationToken ct)
@@ -61,6 +82,7 @@ namespace NowFrameWork.UI
         internal void BeginVisibility(bool visible)
         {
             Capture();
+            _shown = false;
             _group.interactable = false; _group.blocksRaycasts = false;
             for (int i = 0; i < _raycasters.Length; i++) if (_raycasters[i] != null) _raycasters[i].enabled = false;
             if (visible)
@@ -81,8 +103,8 @@ namespace NowFrameWork.UI
         internal void CommitVisible()
         {
             _group.alpha = _alpha;
-            _group.interactable = _interactable; _group.blocksRaycasts = _blocksRaycasts;
-            for (int i = 0; i < _raycasters.Length; i++) if (_raycasters[i] != null) _raycasters[i].enabled = _raycasterEnabled[i];
+            _shown = true;
+            ApplyInput();
             if (_visible == null) _visible = new CancellationTokenSource();
             OnShown();
         }
@@ -92,6 +114,7 @@ namespace NowFrameWork.UI
         internal void ApplyHidden()
         {
             Capture();
+            _shown = false;
             CancelVisible();
             ClearFocus();
             _group.alpha = 0; _group.interactable = false; _group.blocksRaycasts = false;
@@ -104,9 +127,23 @@ namespace NowFrameWork.UI
         {
             ApplyHidden();
             if (_session != null && !_session.IsCancellationRequested) _session.Cancel();
-            if (_opened && !_closed) { await OnCloseAsync(); _closed = true; }
-            if (!_disposed) { OnDispose(); _disposed = true; }
+            if (_opened) { await OnCloseAsync(); _opened = false; }
             _session?.Dispose(); _session = null;
+        }
+
+        internal void ParkInCache(IUiTransition transition)
+        {
+            if (transition is UiTransitionBehaviour behaviour && behaviour != null) behaviour.ResetForCache(this);
+            _lastFocus = null;
+            Session = 0;
+            gameObject.SetActive(false);
+        }
+
+        internal void DisposeInstance()
+        {
+            if (_disposed) return;
+            OnDispose();
+            _disposed = true;
         }
 
         void CancelVisible()
@@ -122,6 +159,59 @@ namespace NowFrameWork.UI
             if (system != null && system.currentSelectedGameObject != null
                 && system.currentSelectedGameObject.transform.IsChildOf(transform)) system.SetSelectedGameObject(null);
         }
+
+        internal void SetInputBlocked(bool blocked)
+        {
+            Capture();
+            if (blocked && !_inputBlocked)
+            {
+                var system = EventSystem.current;
+                if (system != null && system.currentSelectedGameObject != null
+                    && system.currentSelectedGameObject.transform.IsChildOf(transform))
+                    _lastFocus = system.currentSelectedGameObject;
+            }
+            _inputBlocked = blocked;
+            ApplyInput();
+            if (blocked) ClearFocus();
+        }
+
+        void ApplyInput()
+        {
+            bool enabled = _shown && !_inputBlocked;
+            _group.interactable = enabled && _interactable;
+            _group.blocksRaycasts = enabled && _blocksRaycasts;
+            for (int i = 0; i < _raycasters.Length; i++)
+                if (_raycasters[i] != null) _raycasters[i].enabled = enabled && _raycasterEnabled[i];
+        }
+
+        internal void RestoreFocus()
+        {
+            var system = EventSystem.current;
+            if (system == null || !_shown || _inputBlocked) return;
+            if (system.currentSelectedGameObject != null && system.currentSelectedGameObject.transform.IsChildOf(transform)) return;
+            Selectable target = _lastFocus != null ? _lastFocus.GetComponent<Selectable>() : null;
+            if (target == null || !target.transform.IsChildOf(transform) || !target.IsActive() || !target.IsInteractable()) target = _defaultFocus;
+            if (target != null && target.transform.IsChildOf(transform) && target.IsActive() && target.IsInteractable())
+                system.SetSelectedGameObject(target.gameObject);
+        }
+
+        internal void SetSorting(int order, int layer)
+        {
+            Capture();
+            for (int i = 0; i < _canvases.Length; i++)
+            {
+                Canvas canvas = _canvases[i];
+                if (canvas == null) continue;
+                if (canvas.transform != transform && !canvas.overrideSorting) continue;
+                int offset = canvas.transform == transform ? 0 : _sortingOffsets[i];
+                if (offset < 0 || offset > 30) throw new InvalidOperationException("独立排序的子 Canvas 相对根的 sortingOrder 必须在 0–30 内: " + canvas.name);
+                canvas.overrideSorting = true; canvas.sortingLayerID = layer; canvas.sortingOrder = order + offset;
+            }
+        }
+
+        internal bool ConsumeBack() => OnBackRequested();
+        /// <summary>同步消费返回请求；true 表示面板自行处理。异步确认由业务 TaskRunner 发起，不在此等待自身关闭。</summary>
+        protected virtual bool OnBackRequested() => false;
 
         protected virtual void OnCreate() { }
         protected virtual UniTask OnOpenAsync(object args, CancellationToken ct) => UniTask.CompletedTask;

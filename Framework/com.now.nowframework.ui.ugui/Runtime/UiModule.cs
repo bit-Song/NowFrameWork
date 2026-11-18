@@ -27,7 +27,8 @@ namespace NowFrameWork.UI
 
         public UiModule(IAssetService assets, UiRoot rootPrefab, IEnumerable<UiDefinition> definitions,
             IUiTransition transition = null, UnityEngine.EventSystems.EventSystem eventSystem = null,
-            Transform parent = null, ILog log = null, Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null)
+            Transform parent = null, ILog log = null, Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null,
+            UiCacheOptions cacheOptions = null)
         {
             MainThreadGuard.Assert("UiModule.ctor");
             _prefab = rootPrefab != null ? rootPrefab : throw new ArgumentNullException(nameof(rootPrefab));
@@ -35,7 +36,7 @@ namespace NowFrameWork.UI
             _destroy = destroy ?? (go => UnityEngine.Object.Destroy(go));
             _frameWaiter = frameWaiter;
             _factory = new UnityUiViewFactory(assets, frameWaiter: frameWaiter, destroy: _destroy);
-            Service = new UiService(_factory, definitions, transition, startReady: false);
+            Service = new UiService(_factory, definitions, transition, startReady: false, cacheOptions: cacheOptions);
         }
 
         public string Id => "ui";
@@ -58,6 +59,7 @@ namespace NowFrameWork.UI
                 _root.transform.SetParent(_parent, false);
                 _root.gameObject.SetActive(true);
                 _factory.AttachRoot(_root);
+                Service.AttachPresentation(_root, _log);
                 _initialized = true;
             }
             catch (Exception error)

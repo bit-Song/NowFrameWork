@@ -20,12 +20,13 @@ namespace NowFrameWork.Assets
     /// <summary>
     /// 一次资源租约。class 而非 struct：复制句柄会让"谁能释放"失去唯一性，最终变成重复归还。
     ///
-    /// 释放幂等；释放后再取 `Asset`：Editor/Development 抛异常，Release 返回 null。
+    /// Dispose 失败时可重试。开始释放后再取 `Asset`：Editor/Development 抛异常，Release 返回 null。
     /// </summary>
     public sealed class AssetLease<T> : IDisposable where T : UnityEngine.Object
     {
         readonly ILeaseOwner _owner;
         readonly T _asset;
+        bool _releaseStarted, _releasing;
 
         internal AssetLease(ILeaseOwner owner, T asset, AssetKey key, string canonicalKey, long version, AssetLeaseKind kind)
         {
@@ -43,9 +44,9 @@ namespace NowFrameWork.Assets
             {
                 MainThreadGuard.Assert("AssetLease.Asset");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (IsReleased) throw new InvalidOperationException("租约已释放，不能再使用 Asset: " + CanonicalKey);
+                if (_releaseStarted) throw new InvalidOperationException("租约已开始释放，不能再使用 Asset: " + CanonicalKey);
 #endif
-                return IsReleased ? null : _asset;
+                return _releaseStarted ? null : _asset;
             }
         }
 
@@ -63,10 +64,15 @@ namespace NowFrameWork.Assets
         public void Dispose()
         {
             MainThreadGuard.Assert("AssetLease.Dispose");
-            if (IsReleased) return;
+            if (IsReleased || _releasing) return;
 
-            IsReleased = true;
-            _owner?.ReleaseLease(CanonicalKey, Version);
+            _releaseStarted = _releasing = true;
+            try
+            {
+                _owner?.ReleaseLease(CanonicalKey, Version);
+                IsReleased = true;
+            }
+            finally { _releasing = false; }
         }
 
         public override string ToString()

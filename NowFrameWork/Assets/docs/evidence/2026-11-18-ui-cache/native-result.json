@@ -1,0 +1,4 @@
+{
+    "passed": true,
+    "detail": "Windows Mono, real Addressables and DOTween: same instance and lease, fresh arguments and handle, stale handle ignored, trim, automatic idle expiry at Time.timeScale=0, shutdown leases=0."
+}

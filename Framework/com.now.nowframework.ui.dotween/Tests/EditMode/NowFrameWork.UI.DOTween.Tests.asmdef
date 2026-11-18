@@ -1,0 +1,10 @@
+{
+  "name": "NowFrameWork.UI.DOTween.Tests",
+  "rootNamespace": "NowFrameWork.UI.Tweening.Tests",
+  "references": ["NowFrameWork.Core", "NowFrameWork.Assets", "NowFrameWork.UI.UGUI", "NowFrameWork.UI.DOTween", "UniTask", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll", "DOTween.dll"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

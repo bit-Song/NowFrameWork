@@ -38,7 +38,7 @@ namespace NowFrameWork.Assets
         /// <summary>加载；失败抛异常。实现方内部可缓存，但引用计数仍由 Service 负责。</summary>
         UniTask<ProviderHandle> LoadAsync(string canonicalKey, CancellationToken ct);
 
-        /// <summary>释放底层句柄；幂等。</summary>
+        /// <summary>释放底层句柄；幂等，抛异常后可能对同一底层句柄重试。</summary>
         void Release(ProviderHandle handle);
     }
 

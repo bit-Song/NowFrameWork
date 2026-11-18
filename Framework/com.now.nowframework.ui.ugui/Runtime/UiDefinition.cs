@@ -35,7 +35,12 @@ namespace NowFrameWork.UI
         /// <summary>是否允许同一界面同时存在多个实例。</summary>
         public bool MultiInstance { get; set; }
 
-        /// <summary>关闭后是否进入有界缓存（UI-4 实现，先记录契约）。</summary>
+        /// <summary>模态窗口仅允许放在 Popup 层；阻挡下方输入，但不自动隐藏下方内容。</summary>
+        public bool Modal { get; set; }
+        public bool CloseOnBackdrop { get; set; }
+        public UiBackBehavior BackBehavior { get; set; } = UiBackBehavior.Close;
+
+        /// <summary>成功关闭时是否允许按模块缓存策略保留实例。默认关闭后销毁。</summary>
         public bool CacheOnClose { get; set; }
 
         public override string ToString() => "UiDef(" + Name + "#" + Id + ", " + Layer + ")";

@@ -1,0 +1,8 @@
+{
+  "name": "NowFrameWork.UI.DOTween",
+  "rootNamespace": "NowFrameWork.UI.Tweening",
+  "references": ["NowFrameWork.Core", "NowFrameWork.UI.UGUI", "UniTask"],
+  "overrideReferences": true,
+  "precompiledReferences": ["DOTween.dll"],
+  "autoReferenced": false
+}

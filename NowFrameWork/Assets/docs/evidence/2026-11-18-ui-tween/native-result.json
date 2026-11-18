@@ -1,0 +1,4 @@
+{
+    "passed": true,
+    "detail": "Windows Mono real Addressables: per-prefab fade/slide/pop overrides; shared preset assets with independent state; Time.timeScale=0; interrupt/reverse from current alpha/scale; unrelated Tween survives; 10 full navigation/modal cycles; stop during animated entry; leases=0 and activeTweens=0"
+}

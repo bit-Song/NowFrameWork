@@ -1,0 +1,35 @@
+using System;
+using System.IO;
+using Game;
+using NowFrameWork.EditorTools;
+using NowFrameWork.UI.Editor;
+using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+
+public static class UiWindowsValidationBuild
+{
+    public static void PrepareAndBuild()
+    {
+        UiWindowsSceneMenu.Create();
+        var root = UiPrefabBuilder.CreateRoot("Assets/Tests/UIWindows/UiRoot.prefab");
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var camera = new GameObject("Camera", typeof(Camera)).GetComponent<Camera>(); camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = new Color(0.02f, 0.03f, 0.06f); camera.cullingMask = 0;
+        var events = new GameObject("Events", typeof(EventSystem), typeof(InputSystemUIInputModule)).GetComponent<EventSystem>();
+        var host = new GameObject("Windows Probe"); var entry = host.AddComponent<UiWindowsSample>(); entry.Configure(root, events);
+        host.AddComponent<UiWindowsNativeProbe>().Configure(entry);
+        EditorSceneManager.SaveScene(scene, "Assets/Scenes/WindowsNativeProbe.unity");
+        AddressableAssetSettings.BuildPlayerContent(out var content);
+        if (!string.IsNullOrEmpty(content.Error)) throw new Exception(content.Error);
+        PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
+        PlayerSettings.runInBackground = true; PlayerSettings.defaultScreenWidth = 1280; PlayerSettings.defaultScreenHeight = 720;
+        PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+        var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/WindowsNativeProbe.unity" },
+            Path.GetFullPath("../WindowsPlayer/UIWindowsProbe.exe"), BuildTarget.StandaloneWindows64, BuildOptions.Development);
+        if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new Exception("Windows UI build failed");
+    }
+}

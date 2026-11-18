@@ -26,7 +26,7 @@ namespace NowFrameWork.Assets
         readonly Dictionary<AssetKey, UnityEngine.Object> _values =
             new Dictionary<AssetKey, UnityEngine.Object>();
 
-        bool _disposed;
+        bool _disposed, _disposing;
 
         public ConfigService(IAssetService assets)
         {
@@ -85,19 +85,22 @@ namespace NowFrameWork.Assets
             }
         }
 
-        /// <summary>归还全部配置租约；幂等。</summary>
+        /// <summary>归还全部配置租约；失败后可重试。</summary>
         public UniTask DisposeAsync()
         {
             MainThreadGuard.Assert("ConfigService.DisposeAsync");
-            if (_disposed) return UniTask.CompletedTask;
+            if (_disposing) return UniTask.CompletedTask;
             _disposed = true;
-
-            foreach (KeyValuePair<string, AssetLease<UnityEngine.Object>> pair in _leases)
-                pair.Value.Dispose();
-
-            _leases.Clear();
             _values.Clear();
+            _disposing = true;
+            try
+            {
+                foreach (KeyValuePair<string, AssetLease<UnityEngine.Object>> pair in _leases)
+                    pair.Value.Dispose();
 
+                _leases.Clear();
+            }
+            finally { _disposing = false; }
             return UniTask.CompletedTask;
         }
 

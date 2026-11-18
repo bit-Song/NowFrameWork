@@ -1,0 +1,106 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using Game;
+using NowFrameWork.Assets;
+using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Boot;
+using NowFrameWork.Core.Storage;
+using NowFrameWork.UI;
+using NowFrameWork.Unity;
+using NowFrameWork.Unity.Storage;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+public sealed class UiWindowsNativeProbe : MonoBehaviour
+{
+    [SerializeField] UiWindowsSample _entry;
+    BootSession _boot;
+    public void Configure(UiWindowsSample entry) => _entry = entry;
+    BootContext CreateContext()
+    {
+        var app = App.Create();
+        return new BootContext(app, new AssetService(new AddressablesProvider(TimeSpan.FromSeconds(5)), app.Log),
+            new FileSettingsStore<BootPreferences>(Path.Combine(Application.persistentDataPath, "UiWindowsProbe"), "prefs",
+            new JsonSettingsCodec<BootPreferences>(validate: BootPreferences.Validate)));
+    }
+    UiView View(int id)
+    {
+        foreach (var view in _entry.Root.GetComponentsInChildren<UiView>(true)) if (view.UiId == id) return view;
+        throw new Exception("Missing view " + id);
+    }
+    GameObject RaycastCorner()
+    {
+        Canvas.ForceUpdateCanvases();
+        var pointer = new PointerEventData(EventSystem.current) { position = new Vector2(5, 5), button = PointerEventData.InputButton.Left };
+        var hits = new List<RaycastResult>(); EventSystem.current.RaycastAll(pointer, hits);
+        if (hits.Count == 0) throw new Exception("No raycast blocker at screen corner");
+        return hits[0].gameObject;
+    }
+    async void Start()
+    {
+        bool passed = false; string detail;
+        try
+        {
+            _boot = new BootSession(CreateContext, new BootOptions(), _entry); await _boot.StartAsync();
+            var context = _boot.Context; UiView home = View(1);
+            await _entry.OpenInventoryAsync(default); var inventory = View(2);
+            await _entry.OpenSettingsAsync(default); var settings = View(3);
+            if (!inventory.InputBlocked || !home.InputBlocked || settings.InputBlocked) throw new Exception("Modal input gating failed");
+            if (RaycastCorner().name != "Shared Modal Backdrop") throw new Exception("Backdrop does not cover full screen");
+            var backdrop = RaycastCorner();
+            int firstOrder = _entry.Root.BackdropSortingOrder;
+            await _entry.OpenConfirmAsync(default);
+            if (!settings.InputBlocked || View(4).InputBlocked || _entry.Root.BackdropSortingOrder <= firstOrder) throw new Exception("Nested modal order failed");
+            var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+            ExecuteEvents.Execute(RaycastCorner(), pointer, ExecuteEvents.pointerClickHandler);
+            await UniTask.NextFrame();
+            if (_entry.Service.SessionCount != 4) throw new Exception("Non-closeable backdrop closed confirmation");
+            await CaptureAsync();
+            await _entry.BackAsync(default);
+            if (!ReferenceEquals(backdrop, RaycastCorner()) || _entry.Root.BackdropSortingOrder != firstOrder) throw new Exception("Shared backdrop was not reused");
+            if (EventSystem.current.currentSelectedGameObject != settings.DefaultFocus.gameObject) throw new Exception("Settings focus was not restored");
+            ExecuteEvents.Execute(RaycastCorner(), pointer, ExecuteEvents.pointerClickHandler);
+            using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                await UniTask.WaitUntil(() => !_entry.Service.TopModal.IsValid, cancellationToken: timeout.Token);
+            if (inventory.InputBlocked || EventSystem.current.currentSelectedGameObject != inventory.DefaultFocus.gameObject) throw new Exception("Inventory input/focus not restored");
+            await _entry.BackAsync(default);
+            if (!ReferenceEquals(home, View(1)) || _entry.Service.Navigation.PageCount != 1) throw new Exception("Page instance/history not restored");
+            await _entry.VerifyFlowAsync(default);
+            if (context.Assets.ActiveLeases != 1) throw new Exception("Window cycles leaked prefab leases");
+            UniTask inFlight = _entry.OpenInventoryAsync(default);
+            await _boot.StopAsync();
+            bool canceled = false; try { await inFlight; } catch (OperationCanceledException) { canceled = true; }
+            if (!canceled || GameEntry.IsReady || context.Assets.ActiveLeases != 0 || _boot.Context != null) throw new Exception("Stop during navigation leaked");
+            detail = "Real Addressables: page history and same-instance restoration; two nested modals; one shared fullscreen raycast backdrop; click policies; input/focus restoration; 10 complete cycles; stop during navigation; leases=0; offscreen rendering";
+            passed = true;
+        }
+        catch (Exception error) { detail = error.ToString(); Debug.LogException(error); }
+        string json = JsonUtility.ToJson(new Result { passed = passed, detail = detail }, true);
+        File.WriteAllText(Path.Combine(Application.dataPath, "../../ui-windows-native-result.json"), json);
+        Debug.Log("[UI WINDOWS NATIVE] " + json); Application.Quit(passed ? 0 : 1);
+    }
+    async UniTask CaptureAsync()
+    {
+        var canvas = _entry.Root.Canvas; var camera = FindObjectOfType<Camera>();
+        var mode = canvas.renderMode; var previousCamera = canvas.worldCamera; int mask = camera.cullingMask;
+        var render = new RenderTexture(1280, 720, 24); var texture = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        var previous = RenderTexture.active;
+        try
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 1;
+            camera.cullingMask = ~0; camera.targetTexture = render; await UniTask.NextFrame(); Canvas.ForceUpdateCanvases(); camera.Render();
+            RenderTexture.active = render; texture.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); texture.Apply();
+            File.WriteAllBytes(Path.Combine(Application.dataPath, "../../ui-windows.png"), texture.EncodeToPNG());
+        }
+        finally
+        {
+            RenderTexture.active = previous; canvas.renderMode = mode; canvas.worldCamera = previousCamera;
+            camera.cullingMask = mask; camera.targetTexture = null; Destroy(render); Destroy(texture);
+        }
+    }
+    [Serializable] sealed class Result { public bool passed; public string detail; }
+}

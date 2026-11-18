@@ -1,0 +1,4 @@
+{
+    "passed": true,
+    "detail": "Real Addressables: page history and same-instance restoration; two nested modals; one shared fullscreen raycast backdrop; click policies; input/focus restoration; 10 complete cycles; stop during navigation; leases=0; offscreen rendering"
+}

@@ -29,7 +29,8 @@ namespace NowFrameWork.UI.Editor
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = 0.5f;
                 RectTransform safe = Stretch("SafeArea", root.transform);
-                RectTransform page = Stretch("Page", safe), popup = Stretch("Popup", safe), toast = Stretch("Toast", safe);
+                // 新根的窗口层铺满视口；内容安全区由面板内部 UiSafeArea 处理。既有 Prefab 不覆盖。
+                RectTransform page = Stretch("Page", root.transform), popup = Stretch("Popup", root.transform), toast = Stretch("Toast", root.transform);
                 root.GetComponent<UiRoot>().Configure(canvas, safe, page, popup, toast);
                 return PrefabUtility.SaveAsPrefabAsset(root, path).GetComponent<UiRoot>();
             }

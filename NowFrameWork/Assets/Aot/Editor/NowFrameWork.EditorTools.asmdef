@@ -11,9 +11,11 @@
     "HybridCLR.Editor",
     "NowFrameWork.Boot.Addressables",
     "NowFrameWork.Boot",
+    "NowFrameWork.Core",
     "Game",
     "NowFrameWork.UI.UGUI.Editor",
     "NowFrameWork.UI.UGUI",
+    "NowFrameWork.UI.DOTween",
     "Unity.InputSystem",
     "UnityEngine.UI"
   ],

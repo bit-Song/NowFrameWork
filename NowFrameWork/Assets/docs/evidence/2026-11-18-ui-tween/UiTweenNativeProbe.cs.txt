@@ -1,0 +1,115 @@
+using System;
+using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using Game;
+using NowFrameWork.Assets;
+using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Boot;
+using NowFrameWork.Core.Storage;
+using NowFrameWork.UI;
+using NowFrameWork.UI.Tweening;
+using NowFrameWork.Unity;
+using NowFrameWork.Unity.Storage;
+using UnityEngine;
+using TweenEngine = DG.Tweening.DOTween;
+
+public sealed class UiTweenNativeProbe : MonoBehaviour
+{
+    [SerializeField] UiWindowsSample _entry;
+    BootSession _boot;
+    Tween _foreign;
+    public void Configure(UiWindowsSample entry) => _entry = entry;
+    BootContext Context()
+    {
+        var app = App.Create();
+        return new BootContext(app, new AssetService(new AddressablesProvider(TimeSpan.FromSeconds(5)), app.Log),
+            new FileSettingsStore<BootPreferences>(Path.Combine(Application.persistentDataPath, "UiTweenProbe"), "prefs",
+            new JsonSettingsCodec<BootPreferences>(validate: BootPreferences.Validate)));
+    }
+    DOTweenUiTransition Adapter(int id)
+    {
+        foreach (var view in _entry.Root.GetComponentsInChildren<UiView>(true)) if (view.UiId == id) return view.GetComponent<DOTweenUiTransition>();
+        throw new Exception("Missing view " + id);
+    }
+    static void Near(Vector3 expected, Vector3 actual, string message)
+    { if ((expected - actual).sqrMagnitude > 0.00001f) throw new Exception(message + " " + expected + " / " + actual); }
+
+    async void Start()
+    {
+        bool passed = false; string detail;
+        float previousTimeScale = Time.timeScale;
+        try
+        {
+            Application.targetFrameRate = 60;
+            Time.timeScale = 0; // UI 必须使用非缩放时间。
+            _boot = new BootSession(Context, new BootOptions(), _entry); await _boot.StartAsync();
+            var context = _boot.Context;
+            if (Adapter(1).Preset.name != "Fade") throw new Exception("Home preset not selected");
+            float unrelated = 0;
+            _foreign = TweenEngine.To(() => unrelated, x => unrelated = x, 1, 1000).SetUpdate(true).SetAutoKill(false);
+            UniTask inventory = _entry.OpenInventoryAsync(default); await UniTask.NextFrame();
+            var slide = Adapter(2);
+            if (slide.Preset.name != "Slide" || !slide.IsPlaying || slide.MotionRoot.anchoredPosition.x <= 0)
+                throw new Exception("Inventory did not slide with its own preset");
+            await inventory; Near(Vector3.zero, slide.MotionRoot.anchoredPosition, "Slide did not finish at baseline");
+            UniTask settings = _entry.OpenSettingsAsync(default); await UniTask.NextFrame();
+            var pop = Adapter(3);
+            if (pop.Preset.name != "Pop" || !pop.IsPlaying || Mathf.Approximately(pop.MotionRoot.localScale.x, 1))
+                throw new Exception("Settings did not scale with its own preset");
+            await settings;
+            UiHandle handle = _entry.Service.TopModal;
+            UniTask hide = _entry.Service.HideAsync(handle);
+            await UniTask.Delay(40, ignoreTimeScale: true);
+            Vector3 scale = pop.MotionRoot.localScale; float alpha = pop.GetComponent<UiView>().VisualGroup.alpha;
+            UniTask show = _entry.Service.ShowAsync(handle);
+            Near(scale, pop.MotionRoot.localScale, "Reverse reset the scale instead of continuing");
+            if (Mathf.Abs(alpha - pop.GetComponent<UiView>().VisualGroup.alpha) > 0.0001f) throw new Exception("Reverse jumped alpha");
+            bool canceled = false; try { await hide; } catch (OperationCanceledException) { canceled = true; }
+            await show; if (!canceled || pop.IsPlaying) throw new Exception("Hide/show ownership did not settle");
+            Near(Vector3.one, pop.MotionRoot.localScale, "Pop did not restore baseline scale");
+            await _entry.OpenConfirmAsync(default);
+            if (!ReferenceEquals(pop.Preset, Adapter(4).Preset)) throw new Exception("Shared preset was not shared as an asset");
+            await CaptureAsync();
+            await _entry.BackAsync(default);
+            if (pop.IsPlaying || !_foreign.IsActive()) throw new Exception("Closing another modal affected unrelated tween");
+            await _entry.BackAsync(default); await _entry.BackAsync(default);
+            await _entry.VerifyFlowAsync(default);
+            if (context.Assets.ActiveLeases != 1) throw new Exception("Animated loops leaked prefab leases");
+            UniTask entering = _entry.OpenInventoryAsync(default); await UniTask.NextFrame();
+            await _boot.StopAsync();
+            try { await entering; throw new Exception("In-flight navigation was not canceled"); } catch (OperationCanceledException) { }
+            if (GameEntry.IsReady || context.Assets.ActiveLeases != 0 || !_foreign.IsActive()) throw new Exception("Stop leaked or killed foreign tween");
+            _foreign.Kill(false); _foreign = null; await UniTask.NextFrame();
+            if (TweenEngine.TotalActiveTweens() != 0) throw new Exception("Owned tweens remained after shutdown: " + TweenEngine.TotalActiveTweens());
+            detail = "Windows Mono real Addressables: per-prefab fade/slide/pop overrides; shared preset assets with independent state; Time.timeScale=0; interrupt/reverse from current alpha/scale; unrelated Tween survives; 10 full navigation/modal cycles; stop during animated entry; leases=0 and activeTweens=0";
+            passed = true;
+        }
+        catch (Exception error) { detail = error.ToString(); Debug.LogException(error); }
+        finally { Time.timeScale = previousTimeScale; if (_foreign != null && _foreign.IsActive()) _foreign.Kill(false); }
+        string json = JsonUtility.ToJson(new Result { passed = passed, detail = detail }, true);
+        File.WriteAllText(Path.Combine(Application.dataPath, "../../ui-tween-native-result.json"), json);
+        Debug.Log("[UI TWEEN NATIVE] " + json); Application.Quit(passed ? 0 : 1);
+    }
+    async UniTask CaptureAsync()
+    {
+        var canvas = _entry.Root.Canvas; var camera = FindObjectOfType<Camera>();
+        var mode = canvas.renderMode; var previousCamera = canvas.worldCamera; int mask = camera.cullingMask;
+        var render = new RenderTexture(1280, 720, 24); var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        var previous = RenderTexture.active;
+        try
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 1;
+            camera.cullingMask = ~0; camera.targetTexture = render; await UniTask.NextFrame(); Canvas.ForceUpdateCanvases(); camera.Render();
+            RenderTexture.active = render; image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
+            File.WriteAllBytes(Path.Combine(Application.dataPath, "../../ui-tween.png"), image.EncodeToPNG());
+        }
+        finally
+        {
+            RenderTexture.active = previous; canvas.renderMode = mode; canvas.worldCamera = previousCamera;
+            camera.cullingMask = mask; camera.targetTexture = null; Destroy(render); Destroy(image);
+        }
+    }
+    [Serializable] sealed class Result { public bool passed; public string detail; }
+}

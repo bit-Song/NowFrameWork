@@ -1,0 +1,37 @@
+{
+  "testables": [
+    "com.now.nowframework.core",
+    "com.now.nowframework.assets",
+    "com.now.nowframework.unity",
+    "com.now.nowframework.assets.addressables",
+    "com.now.nowframework.ui.ugui",
+    "com.now.nowframework.ui.dotween"
+  ],
+  "dependencies": {
+    "com.now.nowframework.core": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.core",
+    "com.now.nowframework.assets": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.assets",
+    "com.now.nowframework.unity": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.unity",
+    "com.now.nowframework.assets.addressables": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.assets.addressables",
+    "com.now.nowframework.ui.ugui": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.ui.ugui",
+    "com.cysharp.unitask": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.cysharp.unitask@a77a1b4a89",
+    "com.unity.addressables": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.addressables@1.22.4-t1",
+    "com.unity.ugui": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.ugui@1.0.0",
+    "com.unity.test-framework": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.test-framework@1.1.33",
+    "com.unity.ext.nunit": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.ext.nunit@1.0.6",
+    "com.unity.scriptablebuildpipeline": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.scriptablebuildpipeline@1.21.25",
+    "com.unity.inputsystem": "file:D:/UnityProject/TMP/NowFrameWork/Library/PackageCache/com.unity.inputsystem@1.14.4-t4",
+    "com.unity.modules.ui": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.assetbundle": "1.0.0",
+    "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.physics2d": "1.0.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.modules.unitywebrequestassetbundle": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.screencapture": "1.0.0",
+    "com.now.nowframework.ui.dotween": "file:D:/UnityProject/TMP/Framework/com.now.nowframework.ui.dotween"
+  }
+}

@@ -66,6 +66,34 @@ namespace NowFrameWork.UI.Tests
         }
 
         [Test]
+        public void RealFactory_CachedInstanceKeepsLeaseUntilTrimDestroysIt()
+        {
+            var factory = new UnityUiViewFactory(_assets, _root, destroy: ImmediateDestroy);
+            var definition = Definition;
+            definition.CacheOnClose = true;
+            var service = new UiService(factory, new[] { definition });
+            var layer = _root.GetLayer(UiLayer.Page);
+            var first = service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult().Handle;
+            GameObject instance = layer.GetChild(0).gameObject;
+            service.CloseAsync(first).GetAwaiter().GetResult();
+            Assert.IsFalse(instance.activeSelf);
+            Assert.AreEqual(1, service.CachedCount);
+            Assert.AreEqual(1, _assets.ActiveLeases);
+            var second = service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult().Handle;
+            Assert.AreSame(instance, layer.GetChild(0).gameObject);
+            Assert.AreEqual(1, factory.TrackedCount);
+            Assert.AreEqual(1, _assets.ActiveLeases);
+            service.CloseAsync(second).GetAwaiter().GetResult();
+            service.TrimCacheAsync().GetAwaiter().GetResult();
+            Assert.IsTrue(instance == null);
+            Assert.AreEqual(0, _assets.ActiveLeases);
+            Assert.AreEqual(0, factory.TrackedCount);
+            Assert.AreEqual(1, _provider.Released);
+            service.ShutdownAsync().GetAwaiter().GetResult();
+            factory.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
         public void Create_ExceedsTrackedLimit_ThrowsAndKeepsLeaseCount()
         {
             // 上限 2：前两个实例不关闭，第三个必须被拒绝，避免清理超时的记录无限累积
@@ -152,6 +180,35 @@ namespace NowFrameWork.UI.Tests
             service.HideAsync(handle).GetAwaiter().GetResult(); service.ShowAsync(handle).GetAwaiter().GetResult();
             Assert.IsFalse(canvas.enabled);
             service.ShutdownAsync().GetAwaiter().GetResult(); factory.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void Module_UsesOneFullscreenBackdrop_AndMovesItToTopModal()
+        {
+            _rootObject.SetActive(false);
+            var modal = new UiDefinition(2, "Modal", AssetKey.From("panel"))
+                { Layer = UiLayer.Popup, Modal = true, MultiInstance = true, CloseOnBackdrop = true };
+            var module = new UiModule(_assets, _root, new[] { Definition, modal }, destroy: ImmediateDestroy);
+            try
+            {
+                module.InitializeAsync(default).GetAwaiter().GetResult(); module.StartAsync(default).GetAwaiter().GetResult();
+                module.Service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult();
+                var key = new UiKey<EmptyArgs>(2, "Modal");
+                var first = module.Service.OpenAsync(key, EmptyArgs.Default).GetAwaiter().GetResult();
+                int firstOrder = module.Root.BackdropSortingOrder;
+                module.Service.OpenAsync(key, EmptyArgs.Default).GetAwaiter().GetResult();
+                Assert.IsTrue(module.Root.BackdropVisible); Assert.Greater(module.Root.BackdropSortingOrder, firstOrder);
+                var backdrop = module.Root.transform.Find("Shared Modal Backdrop");
+                Assert.IsNotNull(backdrop); Assert.AreSame(module.Root.transform, backdrop.parent);
+                Assert.AreEqual(Vector2.zero, ((RectTransform)backdrop).anchorMin); Assert.AreEqual(Vector2.one, ((RectTransform)backdrop).anchorMax);
+                Assert.AreEqual(2, module.Root.GetComponentsInChildren<UnityEngine.UI.Image>(true).Length);
+                backdrop.GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Assert.AreEqual(first.Handle, module.Service.TopModal); Assert.AreEqual(firstOrder, module.Root.BackdropSortingOrder);
+                module.Service.CloseAsync(first.Handle).GetAwaiter().GetResult(); Assert.IsFalse(module.Root.BackdropVisible);
+                Assert.AreEqual(1, _assets.ActiveLeases);
+            }
+            finally { module.DisposeAsync().GetAwaiter().GetResult(); }
+            Assert.AreEqual(0, _assets.ActiveLeases);
         }
 
         [Test]

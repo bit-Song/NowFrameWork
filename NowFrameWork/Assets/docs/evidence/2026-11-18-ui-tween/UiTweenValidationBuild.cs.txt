@@ -1,0 +1,36 @@
+using System;
+using System.IO;
+using Game;
+using NowFrameWork.EditorTools;
+using NowFrameWork.UI.Editor;
+using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+
+public static class UiTweenValidationBuild
+{
+    public static void PrepareAndBuild()
+    {
+        UiTweenSceneMenu.Create();
+        var root = UiPrefabBuilder.CreateRoot("Assets/Tests/UITween/UiRoot.prefab");
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var camera = new GameObject("Camera", typeof(Camera)).GetComponent<Camera>(); camera.cullingMask = 0;
+        camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(0.02f, 0.03f, 0.06f);
+        var events = new GameObject("Events", typeof(EventSystem), typeof(InputSystemUIInputModule)).GetComponent<EventSystem>();
+        var host = new GameObject("Tween Probe"); var entry = host.AddComponent<UiWindowsSample>(); entry.Configure(root, events);
+        entry.ConfigurePrefabAddresses("UiTween/Home", "UiTween/Inventory", "UiTween/Settings", "UiTween/Confirm");
+        host.AddComponent<UiTweenNativeProbe>().Configure(entry);
+        EditorSceneManager.SaveScene(scene, "Assets/Scenes/TweenNativeProbe.unity");
+        AddressableAssetSettings.BuildPlayerContent(out var content);
+        if (!string.IsNullOrEmpty(content.Error)) throw new Exception(content.Error);
+        PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
+        PlayerSettings.runInBackground = true; PlayerSettings.defaultScreenWidth = 1280; PlayerSettings.defaultScreenHeight = 720;
+        PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+        var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/TweenNativeProbe.unity" }, Path.GetFullPath("../TweenPlayer/UITweenProbe.exe"),
+            BuildTarget.StandaloneWindows64, BuildOptions.Development);
+        if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new Exception("UI Tween build failed");
+    }
+}
