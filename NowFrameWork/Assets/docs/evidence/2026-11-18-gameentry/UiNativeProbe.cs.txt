@@ -1,0 +1,134 @@
+using System;
+using System.IO;
+using Cysharp.Threading.Tasks;
+using Game;
+using NowFrameWork.Assets;
+using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Boot;
+using NowFrameWork.Core.Storage;
+using NowFrameWork.UI;
+using NowFrameWork.Unity;
+using NowFrameWork.Unity.Storage;
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public sealed class UiNativeProbe : MonoBehaviour
+{
+    [SerializeField] UiRoot _rootPrefab;
+    [SerializeField] UiFlowSample _entry;
+    BootSession _session;
+    public void Configure(UiRoot root, UiFlowSample entry) { _rootPrefab = root; _entry = entry; }
+    BootContext CreateContext()
+    {
+        var app = App.Create();
+        var assets = new AssetService(new AddressablesProvider(TimeSpan.FromSeconds(5)), app.Log);
+        return new BootContext(app, assets, new FileSettingsStore<BootPreferences>(Path.Combine(Application.persistentDataPath,"UIProbe"),
+            "preferences",new JsonSettingsCodec<BootPreferences>(validate:BootPreferences.Validate)));
+    }
+    sealed class BrokenEntry : IBootEntry
+    {
+        readonly UiRoot _root;
+        public UiModule Module;
+        public BrokenEntry(UiRoot root) { _root = root; }
+        public async UniTask EnterAsync(BootContext context, System.Threading.CancellationToken ct)
+        {
+            Module = new UiModule(context.Assets,_root,Array.Empty<UiDefinition>());
+            await Module.InitializeAsync(ct); // 没有注入 EventSystem，应明确失败并回滚。
+        }
+        public UniTask ExitAsync() => Module == null ? UniTask.CompletedTask : Module.DisposeAsync();
+    }
+    async void Start()
+    {
+        Application.targetFrameRate = 60;
+        bool passed = false;
+        string detail;
+        try
+        {
+            _session = new BootSession(CreateContext,new BootOptions(),_entry);
+            await _session.StartAsync();
+            BootContext context = _session.Context;
+            if (!GameEntry.IsReady || !ReferenceEquals(GameEntry.Assets, context.Assets) || !ReferenceEquals(GameEntry.UI, _entry.Service)) throw new Exception("GameEntry did not publish Boot/UI services");
+            await UniTask.Delay(TimeSpan.FromSeconds(0.5));
+            Canvas.ForceUpdateCanvases();
+            foreach(Canvas canvas in FindObjectsOfType<Canvas>()) Debug.Log("[VISUAL] "+canvas.name+" enabled="+canvas.enabled+" root="+canvas.isRootCanvas+" rect="+canvas.GetComponent<RectTransform>().rect);
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
+            {
+                await CaptureUiAsync();
+            }
+            await _entry.Run100Async();
+            if(context.Assets.ActiveLeases != 0) throw new Exception("100 cycles leaked leases");
+            await _entry.OpenAsync();
+            var factory = new UnityUiViewFactory(context.Assets, _entry.Service == null ? null : FindObjectOfType<UiRoot>(),maxDestroyFrames:0);
+            var ui = new UiService(factory,new[]{new UiDefinition(55,"Timeout",AssetKey.From("UiProbe/Panel"))});
+            UiHandle handle = (await ui.OpenAsync(new UiKey<EmptyArgs>(55,"Timeout"),EmptyArgs.Default)).Handle;
+            int leases = context.Assets.ActiveLeases;
+            bool timeout = false;
+            try { await ui.CloseAsync(handle); } catch(TimeoutException) { timeout = true; }
+            if(!timeout || context.Assets.ActiveLeases != leases || ui.FaultedCount != 1) throw new Exception("destroy timeout released resources early");
+            await UniTask.NextFrame();
+            await ui.CloseAsync(handle);
+            try { await factory.DisposeAsync(); } catch(TimeoutException) { await UniTask.NextFrame(); await factory.DisposeAsync(); }
+            if(context.Assets.ActiveLeases != leases-1) throw new Exception("retry did not release exactly one lease");
+            await _session.StopAsync();
+            if(context.Assets.ActiveLeases != 0 || _session.Context != null || GameEntry.IsReady) throw new Exception("Boot stop leaked binding or leases");
+            bool unavailable=false; try { var unused=GameEntry.Assets; } catch(InvalidOperationException) { unavailable=true; }
+            if(!unavailable) throw new Exception("Stopped GameEntry accepted access");
+            await _session.StartAsync();
+            if(!GameEntry.IsReady || ReferenceEquals(context.Assets,GameEntry.Assets)) throw new Exception("Restart did not bind new services");
+            await _session.StopAsync();
+            if(GameEntry.IsReady) throw new Exception("Restart stop retained binding");
+            var broken = new BrokenEntry(_rootPrefab);
+            var failed = new BootSession(CreateContext,new BootOptions(),broken);
+            bool rejected = false;
+            try { await failed.StartAsync(); } catch(InvalidOperationException) { rejected = true; }
+            if(!rejected || failed.Context != null || failed.State != BootState.Failed) throw new Exception("failed UI startup did not roll back");
+            await failed.StopAsync();
+            detail = "GameEntry shares Boot/UI services, rejects stopped access, and rebinds fresh services on restart; 100 real Addressables/UI factory open-close cycles; timeout retains lease; retry releases; Boot success/stop and UI startup failure rollback; offscreen Camera UI rendering";
+            passed = true;
+        }
+        catch(Exception error) { detail = error.ToString(); Debug.LogException(error); }
+        string report = JsonUtility.ToJson(new Result{passed=passed,detail=detail},true);
+        string path = Path.Combine(Application.dataPath,"../../gameentry-native-result.json");
+        File.WriteAllText(path,report);
+        Debug.Log("[UI NATIVE] "+report);
+        Application.Quit(passed?0:1);
+    }
+    async UniTask CaptureUiAsync()
+    {
+        Canvas canvas = FindObjectOfType<UiRoot>().Canvas;
+        Camera camera = FindObjectOfType<Camera>();
+        RenderMode mode = canvas.renderMode;
+        Camera originalCamera = canvas.worldCamera;
+        int mask = camera.cullingMask;
+        var render = new RenderTexture(1280,720,24);
+        var image = new Texture2D(1280,720,TextureFormat.RGB24,false);
+        RenderTexture previous = RenderTexture.active;
+        try
+        {
+            camera.cullingMask = ~0;
+            camera.targetTexture = render;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            canvas.planeDistance = 1;
+            await UniTask.NextFrame();
+            Canvas.ForceUpdateCanvases();
+            camera.Render();
+            RenderTexture.active = render;
+            image.ReadPixels(new Rect(0,0,1280,720),0,0); image.Apply();
+            int bright=0;
+            foreach(Color32 color in image.GetPixels32()) if(color.r>180 && color.g>180 && color.b>180) bright++;
+            File.WriteAllBytes(Path.Combine(Application.dataPath,"../../ui-native.png"),image.EncodeToPNG());
+            if(bright<100) throw new Exception("UGUI text was not rendered to target: "+bright);
+            Debug.Log("[VISUAL] Camera mode UI rendered, bright text pixels="+bright);
+        }
+        finally
+        {
+            RenderTexture.active=previous;
+            camera.targetTexture=null; camera.cullingMask=mask;
+            canvas.renderMode=mode; canvas.worldCamera=originalCamera;
+            render.Release(); Destroy(render); Destroy(image);
+        }
+    }
+    void Update(){ if(_session?.State == BootState.Running) _session.Context.App.Tick(Time.deltaTime,Time.unscaledDeltaTime); }
+    [Serializable] sealed class Result { public bool passed; public string detail; }
+}

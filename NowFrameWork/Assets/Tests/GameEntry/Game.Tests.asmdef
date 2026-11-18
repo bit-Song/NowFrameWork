@@ -1,0 +1,10 @@
+{
+  "name": "Game.Tests",
+  "rootNamespace": "Game.Tests",
+  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Core", "NowFrameWork.Unity", "NowFrameWork.Assets", "NowFrameWork.UI.UGUI", "UniTask", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

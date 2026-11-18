@@ -173,6 +173,8 @@ public sealed class Scope : IDisposable
 
 **规则：模块的依赖全部写在构造函数上；`Get<T>()` 只允许出现在装配代码里。**
 
+2026-11-18 补充：上述规则继续约束框架模块。项目业务层可以通过 `GameEntry` 获取应用共享服务，入口由组合根在模块就绪后绑定；它不用于跨 Scope 解析场景/战斗对象，框架包不得反向依赖项目入口。见 [28](../04-测试与接入/28-GameEntry服务入口与生命周期.md) 与 ADR-031。
+
 ```csharp
 public sealed class LevelDirector : IAppModule
 {

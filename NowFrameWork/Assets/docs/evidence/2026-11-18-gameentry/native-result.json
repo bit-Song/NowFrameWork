@@ -1,0 +1,4 @@
+{
+    "passed": true,
+    "detail": "GameEntry shares Boot/UI services, rejects stopped access, and rebinds fresh services on restart; 100 real Addressables/UI factory open-close cycles; timeout retains lease; retry releases; Boot success/stop and UI startup failure rollback; offscreen Camera UI rendering"
+}

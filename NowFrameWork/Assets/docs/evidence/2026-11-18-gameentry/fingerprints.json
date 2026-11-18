@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-18",
+  "baseCommit": "28d2b8c",
+  "editor": "Tuanjie 1.8.2 / 2022.3.62t4",
+  "sourceHashFormat": "UTF-8 without BOM, LF normalized",
+  "sources": {
+    "NowFrameWork/Assets/Game/GameEntry.cs": "6a79bd1b37fd2a8f0547cd5e398dc65b0c83b97c80f1828c9241f2db42fcae04",
+    "NowFrameWork/Assets/Game/UiFlowSample.cs": "9de907107cfa40c3f5d4a8596210b8f127d674e569e4b8925cbaf378e69b841a",
+    "NowFrameWork/Assets/Game/AssetLoadDemo.cs": "59490f71f86c12899530d2ab94b0a83b5c55db26dce10d34c24824a5a9d400da",
+    "NowFrameWork/Assets/Game/Game.asmdef": "e2a4cd7aaf295b23a48f7042018cd56c65fe4b0eeb531c73abc38cbd511078c3",
+    "NowFrameWork/Assets/Tests/GameEntry/GameEntryTests.cs": "f270d85afc7a251ea3521ed1844d755bb5a742aae7d64ae4ba475c5cc12b1037",
+    "NowFrameWork/Assets/Tests/GameEntry/Game.Tests.asmdef": "346634eaf8cafc4ff3b4c5e7495914d0a463b30f4f26d14b3c70ecd7d46cdb21",
+    "Framework/com.now.nowframework.ui.ugui/Runtime/UnityUiViewFactory.cs": "cb06191ed0e6dffee77080f320d7b1086b1281cf74015474af19d9b0108bc6f7"
+  },
+  "artifacts": {
+    "consumer-manifest.json": "1a5ccc11276b6e53191bb6335cd161b01c619e59ec4e0f3b2f7900671b54a457",
+    "editmode.xml": "f998c86ba2ace4780d49af71904f3fe1ca1bf59569d00dc8ec59f257771c8d89",
+    "native-result.json": "2675d950b1ca197d778ae8cfabac833abb7d3f1576ef031c6bed19fecbbfa7c4",
+    "README.md": "4b7e185ae0c4d08d2c67a67f722cb5560230835ef3bff6a0af95ddc620d49e61",
+    "UiNativeProbe.cs.txt": "b1dded09ce30f0d43892aa4e9fa6922ed62e2ddea1cd43e162261cff64da238a",
+    "UiValidationBuild.cs.txt": "e2126d8f9d638a16212db7fe8d39749f1b051911869d9368c36013728c97808f"
+  },
+  "player": {
+    "gameDll": "3D9177C09197D3A2F4AC93F7470F533C5F9D538942DFAC7BD1B301241F51A8C0",
+    "probeDll": "553D1BB20797BA1C1E0F4C9BFABDBA1B5B2EA674104DF87AB22F744E015FEA30",
+    "exe": "EB882B09E44C88427A4A9D9EB735BF606034DB935D432281837CFCF999C40252"
+  }
+}

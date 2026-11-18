@@ -27,12 +27,14 @@ namespace Game
         TaskRunner _tasks;
         bool _exiting;
         bool _entered;
+        GameEntry.Binding _binding;
 
         public UiService Service => _module?.Service;
         public void Configure(UiRoot root, EventSystem eventSystem) { _rootPrefab = root; _eventSystem = eventSystem; }
 
         public async UniTask EnterAsync(BootContext context, CancellationToken ct)
         {
+            if (_context != null) throw new InvalidOperationException("UI 项目入口尚未退出。");
             _context = context; _exiting = false; _entered = false;
             _lifetime = new CancellationTokenSource(); _tasks = new TaskRunner(context.App.Log);
             _module = new UiModule(context.Assets, _rootPrefab,
@@ -41,6 +43,8 @@ namespace Game
             _scope = new Scope("Game UI", null, context.App.Clock, context.App.Log);
             _scope.Modules.Register(_module);
             await _scope.StartupAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            _binding = GameEntry.Bind(context, _module.Service);
             await OpenAsync(ct);
             _entered = true;
             Write("UI 就绪。底部按钮可测试显隐、快速反向和 100 次打开/关闭。");
@@ -48,7 +52,7 @@ namespace Game
 
         public async UniTask OpenAsync(CancellationToken ct = default)
         {
-            UiOpenResult result = await Service.OpenAsync(PanelKey, EmptyArgs.Default, ct);
+            UiOpenResult result = await GameEntry.UI.OpenAsync(PanelKey, EmptyArgs.Default, ct);
             if (result.IsOpen) _handle = result.Handle;
         }
 
@@ -110,11 +114,13 @@ namespace Game
             if (_context == null) return;
             _exiting = true;
             _entered = false;
+            _binding?.BeginStopping();
             _lifetime.Cancel();
             if (_active != null) await _active.Task;
             // 模块清理失败时保留引用，阻止 Boot 继续卸载资源依赖。
             if (_module != null) await _module.DisposeAsync();
             if (_scope != null) await _scope.DisposeAsync();
+            _binding?.Dispose(); _binding = null;
             _module = null; _scope = null;
             _tasks.Dispose(); _tasks = null;
             _lifetime.Dispose(); _lifetime = null;

@@ -1,51 +1,44 @@
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
-using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Boot;
 using NowFrameWork.Generated;
-using System;
-using System.Linq;
-using System.Net;
-using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Game
 {
     /// <summary>
-    /// 框架加载方式的最小示例：AddressablesAssets 组装 → InitializeAsync → AcquireAsync → Dispose。
-    ///
-    /// 用法：任意场景建空物体 → 挂本组件 → Inspector 填 Addressable 地址 → Play → 点「加载 / 卸载」。
-    /// 屏幕左下角实时显示 ActiveLeases，卸载后必须回到 0。
+    /// Boot 项目入口示例：把本组件配置到 BootFlow 的 Project Entry 后运行。
+    /// 复用 Boot 的资源服务，通过 GameEntry 加载；停止时先销毁实例，再归还租约。
     /// </summary>
-    public class AssetLoadDemo : MonoBehaviour
+    public sealed class AssetLoadDemo : MonoBehaviour, IBootEntry
     {
-        GameObject instance;
-        AssetLease<GameObject> lease;
-        private async void Start()
-        {
-            var created = AddressablesAssets.Create();
-            IAssetService assets = created.Service;
-            AssetsModule module = created.Module;
-            // ② 初始化
-            await module.InitializeAsync(CancellationToken.None);
+        GameEntry.Binding _binding;
+        AssetLease<GameObject> _lease;
+        GameObject _instance;
 
-            lease = await assets.AcquireAsync<GameObject>(AssetKeys.Tests.PCRegression.Probe_prefab, CancellationToken.None);
-            // 克隆一份实例（这才是"你的"对象）
-            instance = Instantiate(lease.Asset);
-            Debug.Log("loaded bundles: " + AssetBundle.GetAllLoadedAssetBundles().Count());
-            // 卸载：先销毁实例，跨一帧，再还租约
-            Destroy(instance);
-            await UniTask.NextFrame();
-            lease.Dispose();
-            Debug.Log("loaded bundles: " + AssetBundle.GetAllLoadedAssetBundles().Count());
+        public async UniTask EnterAsync(BootContext context, CancellationToken ct)
+        {
+            if (_binding != null) throw new InvalidOperationException("资源示例尚未退出。");
+            ct.ThrowIfCancellationRequested();
+            _binding = GameEntry.Bind(context);
+            _lease = await GameEntry.Assets.AcquireAsync<GameObject>(
+                AssetKeys.Tests.PCRegression.Probe_prefab, ct);
+            ct.ThrowIfCancellationRequested();
+            _instance = Instantiate(_lease.Asset);
+            Debug.Log("[GameEntry 加载示例] 已创建实例；点击 Boot 停止后销毁并归还租约。", this);
         }
 
-        private void Update()
+        public async UniTask ExitAsync()
         {
-            if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
-            {
-               
-            }
+            _binding?.BeginStopping();
+            if (_instance != null) Destroy(_instance);
+            if (!await UnityObjectLifecycle.WaitDestroyedAsync(_instance))
+                throw new TimeoutException("资源示例实例尚未销毁，保留租约供再次停止时重试。");
+            _instance = null;
+            _lease?.Dispose(); _lease = null;
+            _binding?.Dispose(); _binding = null;
         }
     }
 }

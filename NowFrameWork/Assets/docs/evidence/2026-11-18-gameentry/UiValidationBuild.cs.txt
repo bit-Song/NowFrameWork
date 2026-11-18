@@ -1,0 +1,40 @@
+using System;
+using System.IO;
+using Game;
+using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using NowFrameWork.UI.Editor;
+
+public static class UiValidationBuild
+{
+    public static void PrepareAndBuild()
+    {
+        var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+        var root = UiPrefabBuilder.CreateRoot("Assets/Tests/UIIntegration/UiRoot.prefab");
+        UiPrefabBuilder.CreatePanel("Assets/Tests/UIIntegration/Panel.prefab");
+        settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID("Assets/Tests/UIIntegration/Panel.prefab"),settings.DefaultGroup).address="UiProbe/Panel";
+        EditorUtility.SetDirty(settings); AssetDatabase.SaveAssets();
+        File.Delete("Assets/Scenes/UIIntegration.scene");
+        NowFrameWork.EditorTools.UiIntegrationSceneMenu.Create();
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+        var camera = new GameObject("Probe Camera",typeof(Camera)).GetComponent<Camera>(); camera.clearFlags=CameraClearFlags.SolidColor; camera.backgroundColor=new Color(0.02f,0.03f,0.06f); camera.cullingMask=0;
+        var events = new GameObject("Events",typeof(EventSystem),typeof(InputSystemUIInputModule)).GetComponent<EventSystem>();
+        var host = new GameObject("Probe");
+        var entry = host.AddComponent<UiFlowSample>(); entry.Configure(root,events);
+        host.AddComponent<UiNativeProbe>().Configure(root,entry);
+        Directory.CreateDirectory("Assets/Scenes"); EditorSceneManager.SaveScene(scene,"Assets/Scenes/NativeProbe.unity");
+        AddressableAssetSettings.BuildPlayerContent(out var build);
+        if(!string.IsNullOrEmpty(build.Error)) throw new Exception(build.Error);
+        PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone,ScriptingImplementation.Mono2x);
+        PlayerSettings.runInBackground=true;
+        PlayerSettings.defaultScreenWidth=1280; PlayerSettings.defaultScreenHeight=720; PlayerSettings.fullScreenMode=FullScreenMode.Windowed;
+        string output=Path.GetFullPath("../Player/UIProbe.exe");
+        var report=BuildPipeline.BuildPlayer(new[]{"Assets/Scenes/NativeProbe.unity"},output,BuildTarget.StandaloneWindows64,BuildOptions.Development);
+        if(report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new Exception("UI probe build failed");
+    }
+}
