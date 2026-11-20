@@ -4,6 +4,8 @@
 
 模块之间的关系、启动后的对象结构和常用 API 入口可以对照 [33 NowFrameWork 结构图与 API 导览](33-NowFrameWork结构图与API导览.md)。
 
+需要按功能查询具体调用与释放方式时，使用 [模块 API 索引](../06-模块API/README.md)。
+
 ## 1. 第一次运行
 
 在团结编辑器中打开 **Window → Asset Management → Addressables → Groups**，将 **Play Mode Script** 设为 **Use Asset Database (fastest)**。这是本地 Play 模式的样例配置。然后按下表顺序打开场景。
