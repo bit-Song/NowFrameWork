@@ -4,13 +4,13 @@
 
 ## 常用 API
 
-| API | 何时使用 |
-|---|---|
-| `BootFlow.Run() / Stop()` | 从场景代码发起启动或停止。组件把失败写到 Console，验收时看阶段和最终停止日志。 |
-| `BootSession.StartAsync(ct) / StopAsync()` | 供持有会话的宿主调用，异步结果直接报告异常。用 `State`、`FailureStage`、`LastError` 定位失败。 |
-| `IBootEntry.EnterAsync(context, ct) / ExitAsync()` | 由 Boot 调用。入口在这里启动自有模块，在退出时等待其任务、实例和租约清理。 |
-| `GameEntry.Bind(context, ui)` | 由入口在依赖就绪后绑定。返回的 `Binding` 由入口保存。先 `BeginStopping()` 关闭访问，再完成清理并调用 `Dispose()` 解绑。 |
-| `GameEntry.IsReady / HasUI / HasScenes` | 先检查就绪，再判断 UI 和场景服务是否已装配。已取得的服务引用也应遵循自己的生命周期。 |
+| API                                                | 何时使用                                                                              |
+| -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `BootFlow.Run() / Stop()`                          | 从场景代码发起启动或停止。组件把失败写到 Console，验收时看阶段和最终停止日志。                                       |
+| `BootSession.StartAsync(ct) / StopAsync()`         | 供持有会话的宿主调用，异步结果直接报告异常。用 `State`、`FailureStage`、`LastError` 定位失败。                  |
+| `IBootEntry.EnterAsync(context, ct) / ExitAsync()` | 由 Boot 调用。入口在这里启动自有模块，在退出时等待其任务、实例和租约清理。                                          |
+| `GameEntry.Bind(context, ui)`                      | 由入口在依赖就绪后绑定。返回的 `Binding` 由入口保存。先 `BeginStopping()` 关闭访问，再完成清理并调用 `Dispose()` 解绑。 |
+| `GameEntry.IsReady / HasUI / HasScenes`            | 先检查就绪，再判断 UI 和场景服务是否已装配。已取得的服务引用也应遵循自己的生命周期。                                      |
 
 ## 调用示例
 
