@@ -1,0 +1,97 @@
+using System;
+using System.IO;
+using HybridCLR.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+[InitializeOnLoad]
+public static class BootWindowsAcceptanceEditor
+{
+    const string IndexKey = "NwfAcceptanceIndex";
+    static readonly string[] Scenes = { "UIWindows", "UITween" };
+    static string Output => Environment.GetEnvironmentVariable("NWF_BOOT_WINDOWS");
+    static BootWindowsAcceptanceEditor() => EditorApplication.playModeStateChanged += Changed;
+
+    public static void Play()
+    {
+        SessionState.SetInt(IndexKey, 0);
+        EditorApplication.delayCall += Enter;
+    }
+
+    static void Enter()
+    {
+        int index = SessionState.GetInt(IndexKey, -1);
+        if (index < 0) return;
+        var settings = AddressableAssetSettingsDefaultObject.Settings;
+        settings.ActivePlayModeDataBuilderIndex = 0;
+        EditorSceneManager.OpenScene("Assets/Scenes/" + Scenes[index] + ".scene");
+        EditorApplication.isPlaying = true;
+    }
+
+    static void Changed(PlayModeStateChange change)
+    {
+        int index = SessionState.GetInt(IndexKey, -1);
+        if (index < 0 || string.IsNullOrEmpty(Output)) return;
+        if (change == PlayModeStateChange.EnteredPlayMode) EditorApplication.update += Poll;
+        if (change != PlayModeStateChange.EnteredEditMode) return;
+        EditorApplication.update -= Poll;
+        string result = Path.Combine(Output, Scenes[index] + ".json");
+        bool passed = File.Exists(result) && File.ReadAllText(result).Contains("\"passed\": true");
+        if (!passed || index == Scenes.Length - 1)
+        {
+            SessionState.EraseInt(IndexKey);
+            EditorApplication.Exit(passed ? 0 : 1);
+            return;
+        }
+        SessionState.SetInt(IndexKey, index + 1);
+        EditorApplication.delayCall += Enter;
+    }
+
+    static void Poll()
+    {
+        int index = SessionState.GetInt(IndexKey, -1);
+        if (index >= 0 && File.Exists(Path.Combine(Output, Scenes[index] + ".json")))
+            EditorApplication.isPlaying = false;
+    }
+
+    public static void Build()
+    {
+        var target = BuildTargetGroup.Standalone;
+        var previousBackend = PlayerSettings.GetScriptingBackend(target);
+        var previousStripping = PlayerSettings.GetManagedStrippingLevel(target);
+        var settings = AddressableAssetSettingsDefaultObject.Settings;
+        var remote = settings.FindGroup("PCRegression Remote").GetSchema<BundledAssetGroupSchema>();
+        var hybrid = HybridCLRSettings.instance;
+        bool previousHybrid = hybrid.enable;
+        bool previousRemoteCatalog = settings.BuildRemoteCatalog;
+        bool previousRemoteGroup = remote.IncludeInBuild;
+        try
+        {
+            hybrid.enable = false;
+            settings.BuildRemoteCatalog = false;
+            remote.IncludeInBuild = false;
+            PlayerSettings.SetScriptingBackend(target, ScriptingImplementation.IL2CPP);
+            PlayerSettings.SetManagedStrippingLevel(target, ManagedStrippingLevel.Low);
+            AddressableAssetSettings.BuildPlayerContent(out var content);
+            if (!string.IsNullOrEmpty(content.Error)) throw new InvalidOperationException(content.Error);
+            var report = BuildPipeline.BuildPlayer(
+                new[] { "Assets/Scenes/BootIntegration.scene" },
+                Path.Combine(Output, "BootWindowsAcceptance.exe"), BuildTarget.StandaloneWindows64, BuildOptions.Development);
+            if (report.summary.result != BuildResult.Succeeded) throw new InvalidOperationException("IL2CPP build " + report.summary.result);
+            Debug.Log("[BOOT WINDOWS ACCEPTANCE] IL2CPP build succeeded");
+        }
+        finally
+        {
+            remote.IncludeInBuild = previousRemoteGroup;
+            settings.BuildRemoteCatalog = previousRemoteCatalog;
+            hybrid.enable = previousHybrid;
+            PlayerSettings.SetManagedStrippingLevel(target, previousStripping);
+            PlayerSettings.SetScriptingBackend(target, previousBackend);
+        }
+    }
+}

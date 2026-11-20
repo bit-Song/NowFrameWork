@@ -1,0 +1,202 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using NowFrameWork.Assets;
+using NowFrameWork.Assets.Adapter;
+using NowFrameWork.Boot;
+using NowFrameWork.Core.Storage;
+using NowFrameWork.Core.Threading;
+using NowFrameWork.Unity;
+using NowFrameWork.Unity.Storage;
+using UnityEngine;
+
+static class BootWindowsProbe
+{
+    const string Config = "PCProbe/Config";
+    const string Missing = "BootProbe/DeliberatelyMissingConfig";
+
+    sealed class Provider : IAssetProvider, IAssetProviderLifecycle, ITypedAssetProvider
+    {
+        readonly AddressablesProvider _inner = new AddressablesProvider(TimeSpan.FromSeconds(8));
+        public bool RepairMissing;
+        public bool FailNextRelease;
+        public int ReleaseAttempts;
+        public int Releases;
+        public bool SawMissing;
+        ProviderHandle _failed;
+
+        public UniTask InitializeAsync(CancellationToken ct) => _inner.InitializeAsync(ct);
+        public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
+            => ResolveCanonicalKeyAsync(key, typeof(UnityEngine.Object), ct);
+        public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, Type type, CancellationToken ct)
+        {
+            if (key.Address == Missing)
+            {
+                if (RepairMissing) key = AssetKey.From(Config);
+                else SawMissing = true;
+            }
+            return _inner.ResolveCanonicalKeyAsync(key, type, ct);
+        }
+        public UniTask<ProviderHandle> LoadAsync(string key, CancellationToken ct) => _inner.LoadAsync(key, ct);
+        public void Release(ProviderHandle handle)
+        {
+            ReleaseAttempts++;
+            if (FailNextRelease)
+            {
+                FailNextRelease = false;
+                _failed = handle;
+                throw new InvalidOperationException("Injected provider release failure");
+            }
+            if (_failed != null)
+            {
+                Require(ReferenceEquals(_failed, handle), "release retried a different handle");
+                _failed = null;
+            }
+            _inner.Release(handle);
+            Releases++;
+        }
+    }
+
+    sealed class Entry : IBootEntry
+    {
+        public bool Gate;
+        public int Enters, Exits;
+        public readonly UniTaskCompletionSource Entered = new UniTaskCompletionSource();
+        public async UniTask EnterAsync(BootContext context, CancellationToken ct)
+        {
+            Enters++;
+            if (!Gate) return;
+            Entered.TrySetResult();
+            await UniTask.WaitUntil(() => ct.IsCancellationRequested);
+            ct.ThrowIfCancellationRequested();
+        }
+        public UniTask ExitAsync() { Exits++; return UniTask.CompletedTask; }
+    }
+
+    sealed class Fixture
+    {
+        public readonly Provider Provider = new Provider();
+        public readonly Entry Entry = new Entry();
+        public readonly List<BootContext> Contexts = new List<BootContext>();
+        public readonly BootSession Boot;
+        public Fixture(string path, string config)
+        {
+            Boot = new BootSession(() =>
+            {
+                var app = App.Create();
+                var context = new BootContext(app, new AssetService(Provider, app.Log),
+                    new FileSettingsStore<BootPreferences>(path, "prefs",
+                        new JsonSettingsCodec<BootPreferences>(validate: BootPreferences.Validate)));
+                Contexts.Add(context);
+                return context;
+            }, new BootOptions(configAddress: config), Entry);
+        }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Start()
+    {
+        string output = Environment.GetEnvironmentVariable("NWF_BOOT_WINDOWS");
+        if (string.IsNullOrWhiteSpace(output)) return;
+        foreach (var b in UnityEngine.Object.FindObjectsOfType<BootFlow>()) b.enabled = false;
+        MainThreadGuard.BindCurrentThread();
+        Run(output).Forget();
+    }
+
+    static async UniTask Run(string output)
+    {
+        var results = new List<Case>();
+        string isolated = Path.Combine(output, "Settings-" + Guid.NewGuid().ToString("N"));
+        await CaseAsync(results, "required_config_missing_then_retry", () => MissingThenRetry(Path.Combine(isolated, "config")));
+        await CaseAsync(results, "stop_while_starting_then_restart", () => CancelThenRetry(Path.Combine(isolated, "cancel")));
+        await CaseAsync(results, "failed_release_then_retry_stop", () => FailedStop(Path.Combine(isolated, "stop")));
+        bool passed = results.TrueForAll(c => c.passed);
+        File.WriteAllText(Path.Combine(output, "boot-windows-result.json"), JsonUtility.ToJson(new Report { passed = passed, cases = results.ToArray() }, true));
+        Application.Quit(passed ? 0 : 1);
+    }
+
+    static async UniTask CaseAsync(List<Case> results, string name, Func<UniTask<string>> run)
+    {
+        try { results.Add(new Case { name = name, passed = true, detail = await run() }); }
+        catch (Exception e) { Debug.LogException(e); results.Add(new Case { name = name, detail = e.ToString() }); }
+    }
+
+    static async UniTask<string> MissingThenRetry(string path)
+    {
+        var f = new Fixture(path, Missing);
+        Exception startError = await ErrorOf(f.Boot.StartAsync());
+        Require(startError is InvalidOperationException && startError.Message.Contains(Missing) && f.Provider.SawMissing, "expected real Addressables missing key");
+        Require(f.Boot.State == BootState.Failed && f.Boot.FailureStage == "Config" && f.Boot.LastError == startError, "config failure observability");
+        Require(f.Entry.Enters == 0 && f.Entry.Exits == 0 && f.Boot.CanStart && f.Boot.Context == null, "failed config reached entry or held context");
+        var original = f.Contexts[0];
+        Empty(original);
+        f.Provider.RepairMissing = true;
+        await StartFreshAndStop(f, original);
+        return "Failed at Config; real Addressables missing key; entry untouched; repaired test alias; retry ran with a fresh context; stop left zero leases/requests.";
+    }
+
+    static async UniTask<string> CancelThenRetry(string path)
+    {
+        var f = new Fixture(path, Config);
+        f.Entry.Gate = true;
+        var start = f.Boot.StartAsync();
+        await f.Entry.Entered.Task.Timeout(TimeSpan.FromSeconds(20));
+        var original = f.Contexts[0];
+        Require(f.Boot.State == BootState.Starting && f.Boot.Stage == "Entry" && original.Assets.ActiveLeases == 1, "entry gate not reached with config held");
+        await f.Boot.StopAsync();
+        Require(await ErrorOf(start) is OperationCanceledException, "start did not cancel");
+        Require(f.Boot.FailureStage == "Entry" && f.Entry.Exits == 1, "entry cancellation cleanup");
+        Stopped(f, original);
+        f.Entry.Gate = false;
+        await StartFreshAndStop(f, original);
+        return "Stop canceled startup at Entry while a real config lease was held; exit ran once; retry ran with a fresh context; zero leases/requests after both stops.";
+    }
+
+    static async UniTask<string> FailedStop(string path)
+    {
+        var f = new Fixture(path, Config);
+        await f.Boot.StartAsync();
+        var original = f.Boot.Context;
+        Require(original.Configuration != null && original.Assets.ActiveLeases == 1, "config lease not retained");
+        f.Provider.FailNextRelease = true;
+        Exception stop = await ErrorOf(f.Boot.StopAsync());
+        Require(stop is InvalidOperationException && stop.Message == "Injected provider release failure", "wrong stop failure");
+        Require(f.Boot.State == BootState.CleanupFailed && f.Boot.Stage == "Cleanup" && f.Boot.LastError == stop, "cleanup failure observability");
+        Require(ReferenceEquals(f.Boot.Context, original) && !f.Boot.CanStart && original.Assets.ActiveLeases == 1 && f.Provider.Releases == 0, "cleanup lost ownership");
+        try { f.Boot.StartAsync(); throw new Exception("start unexpectedly accepted"); }
+        catch (InvalidOperationException) { }
+        await f.Boot.StopAsync();
+        Stopped(f, original);
+        Require(f.Provider.ReleaseAttempts == 2 && f.Provider.Releases == 1 && f.Entry.Exits == 2, "release/exit retry accounting");
+        return "CleanupFailed held the original context and one lease; start blocked; second Stop released the exact same Addressables handle once and reset lease/request counts.";
+    }
+
+    static async UniTask StartFreshAndStop(Fixture f, BootContext original)
+    {
+        await f.Boot.StartAsync();
+        var next = f.Boot.Context;
+        Require(f.Boot.State == BootState.Running && next.Configuration != null && next.Assets.ActiveLeases == 1, "retry did not reach Running");
+        Require(!ReferenceEquals(original, next) && f.Contexts.Count == 2 && f.Boot.LastError == null && f.Boot.FailureStage == null, "retry did not reset context/error");
+        await f.Boot.StopAsync();
+        Stopped(f, next);
+    }
+
+    static void Stopped(Fixture f, BootContext context)
+    {
+        Require(f.Boot.State == BootState.Stopped && f.Boot.Context == null && f.Boot.CanStart, "stop lost lifecycle invariants");
+        Empty(context);
+    }
+
+    static void Empty(BootContext c) => Require(c.Assets.ActiveLeases == 0 && c.Assets.PendingRequests == 0, "leases or requests remained");
+    static async UniTask<Exception> ErrorOf(UniTask task)
+    {
+        try { await task; }
+        catch (Exception error) { return error; }
+        throw new Exception("Expected operation failure");
+    }
+    static void Require(bool value, string detail) { if (!value) throw new InvalidOperationException(detail); }
+    [Serializable] sealed class Case { public string name, detail; public bool passed; }
+    [Serializable] sealed class Report { public bool passed; public Case[] cases; }
+}

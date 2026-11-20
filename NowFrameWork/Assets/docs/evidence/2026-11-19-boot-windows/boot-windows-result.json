@@ -1,0 +1,20 @@
+{
+    "passed": true,
+    "cases": [
+        {
+            "name": "required_config_missing_then_retry",
+            "detail": "Failed at Config; real Addressables missing key; entry untouched; repaired test alias; retry ran with a fresh context; stop left zero leases/requests.",
+            "passed": true
+        },
+        {
+            "name": "stop_while_starting_then_restart",
+            "detail": "Stop canceled startup at Entry while a real config lease was held; exit ran once; retry ran with a fresh context; zero leases/requests after both stops.",
+            "passed": true
+        },
+        {
+            "name": "failed_release_then_retry_stop",
+            "detail": "CleanupFailed held the original context and one lease; start blocked; second Stop released the exact same Addressables handle once and reset lease/request counts.",
+            "passed": true
+        }
+    ]
+}

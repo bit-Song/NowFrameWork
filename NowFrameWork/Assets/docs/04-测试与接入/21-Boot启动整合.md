@@ -61,3 +61,5 @@ BootFlow 默认不启用代码热更，编辑器也拒绝真实 HybridCLR 加载
 本阶段尚未对新 Boot 场景重新构建 Player，实际 Addressables 目录、场景切换及 HybridCLR 元数据/DLL 在新流程下的端到端验收仍待执行。文档 17/20 既有 Windows 资源与存储证据不等价于新 Boot 流程已经通过 Native 验证。Android/iOS 真机继续按用户安排后置。
 
 后续验证（2026-11-17）：UI-1 接入的最小普通 BootSession 已在独立 Windows Mono Player 跑通（基础资源初始化 → 项目 UI Scope → 100 次开关 → 退出及故障回滚），见 [25](25-UI最小流程与接入.md)。这不覆盖本节可选配置、场景、资源更新和 HybridCLR 的全部 Player 组合。
+
+后续验证（2026-11-19）：主工程 `BootIntegration.scene` 的 Windows x64 IL2CPP Development Player 通过了普通 AOT 异常路径验收。使用本地 Addressables，覆盖了必需配置缺失后重启、启动中取消并重启、Provider 释放失败后再次停止。组合远端更新和真实 HybridCLR 加载留待发布验收。 [Boot Windows 验收](../evidence/2026-11-19-boot-windows/README.md)
