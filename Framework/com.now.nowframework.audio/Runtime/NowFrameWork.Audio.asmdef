@@ -1,0 +1,6 @@
+{
+  "name": "NowFrameWork.Audio",
+  "rootNamespace": "NowFrameWork.Audio",
+  "references": ["NowFrameWork.Core", "NowFrameWork.Assets", "UniTask"],
+  "autoReferenced": false
+}

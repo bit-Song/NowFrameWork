@@ -13,6 +13,7 @@
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#a77a1b4a89824fb6df293099de3060daf2a432c1",
     "com.now.nowframework.assets": "file:../../Framework/com.now.nowframework.assets",
     "com.now.nowframework.assets.addressables": "file:../../Framework/com.now.nowframework.assets.addressables",
+    "com.now.nowframework.audio": "file:../../Framework/com.now.nowframework.audio",
     "com.now.nowframework.core": "file:../../Framework/com.now.nowframework.core",
     "com.now.nowframework.diagnostics": "file:../../Framework/com.now.nowframework.diagnostics",
     "com.now.nowframework.ui.dotween": "file:../../Framework/com.now.nowframework.ui.dotween",

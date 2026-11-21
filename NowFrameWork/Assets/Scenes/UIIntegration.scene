@@ -172,9 +172,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 881631892}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da813aac76935a34e8018e5fb3268b14, type: 3}
+  m_Script: {fileID: 11500000, guid: 497c7bea55c68c7438a74c2ab1aadc3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _rootPrefab: {fileID: 3994732691754993077, guid: dabbd238ae8f17b488aaf3c4c5cc7461, type: 3}
+  _eventSystem: {fileID: 1444821103}
+  _panelAddress: UiProbe/Panel
 --- !u!4 &881631895
 Transform:
   m_ObjectHideFlags: 0
