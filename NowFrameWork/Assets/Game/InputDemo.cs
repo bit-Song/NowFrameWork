@@ -32,6 +32,7 @@ namespace Game
 
         ActionInput _input;
         InputModule _back;
+        InputSystemDeviceWatcher _watcher;
         InputActionAsset _ownedAsset;
         Transform _cube;
 
@@ -67,6 +68,9 @@ namespace Game
 
             _back.InitializeAsync(default).GetAwaiter().GetResult();
             _back.StartAsync(default).GetAwaiter().GetResult();
+
+            _watcher = GetComponent<InputSystemDeviceWatcher>();
+            if (_watcher == null) _watcher = gameObject.AddComponent<InputSystemDeviceWatcher>();
 
             _cube = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
             _cube.name = "InputDemoCube";
@@ -159,6 +163,7 @@ namespace Game
             GUILayout.Label("Move: " + vector.ToString("F2"));
             GUILayout.Label("屏蔽中: " + (_input != null && _input.IsSuppressed ? "是" : "否"));
             GUILayout.Label("日志: " + _log);
+            GUILayout.Label("当前设备: " + (_watcher != null ? _watcher.Tracker.Current.ToString() : "-"));
 
             if (GUILayout.Button("关闭模态（等价于返回键）")) CloseModalIfOpen();
 
