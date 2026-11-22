@@ -21,6 +21,8 @@ namespace NowFrameWork.UI.Tests
             public void Release(ProviderHandle handle) { Released++; }
         }
         GameObject _rootObject, _prefab, _eventObject;
+        readonly System.Collections.Generic.List<EventSystem> _disabledEventSystems =
+            new System.Collections.Generic.List<EventSystem>(2);
         UiRoot _root;
         Provider _provider;
         AssetService _assets;
@@ -32,6 +34,17 @@ namespace NowFrameWork.UI.Tests
         public void SetUp()
         {
             MainThreadGuard.BindCurrentThread();
+
+            // 编辑器可能打开着带 EventSystem 的场景（如 UIIntegration）；
+            // 本用例会自建一个，必须先停用场景里已有的，否则 UiRoot 判定「多个 EventSystem」拒绝启动。
+            foreach (EventSystem existing in UnityEngine.Object.FindObjectsOfType<EventSystem>(true))
+            {
+                if (existing == null || !existing.gameObject.activeSelf) continue;
+
+                _disabledEventSystems.Add(existing);
+                existing.gameObject.SetActive(false);
+            }
+
             _rootObject = new GameObject("Root", typeof(RectTransform), typeof(Canvas), typeof(UiRoot));
             _root = _rootObject.GetComponent<UiRoot>();
             _rootObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
@@ -47,7 +60,17 @@ namespace NowFrameWork.UI.Tests
             _assets = new AssetService(_provider);
         }
         [TearDown]
-        public void TearDown() { ImmediateDestroy(_rootObject); ImmediateDestroy(_prefab); ImmediateDestroy(_eventObject); }
+        public void TearDown()
+        {
+            ImmediateDestroy(_rootObject);
+            ImmediateDestroy(_prefab);
+            ImmediateDestroy(_eventObject);
+
+            foreach (EventSystem existing in _disabledEventSystems)
+                if (existing != null) existing.gameObject.SetActive(true);
+
+            _disabledEventSystems.Clear();
+        }
 
         [Test]
         public void RealFactory_OpenClose_ReleasesAfterActualGameObjectDestruction()

@@ -1,6 +1,7 @@
 {
   "testables": [
     "com.now.nowframework.assets",
+    "com.now.nowframework.input",
     "com.now.nowframework.ui.ugui",
     "com.now.nowframework.ui.dotween",
     "com.now.nowframework.core",
@@ -15,6 +16,7 @@
     "com.now.nowframework.assets.addressables": "file:../../Framework/com.now.nowframework.assets.addressables",
     "com.now.nowframework.audio": "file:../../Framework/com.now.nowframework.audio",
     "com.now.nowframework.core": "file:../../Framework/com.now.nowframework.core",
+    "com.now.nowframework.input": "file:../../Framework/com.now.nowframework.input",
     "com.now.nowframework.diagnostics": "file:../../Framework/com.now.nowframework.diagnostics",
     "com.now.nowframework.ui.dotween": "file:../../Framework/com.now.nowframework.ui.dotween",
     "com.now.nowframework.ui.ugui": "file:../../Framework/com.now.nowframework.ui.ugui",
