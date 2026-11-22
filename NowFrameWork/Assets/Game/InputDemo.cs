@@ -44,7 +44,7 @@ namespace Game
             // 裸场景没有 Boot 时，宿主登记由本演示补上（同线程重复登记幂等）
             if (!MainThreadGuard.IsMainThread) MainThreadGuard.BindCurrentThread();
 
-            InputActionAsset asset = _actions != null ? _actions : BuildDefaultAsset();
+            InputActionAsset asset = _actions != null ? _actions : BuildDefaultActions();
             if (_actions == null) _ownedAsset = asset;
 
             asset.Enable();
@@ -114,7 +114,7 @@ namespace Game
             return true;
         }
 
-        InputActionAsset BuildDefaultAsset()
+        internal static InputActionAsset BuildDefaultActions()
         {
             var asset = ScriptableObject.CreateInstance<InputActionAsset>();
             InputActionMap map = asset.AddActionMap("Player");

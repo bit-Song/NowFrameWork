@@ -14,6 +14,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/SampleScene.scene
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/InputCameraDemo.scene
+    guid: 6021fe09c1b3b0c4a82ff69671db1745
   m_BuildProfiles: []
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 4bf4a3076466ede46b27307d2ad0f502,

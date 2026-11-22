@@ -32,13 +32,21 @@ namespace Game
             InputSystem.onDeviceChange -= OnDeviceChange;
         }
 
-        /// <summary>任意设备事件都视为"最近使用的设备"；只处理状态事件，忽略布局/连接等控制事件。</summary>
+        /// <summary>任意设备事件都视为"最近使用的设备"。</summary>
         void OnInputEvent(InputEventPtr eventPtr, InputDevice device)
         {
-            if (device == null) return;
-            if (!eventPtr.IsA<StateEvent>() && !eventPtr.IsA<DeltaStateEvent>()) return;
+            // 该回调由 Input System 逐事件调用，任何异常都会污染 Console 并中断后续订阅者，
+            // 这里只读取设备类型，异常一律吞掉（诊断信息对设备提示无价值）。
+            try
+            {
+                if (device == null) return;
 
-            Tracker.Set(KindOf(device));
+                Tracker.Set(KindOf(device));
+            }
+            catch (System.Exception)
+            {
+                // 设备状态异常时忽略本次事件
+            }
         }
 
         static InputDeviceKind KindOf(InputDevice device)

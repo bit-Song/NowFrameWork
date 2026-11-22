@@ -13,7 +13,8 @@
         "UniTask",
         "NowFrameWork.UI.UGUI",
         "UnityEngine.UI",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
