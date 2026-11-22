@@ -59,7 +59,7 @@ namespace NowFrameWork.Input
     public sealed class ActionInput
     {
         readonly IActionSource[] _sources;
-        readonly List<object> _gates = new List<object>(4);
+        readonly List<string> _gates = new List<string>(4);
 
         public ActionInput(params IActionSource[] sources)
         {
@@ -85,7 +85,7 @@ namespace NowFrameWork.Input
         ///
         /// 典型用法：模态弹窗打开时 `using (input.Suppress("ui.modal")) { ... }`。
         /// </summary>
-        public IDisposable Suppress(object reason)
+        public IDisposable Suppress(string reason)
         {
             MainThreadGuard.Assert("ActionInput.Suppress");
 
@@ -101,7 +101,7 @@ namespace NowFrameWork.Input
         /// 适合每帧根据外部状态同步（例如 `SetGate("ui.modal", ui.TopModal.IsValid)`）：
         /// 状态不变时不产生分配，也不会重复计数。
         /// </summary>
-        public void SetGate(object reason, bool active)
+        public void SetGate(string reason, bool active)
         {
             MainThreadGuard.Assert("ActionInput.SetGate");
 
@@ -138,9 +138,9 @@ namespace NowFrameWork.Input
         sealed class Gate : IDisposable
         {
             ActionInput _owner;
-            readonly object _reason;
+            readonly string _reason;
 
-            public Gate(ActionInput owner, object reason)
+            public Gate(ActionInput owner, string reason)
             {
                 _owner = owner;
                 _reason = reason;

@@ -13,7 +13,8 @@ namespace Game
     {
         [SerializeField] RectTransform _area;
         [SerializeField] RectTransform _knob;
-        [SerializeField] float _radius = 120f;
+        [Tooltip("0 = 按区域宽度的一半自动计算；>0 为固定本地单位半径")]
+        [SerializeField] float _radius = 0f;
         [SerializeField, Range(0f, 0.9f)] float _deadzone = 0.15f;
 
         /// <summary>当前方向，长度 0..1。</summary>
@@ -37,10 +38,12 @@ namespace Game
 
             Vector2 delta = local - area.rect.center;
 
-            Value = JoystickMath.Evaluate(delta, _radius, _deadzone);
+            float radius = _radius > 0f ? _radius : area.rect.width * 0.5f;
+
+            Value = JoystickMath.Evaluate(delta, radius, _deadzone);
             IsPressed = true;
 
-            if (_knob != null) _knob.anchoredPosition = Vector2.ClampMagnitude(delta, _radius);
+            if (_knob != null) _knob.anchoredPosition = Vector2.ClampMagnitude(delta, radius);
         }
 
         void Reset()

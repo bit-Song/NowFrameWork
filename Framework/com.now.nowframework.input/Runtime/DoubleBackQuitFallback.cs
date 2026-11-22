@@ -1,4 +1,5 @@
 using System;
+using NowFrameWork.Core.Threading;
 using UnityEngine;
 
 namespace NowFrameWork.Input
@@ -36,6 +37,7 @@ namespace NowFrameWork.Input
         /// <summary>提示剩余秒数；不在提示中时为 0。</summary>
         public float RemainingSeconds
         {
+            // 读取 Time.unscaledTime，只能在主线程访问
             get
             {
                 float left = _deadline - _now();
@@ -45,6 +47,8 @@ namespace NowFrameWork.Input
 
         public bool OnBack()
         {
+            MainThreadGuard.Assert("DoubleBackQuitFallback.OnBack");
+
             float now = _now();
 
             if (now <= _deadline)

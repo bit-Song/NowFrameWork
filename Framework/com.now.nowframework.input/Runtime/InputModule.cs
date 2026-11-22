@@ -106,6 +106,8 @@ namespace NowFrameWork.Input
 
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
+            MainThreadGuard.Assert("InputModule.Tick");
+
             if (!_running || _paused || _dispatching || _shutdown) return;
 
             bool pressed = false;
@@ -133,7 +135,7 @@ namespace NowFrameWork.Input
                 {
                     route = BackRoute.Ui;
                 }
-                else if (_fallback != null && _fallback.OnBack())
+                else if (!_shutdown && _fallback != null && _fallback.OnBack())
                 {
                     route = BackRoute.Fallback;
                 }
