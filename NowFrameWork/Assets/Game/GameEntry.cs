@@ -6,6 +6,7 @@ using NowFrameWork.Core.Logging;
 using NowFrameWork.Core.Storage;
 using NowFrameWork.Core.Threading;
 using NowFrameWork.Core.Time;
+using NowFrameWork.Input;
 using NowFrameWork.UI;
 using UnityEngine;
 
@@ -35,6 +36,12 @@ namespace Game
         public static bool HasScenes => Current.Context.Scenes != null;
         public static IUiService UI => Current.UI
             ?? throw new InvalidOperationException("当前项目入口未启用 UI 模块。");
+
+        public static bool HasActions => Current.Actions != null;
+
+        /// <summary>动作读取与输入屏蔽入口；未启用时抛错，避免静默拿到 null 后误判"没有输入"。</summary>
+        public static ActionInput Actions => Current.Actions
+            ?? throw new InvalidOperationException("当前项目入口未启用动作输入。");
         public static ISceneService Scenes => Current.Context.Scenes
             ?? throw new InvalidOperationException("当前项目入口未启用场景服务。");
 
@@ -50,12 +57,12 @@ namespace Game
         }
 
         /// <summary>只由项目组合根调用；调用前须完成 Boot 基础服务与所选项目模块的启动。</summary>
-        public static Binding Bind(BootContext context, IUiService ui = null)
+        public static Binding Bind(BootContext context, IUiService ui = null, ActionInput actions = null)
         {
             MainThreadGuard.Assert("GameEntry.Bind");
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (_current != null) throw new InvalidOperationException("GameEntry 已绑定或尚未完成停止；禁止覆盖服务，请先由原所有者完成清理。");
-            var binding = new Binding(context, ui);
+            var binding = new Binding(context, ui, actions);
             _current = binding;
             return binding;
         }
@@ -69,9 +76,15 @@ namespace Game
         {
             internal BootContext Context { get; private set; }
             internal IUiService UI { get; private set; }
+            internal ActionInput Actions { get; private set; }
             internal bool Stopping { get; private set; }
 
-            internal Binding(BootContext context, IUiService ui) { Context = context; UI = ui; }
+            internal Binding(BootContext context, IUiService ui, ActionInput actions)
+            {
+                Context = context;
+                UI = ui;
+                Actions = actions;
+            }
 
             public void BeginStopping()
             {
@@ -87,6 +100,7 @@ namespace Game
                 Stopping = true;
                 Context = null;
                 UI = null;
+                Actions = null;
             }
         }
     }

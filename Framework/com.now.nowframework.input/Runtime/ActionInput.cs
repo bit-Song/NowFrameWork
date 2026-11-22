@@ -8,10 +8,16 @@ namespace NowFrameWork.Input
     public readonly struct ActionState
     {
         public ActionState(float value, bool pressed, bool held)
+            : this(value, pressed, held, default)
+        {
+        }
+
+        public ActionState(float value, bool pressed, bool held, UnityEngine.Vector2 vector)
         {
             Value = value;
             Pressed = pressed;
             Held = held;
+            Vector = vector;
         }
 
         /// <summary>归一化连续值（摇杆/按键为 0/1）。</summary>
@@ -23,7 +29,10 @@ namespace NowFrameWork.Input
         /// <summary>当前按住。</summary>
         public bool Held { get; }
 
-        public bool IsIdle => Value == 0f && !Pressed && !Held;
+        /// <summary>二维方向（摇杆/移动轴）；标量动作时为 default。</summary>
+        public UnityEngine.Vector2 Vector { get; }
+
+        public bool IsIdle => Value == 0f && !Pressed && !Held && Vector.sqrMagnitude == 0f;
 
         public static ActionState Idle => default;
 
@@ -86,6 +95,24 @@ namespace NowFrameWork.Input
             return new Gate(this, reason);
         }
 
+        /// <summary>
+        /// 按原因开启/关闭屏蔽（幂等）。
+        ///
+        /// 适合每帧根据外部状态同步（例如 `SetGate("ui.modal", ui.TopModal.IsValid)`）：
+        /// 状态不变时不产生分配，也不会重复计数。
+        /// </summary>
+        public void SetGate(object reason, bool active)
+        {
+            MainThreadGuard.Assert("ActionInput.SetGate");
+
+            if (reason == null) throw new ArgumentNullException(nameof(reason));
+
+            bool present = _gates.Contains(reason);
+
+            if (active && !present) _gates.Add(reason);
+            else if (!active && present) _gates.Remove(reason);
+        }
+
         /// <summary>读取动作；被屏蔽时返回空闲状态。</summary>
         public ActionState Read(int actionId)
         {
@@ -105,6 +132,8 @@ namespace NowFrameWork.Input
         public bool WasPressed(int actionId) => Read(actionId).Pressed;
 
         public float GetValue(int actionId) => Read(actionId).Value;
+
+        public UnityEngine.Vector2 GetVector(int actionId) => Read(actionId).Vector;
 
         sealed class Gate : IDisposable
         {

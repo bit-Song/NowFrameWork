@@ -96,6 +96,55 @@ namespace NowFrameWork.Input.Tests
         }
 
         [Test]
+        public void SetGate_TogglesWithoutDuplicates()
+        {
+            var source = new FakeSource { Id = 1, State = new ActionState(1f, true, true) };
+            var input = new ActionInput(source);
+
+            input.SetGate("ui.modal", true);
+            input.SetGate("ui.modal", true);   // 重复开启不应叠加
+
+            Assert.AreEqual(1, input.GateCount);
+            Assert.IsTrue(input.Read(1).IsIdle);
+
+            input.SetGate("ui.modal", false);
+            input.SetGate("ui.modal", false);  // 重复关闭不应变负
+
+            Assert.AreEqual(0, input.GateCount);
+            Assert.AreEqual(1f, input.GetValue(1), 0.0001f);
+        }
+
+        [Test]
+        public void SetGate_CoexistsWithSuppressTokens()
+        {
+            var input = new ActionInput(new FakeSource { Id = 1 });
+
+            IDisposable modal = input.Suppress("ui.manual");
+            input.SetGate("game.paused", true);
+            Assert.AreEqual(2, input.GateCount);
+
+            input.SetGate("game.paused", false);
+            Assert.AreEqual(1, input.GateCount, "自动门关闭不应影响手动令牌");
+
+            modal.Dispose();
+            Assert.AreEqual(0, input.GateCount);
+        }
+
+        [Test]
+        public void GetVector_PassesThroughAndClearsWhenSuppressed()
+        {
+            var source = new FakeSource { Id = 2, State = new ActionState(1f, false, true, new UnityEngine.Vector2(0.5f, -0.5f)) };
+            var input = new ActionInput(source);
+
+            UnityEngine.Vector2 value = input.GetVector(2);
+            Assert.AreEqual(0.5f, value.x, 0.0001f);
+            Assert.AreEqual(-0.5f, value.y, 0.0001f);
+
+            using (input.Suppress("ui.modal"))
+                Assert.AreEqual(UnityEngine.Vector2.zero, input.GetVector(2), "屏蔽期间方向必须归零");
+        }
+
+        [Test]
         public void Suppress_NullReason_Throws()
         {
             var input = new ActionInput();

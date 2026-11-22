@@ -29,6 +29,8 @@ namespace Game
         UiModule _module;
         InputModule _input;
         DoubleBackQuitFallback _quitFallback;
+        ActionInput _gameplay;
+        int _lastActionLog;
         GameEntry.Binding _binding;
         CancellationTokenSource _lifetime;
         TaskRunner _tasks;
@@ -55,10 +57,12 @@ namespace Game
             }, new CanvasGroupUiTransition(), _eventSystem, log: context.App.Log,
                 cacheOptions: new UiCacheOptions(capacity: 1, idleTimeout: TimeSpan.FromSeconds(15)));
             await _module.InitializeAsync(ct); await _module.StartAsync(ct); ct.ThrowIfCancellationRequested();
-            _binding = GameEntry.Bind(context, Service);
+
 
             // 返回导航：屏上按钮走 Run(BackAsync)，物理返回键走 InputModule（防连发、后台不补发）
             _quitFallback = new DoubleBackQuitFallback(2f);
+            _gameplay = new ActionInput(new EscapeActionSource());
+            _binding = GameEntry.Bind(context, Service, _gameplay);
             _input = new InputModule(Service.RequestBackAsync, fallback: _quitFallback,
                 lifecycle: context.App.Lifecycle, log: context.App.Log,
                 sources: new IBackSource[] { new InputSystemBackSource() });
@@ -122,6 +126,31 @@ namespace Game
         void Update()
         {
             _input?.Tick(Time.deltaTime, Time.unscaledDeltaTime);
+
+            if (_gameplay == null || _module == null) return;   // 退出过程中 Service 已失效
+
+            // 每帧同步：有模态弹窗时屏蔽游戏动作（幂等，状态不变不分配）
+            _gameplay.SetGate("ui.modal", Service.TopModal.IsValid);
+
+            if (_gameplay.WasPressed(EscapeActionSource.ActionJump))
+                _lastActionLog = Time.frameCount;
+        }
+
+        /// <summary>演示用动作源：空格对应动作 1，仅在未被 UI 屏蔽时可见。</summary>
+        sealed class EscapeActionSource : IActionSource
+        {
+            public const int ActionJump = 1;
+
+            public bool TryRead(int actionId, out ActionState state)
+            {
+                if (actionId != ActionJump) { state = default; return false; }
+
+                bool held = Keyboard.current != null && Keyboard.current.spaceKey.isPressed;
+                bool pressed = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+
+                state = new ActionState(held ? 1f : 0f, pressed, held);
+                return true;
+            }
         }
         void OnGUI()
         {
@@ -136,6 +165,13 @@ namespace Game
             if (_cacheSettings && GUI.Button(new Rect(740, y, 150, 36), "Trim cache (" + Service.CachedCount + ")"))
                 Run(ct => Service.TrimCacheAsync(ct));
             GUI.enabled = true;
+
+            if (_gameplay != null)
+            {
+                GUI.Label(new Rect(10, y - 70, 600, 24),
+                    "动作(空格): " + (_gameplay.IsSuppressed ? "被 UI 屏蔽" : (_gameplay.GetValue(EscapeActionSource.ActionJump) > 0f ? "按住中" : "可用"))
+                    + (Time.frameCount - _lastActionLog < 60 ? "  [刚触发]" : ""));
+            }
 
             if (_quitFallback != null && _quitFallback.IsPrompting)
             {
@@ -153,6 +189,9 @@ namespace Game
                 await _input.ShutdownAsync(CancellationToken.None);
                 _input = null;
             }
+
+            _gameplay = null;
+            _quitFallback = null;
 
             if (_module != null) await _module.DisposeAsync();
             _binding?.Dispose(); _binding = null; _module = null;
