@@ -11,6 +11,7 @@
 | 架构 | 待补（建议 ARM64） |
 | 场景 | `UIIntegration.scene` |
 | 结果 | 启动与 UI 流程正常 |
+| Release 包 | **通过**（关闭 Development Build 后复测正常） |
 
 > 在同一天先用 Mono 出包验证正常，随后切 IL2CPP 复测通过。
 
@@ -33,7 +34,6 @@
 ## 4 未覆盖
 
 - iOS（需要 Mac 与设备）；
-- Android 关闭 Development Build 的 Release 包；
 - 长时间运行与内存压力；
 - 音频在移动端后台切换的实际表现；
 - 输入模块（Android 返回键）仍为未实现，见 [03 模块清单 F08](../../01-架构与规划/03-模块清单与优先级.md)。
