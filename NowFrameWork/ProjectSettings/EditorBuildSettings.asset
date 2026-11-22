@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/UIIntegration.scene
+    guid: 2ac6544c47f6c104fa3042c8f3faee34
+  - enabled: 0
     path: Assets/Scenes/AssetTest.scene
     guid: 8534902d19931fa408462a010a1d3281
   - enabled: 0

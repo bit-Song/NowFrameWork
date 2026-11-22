@@ -21,6 +21,7 @@
     "com.now.nowframework.unity": "file:../../Framework/com.now.nowframework.unity",
     "com.unity.addressables": "1.22.4-t1",
     "com.unity.collab-proxy": "2.5.1",
+    "com.unity.device-simulator.devices": "1.0.1",
     "com.unity.ide.rider": "3.0.36",
     "com.unity.ide.visualstudio": "2.0.22",
     "com.unity.ide.vscode": "1.2.5",
