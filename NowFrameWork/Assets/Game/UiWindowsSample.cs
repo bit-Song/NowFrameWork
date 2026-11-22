@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
 using NowFrameWork.Boot;
 using NowFrameWork.Core.Async;
+using NowFrameWork.Input;
 using NowFrameWork.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,6 +27,8 @@ namespace Game
         static readonly UiKey<UiWindowSampleArgs> Settings = new UiKey<UiWindowSampleArgs>(3, "Settings");
         static readonly UiKey<UiWindowSampleArgs> Confirm = new UiKey<UiWindowSampleArgs>(4, "Confirm");
         UiModule _module;
+        InputModule _input;
+        DoubleBackQuitFallback _quitFallback;
         GameEntry.Binding _binding;
         CancellationTokenSource _lifetime;
         TaskRunner _tasks;
@@ -53,6 +56,14 @@ namespace Game
                 cacheOptions: new UiCacheOptions(capacity: 1, idleTimeout: TimeSpan.FromSeconds(15)));
             await _module.InitializeAsync(ct); await _module.StartAsync(ct); ct.ThrowIfCancellationRequested();
             _binding = GameEntry.Bind(context, Service);
+
+            // 返回导航：屏上按钮走 Run(BackAsync)，物理返回键走 InputModule（防连发、后台不补发）
+            _quitFallback = new DoubleBackQuitFallback(2f);
+            _input = new InputModule(Service.RequestBackAsync, fallback: _quitFallback,
+                lifecycle: context.App.Lifecycle, log: context.App.Log,
+                sources: new IBackSource[] { new InputSystemBackSource() });
+            await _input.InitializeAsync(ct);
+            await _input.StartAsync(ct);
             await Service.Navigation.PushAsync(Home, HomeArgs(), ct);
             _entered = true;
         }
@@ -110,7 +121,7 @@ namespace Game
         }
         void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Run(BackAsync);
+            _input?.Tick(Time.deltaTime, Time.unscaledDeltaTime);
         }
         void OnGUI()
         {
@@ -125,11 +136,24 @@ namespace Game
             if (_cacheSettings && GUI.Button(new Rect(740, y, 150, 36), "Trim cache (" + Service.CachedCount + ")"))
                 Run(ct => Service.TrimCacheAsync(ct));
             GUI.enabled = true;
+
+            if (_quitFallback != null && _quitFallback.IsPrompting)
+            {
+                GUI.Label(new Rect(0, y - 40, Screen.width, 30),
+                    "再按一次返回键退出 (" + _quitFallback.RemainingSeconds.ToString("F1") + "s)");
+            }
         }
         public async UniTask ExitAsync()
         {
             _entered = false; _binding?.BeginStopping(); _lifetime?.Cancel();
             if (_active != null) await _active.Task;
+
+            if (_input != null)
+            {
+                await _input.ShutdownAsync(CancellationToken.None);
+                _input = null;
+            }
+
             if (_module != null) await _module.DisposeAsync();
             _binding?.Dispose(); _binding = null; _module = null;
             _tasks?.Dispose(); _tasks = null; _lifetime?.Dispose(); _lifetime = null;

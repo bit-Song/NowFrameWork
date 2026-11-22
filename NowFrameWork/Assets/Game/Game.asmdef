@@ -9,6 +9,7 @@
         "NowFrameWork.Boot",
         "NowFrameWork.Boot.Addressables",
         "NowFrameWork.Generated.AssetKeys",
+    "NowFrameWork.Input",
         "UniTask",
         "NowFrameWork.UI.UGUI",
         "UnityEngine.UI",
