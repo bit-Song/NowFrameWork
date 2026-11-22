@@ -69,11 +69,23 @@ namespace NowFrameWork.Audio
             MainThreadGuard.Assert();
             ct.ThrowIfCancellationRequested();
             if (_root != null || _lifetime != null) throw new InvalidOperationException("Audio is already initialized.");
-            _root = new GameObject("NowFrameWork Audio");
-            _root.transform.SetParent(_parent, false);
-            _music = CreateVoice("Music", loop: true, _musicVolume);
-            _lifetime = new CancellationTokenSource();
-            return UniTask.CompletedTask;
+
+            try
+            {
+                _root = new GameObject("NowFrameWork Audio");
+                _root.transform.SetParent(_parent, false);
+                _music = CreateVoice("Music", loop: true, _musicVolume);
+                _lifetime = new CancellationTokenSource();
+                return UniTask.CompletedTask;
+            }
+            catch
+            {
+                // 部分初始化失败必须回滚，否则 _root != null 会让模块永久无法再次初始化
+                if (_lifetime != null) { _lifetime.Dispose(); _lifetime = null; }
+                if (_root != null) { UnityEngine.Object.Destroy(_root); _root = null; }
+                _music = null;
+                throw;
+            }
         }
 
         public UniTask StartAsync(CancellationToken ct)
@@ -247,7 +259,8 @@ namespace NowFrameWork.Audio
 
         void ApplyPause(Voice voice)
         {
-            if (voice.Clip == null || voice.Source == null) return;
+            // 事件回调可能晚于关闭清理到达，_music 已被置空
+            if (voice == null || voice.Clip == null || voice.Source == null) return;
             if (IsPaused) voice.Source.Pause();
             else ResumeVoice(voice);
         }
