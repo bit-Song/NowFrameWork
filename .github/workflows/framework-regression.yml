@@ -1,0 +1,81 @@
+name: Framework Regression
+
+# 需要装有团结（Tuanjie）编辑器的 Windows 自托管 runner：
+#   runs-on 标签：self-hosted, windows, tuanjie
+#   仓库变量：TUANJIE_EDITOR_PATH = 编辑器可执行文件路径
+# 脚本与产物说明见 Assets/docs/04-测试与接入/34-CI回归接入.md
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: framework-regression
+  cancel-in-progress: false      # 同一 runner 上不允许两套 Unity 同时跑
+
+jobs:
+  regression:
+    runs-on: [self-hosted, windows, tuanjie]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: true
+
+      - name: Run framework regression
+        shell: powershell
+        env:
+          EDITOR: ${{ vars.TUANJIE_EDITOR_PATH }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          if (-not $env:EDITOR) {
+            throw "仓库变量 TUANJIE_EDITOR_PATH 未配置（Settings > Secrets and variables > Actions > Variables）"
+          }
+
+          ./Tools/Run-FrameworkRegression.ps1 -EditorPath $env:EDITOR
+
+      - name: Summarize report
+        if: always()
+        shell: powershell
+        run: |
+          $summary = $env:GITHUB_STEP_SUMMARY
+          $root = "NowFrameWork/Build/FrameworkRegression"
+
+          if (-not (Test-Path $root)) {
+            Add-Content $summary "## 框架回归`n`n未生成回归目录（脚本可能在启动阶段失败）。"
+            exit 0
+          }
+
+          $dir = Get-ChildItem $root -Directory | Sort-Object LastWriteTime | Select-Object -Last 1
+          $json = Join-Path $dir.FullName "run.json"
+
+          if (-not (Test-Path $json)) {
+            Add-Content $summary "## 框架回归`n`n缺少 run.json，请查看上传的日志。"
+            exit 0
+          }
+
+          $run = Get-Content $json -Raw | ConvertFrom-Json
+
+          Add-Content $summary "## 框架回归 ``$($run.runName)``"
+          Add-Content $summary ""
+          Add-Content $summary "**状态**：``$($run.status)``"
+          Add-Content $summary ""
+          Add-Content $summary "| 阶段 | 通过 | 失败 | 跳过 | 耗时(s) |"
+          Add-Content $summary "|---|---|---|---|---|"
+
+          foreach ($stage in $run.stages) {
+            Add-Content $summary "| $($stage.name) | $($stage.passed)/$($stage.total) | $($stage.failed) | $($stage.skipped) | $([math]::Round($stage.seconds, 1)) |"
+          }
+
+      - name: Upload regression artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-regression
+          path: NowFrameWork/Build/FrameworkRegression/**
+          if-no-files-found: warn
+          retention-days: 14
