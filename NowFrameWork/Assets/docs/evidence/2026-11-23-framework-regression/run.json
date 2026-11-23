@@ -1,0 +1,60 @@
+﻿{
+    "runName":  "local-20261123-214758",
+    "editor":  "D:\\Unity\\TuanJie\\Edite\\1.8.2\\2022.3.62t4\\Editor\\Tuanjie.exe",
+    "utc":  "2026-11-23T13:55:35.9910687Z",
+    "status":  "passed",
+    "stages":  [
+                   {
+                       "name":  "preflight",
+                       "status":  "passed",
+                       "exitCode":  0,
+                       "log":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\preflight.log",
+                       "report":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\preflight.xml",
+                       "total":  2,
+                       "passed":  2,
+                       "failed":  0,
+                       "skipped":  0,
+                       "error":  null,
+                       "seconds":  331.78
+                   },
+                   {
+                       "name":  "main-editmode",
+                       "status":  "passed",
+                       "exitCode":  0,
+                       "log":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\main-editmode.log",
+                       "report":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\main-editmode.xml",
+                       "total":  452,
+                       "passed":  452,
+                       "failed":  0,
+                       "skipped":  0,
+                       "error":  null,
+                       "seconds":  40.42
+                   },
+                   {
+                       "name":  "core-consumer",
+                       "status":  "passed",
+                       "exitCode":  0,
+                       "log":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\core-consumer.log",
+                       "report":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\core-consumer.xml",
+                       "total":  171,
+                       "passed":  171,
+                       "failed":  0,
+                       "skipped":  0,
+                       "error":  null,
+                       "seconds":  44.56
+                   },
+                   {
+                       "name":  "ui-consumer",
+                       "status":  "passed",
+                       "exitCode":  0,
+                       "log":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\ui-consumer.log",
+                       "report":  "E:\\Unity\\TuanJieProject\\NowFrameWork\\Unity\\NowFrameWork\\NowFrameWork\\Build\\FrameworkRegression\\local-20261123-214758\\ui-consumer.xml",
+                       "total":  299,
+                       "passed":  299,
+                       "failed":  0,
+                       "skipped":  0,
+                       "error":  null,
+                       "seconds":  39.96
+                   }
+               ]
+}
