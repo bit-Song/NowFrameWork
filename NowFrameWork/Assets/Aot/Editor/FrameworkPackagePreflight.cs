@@ -60,6 +60,12 @@ namespace NowFrameWork.EditorTools
         [MenuItem(Menu)]
         public static void CheckInstalledPackages()
         {
+            var issues = InspectInstalledPackages(out int packageCount, out int assemblyCount);
+            FrameworkPreflight.Print(issues, "已安装框架包 " + packageCount + " 个，程序集 " + assemblyCount + " 个");
+        }
+
+        internal static IReadOnlyList<FrameworkPreflight.Issue> InspectInstalledPackages(out int packageCount, out int assemblyCount)
+        {
             var packages = UpmPackageInfo.GetAllRegisteredPackages();
             var owners = packages.Where(package => !string.IsNullOrEmpty(package.assetPath))
                 .ToDictionary(package => package.assetPath, StringComparer.Ordinal);
@@ -96,8 +102,9 @@ namespace NowFrameWork.EditorTools
             }
 
             issues.AddRange(Inspect(assemblies, dependencies));
-            FrameworkPreflight.Print(issues, "已安装框架包 " + dependencies.Count + " 个，程序集 " +
-                assemblies.Count(assembly => IsFrameworkPackage(assembly.Package)) + " 个");
+            packageCount = dependencies.Count;
+            assemblyCount = assemblies.Count(assembly => IsFrameworkPackage(assembly.Package));
+            return issues;
         }
 
         internal static IEnumerable<FrameworkPreflight.Issue> Inspect(IReadOnlyList<AssemblyEntry> assemblies,

@@ -35,6 +35,8 @@ Console 报错包含检查编号、场景路径和层级位置。点击打开场
 
 报错可点击定位到发出引用的 `.asmdef`。测试程序集使用宿主 Unity Test Framework 提供的两个 TestRunner 程序集，普通跨包引用仍需显式声明。预编译 DLL 和动态加载关系由独立消费工程或运行验收覆盖。
 
+需要同时执行构建场景预检、包依赖预检与 EditMode 回归时，可使用 [本地一键回归](../05-进度与评审/15-进度与下一步.md#t03-本地一键回归)。
+
 在 `BootIntegration.scene` 的 Game 窗口观察 `Running`，点击「取消 / 停止」后等清理完成。入口退出失败时保留清理所需字段，后续 Stop 重试。帧驱动计时器应在 Running 后等待。平台信息与暂停、恢复等信号分别从 `context.App.Platform` 和 `context.App.Lifecycle` 获取。
 
 [Boot 启动与停止](../04-测试与接入/21-Boot启动整合.md) · [GameEntry 接入](../04-测试与接入/28-GameEntry服务入口与生命周期.md) · [全部模块 API](README.md)

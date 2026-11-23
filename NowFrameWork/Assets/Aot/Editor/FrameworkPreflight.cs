@@ -54,9 +54,15 @@ namespace NowFrameWork.EditorTools
         [MenuItem(BuildScenesMenu)]
         public static void CheckEnabledBuildScenes()
         {
+            var issues = InspectEnabledBuildScenes(out int count);
+            Print(issues, "启用的构建场景 " + count + " 个");
+        }
+
+        internal static IReadOnlyList<Issue> InspectEnabledBuildScenes(out int count)
+        {
             var issues = new List<Issue>();
             var catalog = new CatalogIndex(AddressableAssetSettingsDefaultObject.Settings);
-            int count = 0;
+            count = 0;
             foreach (var entry in EditorBuildSettings.scenes.Where(scene => scene.enabled))
             {
                 count++;
@@ -92,7 +98,7 @@ namespace NowFrameWork.EditorTools
                         SceneManager.SetActiveScene(active);
                 }
             }
-            Print(issues, "启用的构建场景 " + count + " 个");
+            return issues;
         }
 
         public static IReadOnlyList<Issue> InspectScene(Scene scene, AddressableAssetSettings settings)
