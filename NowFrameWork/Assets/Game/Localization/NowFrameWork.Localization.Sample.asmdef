@@ -1,0 +1,5 @@
+{
+  "name": "NowFrameWork.Localization.Sample",
+  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Core", "Unity.Localization", "Unity.ResourceManager", "UnityEngine.UI", "UniTask"],
+  "autoReferenced": false
+}

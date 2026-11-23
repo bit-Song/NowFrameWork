@@ -1,0 +1,11 @@
+{
+  "name": "NowFrameWork.Preflight.Tests",
+  "rootNamespace": "NowFrameWork.EditorTools.Tests",
+  "references": [
+    "NowFrameWork.EditorTools", "NowFrameWork.Boot", "NowFrameWork.Boot.Addressables",
+    "Game", "Unity.Addressables.Editor", "UnityEngine.UI"
+  ],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Localization-String-Tables-zh-CN
+  m_EditorClassIdentifier:
+  m_GroupName: Localization-String-Tables-zh-CN
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 1d0ccb6541d9cb14d808fd9a774f3ee9
+  m_SerializeEntries:
+  - m_GUID: ce16bbd3c0a12ee40b7c15b1a2ea1c3a
+    m_Address: FrameworkSample_zh-CN
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-zh-CN
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 1
+  m_Settings: {fileID: 11400000, guid: e87353e72cb2aa34a84ba04388143dd3, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 6f615d961aa70a0449d56e7252f30781, type: 2}
+    - {fileID: 11400000, guid: 077ed48f25aca6249ac212ba35c9094f, type: 2}

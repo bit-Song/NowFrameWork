@@ -1,0 +1,6 @@
+{
+  "name": "NowFrameWork.Localization.Sample.Editor",
+  "references": ["NowFrameWork.Localization.Sample", "Game", "NowFrameWork.Boot.Addressables", "NowFrameWork.UI.UGUI", "Unity.Localization", "Unity.Localization.Editor", "Unity.Addressables", "Unity.Addressables.Editor", "UnityEngine.UI"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

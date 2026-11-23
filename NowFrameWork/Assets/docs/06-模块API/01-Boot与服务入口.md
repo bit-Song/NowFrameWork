@@ -23,6 +23,18 @@ Debug.Log(config.text);
 
 ## 使用和清理约定
 
+进入 Play 或构建前，可在团结编辑器运行 **NowFrameWork → 检查 → 预检当前场景**，也可以一次检查 **启用的构建场景**。预检检查项目入口和代码加载器的接口、发布模式选项、本地 Addressables 的配置及场景地址，以及框架 UI 样例的根 Prefab、EventSystem 和面板 `UiView`。
+
+Console 报错包含检查编号、场景路径和层级位置。点击打开场景的报错可定位对象，未打开的场景会定位到场景资产。检查读取场景和本地 Addressables 设置，运行时远端 Catalog 与动态装配仍由运行验收覆盖。
+
+修改 UPM 依赖或 `.asmdef` 后，可运行 **NowFrameWork → 检查 → 预检框架包与程序集**。检查以已安装的 NowFrameWork 包为起点，解析 `references` 中的程序集名称和 GUID：
+
+- `DEP001` 表示框架程序集反向引用了项目程序集。
+- `DEP002` 表示跨包引用了程序集，但当前包的 `package.json` 缺少直接依赖声明。
+- `DEP003` 表示程序集引用缺失或存在歧义，`DEP004` 表示无法读取框架程序集定义。
+
+报错可点击定位到发出引用的 `.asmdef`。测试程序集使用宿主 Unity Test Framework 提供的两个 TestRunner 程序集，普通跨包引用仍需显式声明。预编译 DLL 和动态加载关系由独立消费工程或运行验收覆盖。
+
 在 `BootIntegration.scene` 的 Game 窗口观察 `Running`，点击「取消 / 停止」后等清理完成。入口退出失败时保留清理所需字段，后续 Stop 重试。帧驱动计时器应在 Running 后等待。平台信息与暂停、恢复等信号分别从 `context.App.Platform` 和 `context.App.Lifecycle` 获取。
 
 [Boot 启动与停止](../04-测试与接入/21-Boot启动整合.md) · [GameEntry 接入](../04-测试与接入/28-GameEntry服务入口与生命周期.md) · [全部模块 API](README.md)

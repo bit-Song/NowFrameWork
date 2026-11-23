@@ -131,6 +131,22 @@ namespace NowFrameWork.Input.Tests
         }
 
         [Test]
+        public void SetGate_AndTokenWithSameReason_HaveIndependentOwnership()
+        {
+            var input = new ActionInput();
+            using (input.Suppress("ui.modal"))
+                input.SetGate("ui.modal", true);
+            Assert.That(input.IsSuppressed, Is.True);
+
+            using (input.Suppress("ui.modal"))
+            {
+                input.SetGate("ui.modal", false);
+                Assert.That(input.IsSuppressed, Is.True);
+            }
+            Assert.That(input.IsSuppressed, Is.False);
+        }
+
+        [Test]
         public void GetVector_PassesThroughAndClearsWhenSuppressed()
         {
             var source = new FakeSource { Id = 2, State = new ActionState(1f, false, true, new UnityEngine.Vector2(0.5f, -0.5f)) };

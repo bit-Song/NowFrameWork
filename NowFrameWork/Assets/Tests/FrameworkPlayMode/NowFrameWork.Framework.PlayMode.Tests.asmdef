@@ -1,6 +1,6 @@
 {
   "name": "NowFrameWork.Framework.PlayMode.Tests",
-  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Boot.Addressables", "NowFrameWork.Assets", "NowFrameWork.UI.UGUI", "NowFrameWork.Core", "NowFrameWork.Audio", "UniTask"],
+  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Boot.Addressables", "NowFrameWork.Assets", "NowFrameWork.Assets.Addressables", "NowFrameWork.UI.UGUI", "NowFrameWork.Core", "NowFrameWork.Unity", "NowFrameWork.Audio", "Unity.InputSystem", "UniTask"],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false
 }

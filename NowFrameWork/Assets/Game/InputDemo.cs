@@ -127,13 +127,14 @@ namespace Game
                 .With("Right", "<Keyboard>/d");
             move.AddBinding("<Gamepad>/leftStick");
 
+            // 可重绑定的演示按键使用稳定 ID，保存的覆盖能在重新创建动作后找到原绑定。
             InputAction jump = map.AddAction("Jump", InputActionType.Button);
-            jump.AddBinding("<Keyboard>/space");
-            jump.AddBinding("<Gamepad>/buttonSouth");
+            jump.AddBinding(new InputBinding { path = "<Keyboard>/space", id = new Guid("134f2595-b051-4768-bd11-2651e3ca8ae8") });
+            jump.AddBinding(new InputBinding { path = "<Gamepad>/buttonSouth", id = new Guid("2fb6d932-a907-43a0-856b-b647bde578b5") });
 
             InputAction interact = map.AddAction("Interact", InputActionType.Button);
-            interact.AddBinding("<Keyboard>/e");
-            interact.AddBinding("<Gamepad>/buttonWest");
+            interact.AddBinding(new InputBinding { path = "<Keyboard>/e", id = new Guid("c1727771-32ad-42c2-aa85-8d118dd933ab") });
+            interact.AddBinding(new InputBinding { path = "<Gamepad>/buttonWest", id = new Guid("5b75cb36-cb2f-45a3-bf63-326b58011860") });
 
             return asset;
         }

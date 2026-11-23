@@ -13,6 +13,7 @@
     "HybridCLR.Editor",
     "NowFrameWork.Boot.Addressables",
     "NowFrameWork.Boot",
+    "NowFrameWork.Assets",
     "NowFrameWork.Core",
     "NowFrameWork.UI.UGUI.Editor",
     "NowFrameWork.UI.UGUI",

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: FrameworkSample Shared Data
+  m_EditorClassIdentifier:
+  m_TableCollectionName: FrameworkSample
+  m_TableCollectionNameGuidString: a5d226ecec0606b4db32f4201d5e22d9
+  m_Entries:
+  - m_Id: 2041110528
+    m_Key: panel.heading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2074664960
+    m_Key: panel.fallback
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 7967071675286028314
+  references:
+    version: 2
+    RefIds:
+    - rid: 7967071675286028314
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables,
+        asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1795406817294

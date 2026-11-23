@@ -29,6 +29,7 @@
     "com.unity.ide.visualstudio": "2.0.22",
     "com.unity.ide.vscode": "1.2.5",
     "com.unity.inputsystem": "1.14.4-t4",
+    "com.unity.localization": "1.5.3",
     "com.unity.memoryprofiler": "1.1.12",
     "com.unity.render-pipelines.universal": "14.1.0",
     "com.unity.test-framework": "1.1.33",

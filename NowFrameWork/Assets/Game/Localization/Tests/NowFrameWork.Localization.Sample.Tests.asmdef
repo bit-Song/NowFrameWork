@@ -1,0 +1,6 @@
+{
+  "name": "NowFrameWork.Localization.Sample.Tests",
+  "references": ["NowFrameWork.Localization.Sample", "NowFrameWork.Boot", "NowFrameWork.Boot.Addressables", "NowFrameWork.Core", "NowFrameWork.Unity", "Unity.Localization", "UnityEngine.UI", "UniTask"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

@@ -168,6 +168,59 @@ namespace NowFrameWork.Input.Tests
             Assert.AreEqual(0, uiCalls);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void PendingBack_DoesNotRunFallbackAfterBackground(bool resumeBeforeCompletion)
+        {
+            var life = new AppLifecycle();
+            var pending = new UniTaskCompletionSource<bool>();
+            var fallback = new FakeFallback();
+            var module = Create(_ => pending.Task, fallback, life, new FakeSource { Pending = true });
+            try
+            {
+                module.Tick(0f, 0f);
+                life.NotifyPause();
+                if (resumeBeforeCompletion) life.NotifyResume();
+                pending.TrySetResult(false);
+
+                Assert.That(fallback.Calls, Is.Zero);
+                Assert.That(module.LastRoute, Is.EqualTo(BackRoute.Unhandled));
+            }
+            finally { module.ShutdownAsync(default).GetAwaiter().GetResult(); }
+        }
+
+        [Test]
+        public void Restart_DoesNotLetOldDispatchChangeNewSession()
+        {
+            var old = new UniTaskCompletionSource<bool>();
+            var current = new UniTaskCompletionSource<bool>();
+            var source = new FakeSource { Pending = true };
+            var fallback = new FakeFallback();
+            var life = new AppLifecycle();
+            int calls = 0;
+            var module = Create(_ => ++calls == 1 ? old.Task : current.Task, fallback, life, source);
+            try
+            {
+                module.Tick(0f, 0f);
+                module.ShutdownAsync(default).GetAwaiter().GetResult();
+                module.InitializeAsync(default).GetAwaiter().GetResult();
+                module.StartAsync(default).GetAwaiter().GetResult();
+                source.Pending = true;
+                module.Tick(0f, 0f);
+                Assert.That(calls, Is.EqualTo(2));
+
+                old.TrySetResult(false);
+                source.Pending = true;
+                module.Tick(0f, 0f);
+                Assert.That(calls, Is.EqualTo(2), "旧请求不能解除当前请求的分发门禁");
+                Assert.That(fallback.Calls, Is.Zero);
+                current.TrySetResult(false);
+                Assert.That(fallback.Calls, Is.EqualTo(1));
+                Assert.That(module.BackCount, Is.EqualTo(1));
+            }
+            finally { module.ShutdownAsync(default).GetAwaiter().GetResult(); }
+        }
+
         [Test]
         public void Dispatch_WhenUiThrows_RoutesUnhandled()
         {

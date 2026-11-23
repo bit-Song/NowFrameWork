@@ -5,8 +5,11 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Core.Utility;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.Initialization;
+using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
+using UnityEngine.ResourceManagement.ResourceProviders;
 
 namespace NowFrameWork.Assets.Adapter
 {
@@ -14,11 +17,16 @@ namespace NowFrameWork.Assets.Adapter
     public sealed class AddressablesProvider : IAssetProvider, IAssetUpdateProvider, IAssetProviderLifecycle, ITypedAssetProvider
     {
         readonly TimeSpan _timeout;
+        readonly ReleaseSelection _release;
+        IResourceLocator _releaseLocator;
         readonly Dictionary<string, IResourceLocation> _locations = new Dictionary<string, IResourceLocation>(StringComparer.Ordinal);
 
-        public AddressablesProvider(TimeSpan? timeout = null)
+        public AddressablesProvider(TimeSpan? timeout = null) : this(null, timeout) { }
+
+        public AddressablesProvider(ReleaseSelection release, TimeSpan? timeout)
         {
             MainThreadGuard.Assert("AddressablesProvider.AddressablesProvider");
+            _release = release;
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
         }
 
@@ -29,6 +37,67 @@ namespace NowFrameWork.Assets.Adapter
             var handle = Addressables.InitializeAsync(false);
             try { await AddressablesOperation.WaitAsync(handle, _timeout, ct); }
             finally { AddressablesOperation.Release(handle); }
+            if (_release == null || _releaseLocator != null) return;
+
+            AddressablesRuntimeProperties.SetPropertyValue("NowFrameWork.ReleaseRoot", _release.Directory.Replace('\\', '/'));
+            var catalog = Addressables.LoadContentCatalogAsync(_release.CatalogPath, false);
+            try
+            {
+                await AddressablesOperation.WaitAsync(catalog, _timeout, ct);
+                CheckReleaseBundles(catalog.Result);
+                _releaseLocator = catalog.Result;
+            }
+            catch
+            {
+                if (catalog.IsDone) RemoveAbandonedCatalog(catalog);
+                else catalog.Completed += RemoveAbandonedCatalog;
+                throw;
+            }
+            AddressablesOperation.Release(catalog);
+        }
+
+        void CheckReleaseBundles(IResourceLocator locator)
+        {
+            var checkedLocations = new HashSet<IResourceLocation>();
+            foreach (object key in locator.Keys)
+            {
+                if (!locator.Locate(key, null, out var locations)) continue;
+                foreach (var location in locations) CheckLocation(location, checkedLocations);
+            }
+        }
+
+        void CheckLocation(IResourceLocation location, HashSet<IResourceLocation> checkedLocations)
+        {
+            if (!checkedLocations.Add(location)) return;
+            if (location.ResourceType == typeof(IAssetBundleResource) && !_release.ContainsFile(location.InternalId))
+                throw new InvalidOperationException("Catalog 引用了发布清单之外的 Bundle: " + location.InternalId);
+            if (location.HasDependencies)
+                foreach (var dependency in location.Dependencies) CheckLocation(dependency, checkedLocations);
+        }
+
+        static void RemoveAbandonedCatalog(AsyncOperationHandle<IResourceLocator> operation)
+        {
+            if (operation.Status == AsyncOperationStatus.Succeeded)
+                Addressables.RemoveResourceLocator(operation.Result);
+            AddressablesOperation.Release(operation);
+        }
+
+        /// <summary>在 Boot 清理资源和场景成功后解除本次选定的目录。</summary>
+        public void RemoveReleaseCatalog()
+        {
+            MainThreadGuard.Assert();
+            if (_releaseLocator == null) return;
+            Addressables.RemoveResourceLocator(_releaseLocator);
+            _releaseLocator = null;
+            _locations.Clear();
+        }
+
+        internal IResourceLocation ResolveReleaseLocation(object key, Type type)
+        {
+            if (_release == null) return null;
+            if (_releaseLocator == null || !_releaseLocator.Locate(key, type, out var locations) || locations.Count != 1)
+                throw new InvalidOperationException("发布目录中找不到唯一资源: " + key);
+            return locations[0];
         }
 
         public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
@@ -40,6 +109,8 @@ namespace NowFrameWork.Assets.Adapter
             ct.ThrowIfCancellationRequested();
             Guard.NotNullOrEmpty(key.Address, nameof(key));
             string address = string.IsNullOrEmpty(key.SubObject) ? key.Address : key.Address + "[" + key.SubObject + "]";
+            IResourceLocation releaseLocation = ResolveReleaseLocation(address, assetType);
+            if (releaseLocation != null) return Remember(releaseLocation);
             var handle = Addressables.LoadResourceLocationsAsync(address, assetType);
             try
             {
@@ -49,12 +120,16 @@ namespace NowFrameWork.Assets.Adapter
                     throw new InvalidOperationException("找不到资源: " + address);
                 if (locations.Count != 1)
                     throw new InvalidOperationException("资源键不唯一，不支持以标签加载单个资源: " + address);
-                IResourceLocation location = locations[0];
-                string canonical = location.PrimaryKey + "|" + location.ResourceType.FullName;
-                _locations[canonical] = location;
-                return canonical;
+                return Remember(locations[0]);
             }
             finally { AddressablesOperation.Release(handle); }
+        }
+
+        string Remember(IResourceLocation location)
+        {
+            string canonical = location.PrimaryKey + "|" + location.ResourceType.FullName;
+            _locations[canonical] = location;
+            return canonical;
         }
 
         public async UniTask<ProviderHandle> LoadAsync(string canonicalKey, CancellationToken ct)

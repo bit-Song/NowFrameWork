@@ -6,6 +6,7 @@
   "unity": "2022.3",
   "dependencies": {
     "com.now.nowframework.ui.ugui": "0.1.0",
+    "com.now.nowframework.assets": "0.1.0",
     "com.now.nowframework.core": "0.1.0",
     "com.cysharp.unitask": "2.5.11"
   }

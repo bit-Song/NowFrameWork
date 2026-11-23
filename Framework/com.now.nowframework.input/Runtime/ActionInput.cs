@@ -59,7 +59,8 @@ namespace NowFrameWork.Input
     public sealed class ActionInput
     {
         readonly IActionSource[] _sources;
-        readonly List<string> _gates = new List<string>(4);
+        readonly HashSet<string> _gates = new HashSet<string>(StringComparer.Ordinal);
+        int _suppressionCount;
 
         public ActionInput(params IActionSource[] sources)
         {
@@ -74,11 +75,11 @@ namespace NowFrameWork.Input
         /// <summary>是否有屏蔽令牌存在。</summary>
         public bool IsSuppressed
         {
-            get { MainThreadGuard.Assert("ActionInput.IsSuppressed"); return _gates.Count > 0; }
+            get { MainThreadGuard.Assert("ActionInput.IsSuppressed"); return GateCount > 0; }
         }
 
         /// <summary>当前屏蔽原因数量（诊断用）。</summary>
-        public int GateCount => _gates.Count;
+        public int GateCount => _gates.Count + _suppressionCount;
 
         /// <summary>
         /// 压入屏蔽令牌；释放后自动解除。可嵌套：全部释放才恢复。
@@ -91,8 +92,9 @@ namespace NowFrameWork.Input
 
             if (reason == null) throw new ArgumentNullException(nameof(reason));
 
-            _gates.Add(reason);
-            return new Gate(this, reason);
+            var gate = new Gate(this);
+            _suppressionCount++;
+            return gate;
         }
 
         /// <summary>
@@ -107,10 +109,8 @@ namespace NowFrameWork.Input
 
             if (reason == null) throw new ArgumentNullException(nameof(reason));
 
-            bool present = _gates.Contains(reason);
-
-            if (active && !present) _gates.Add(reason);
-            else if (!active && present) _gates.Remove(reason);
+            if (active) _gates.Add(reason);
+            else _gates.Remove(reason);
         }
 
         /// <summary>读取动作；被屏蔽时返回空闲状态。</summary>
@@ -118,7 +118,7 @@ namespace NowFrameWork.Input
         {
             MainThreadGuard.Assert("ActionInput.Read");
 
-            if (_gates.Count > 0) return ActionState.Idle;
+            if (GateCount > 0) return ActionState.Idle;
 
             for (int i = 0; i < _sources.Length; i++)
             {
@@ -138,21 +138,16 @@ namespace NowFrameWork.Input
         sealed class Gate : IDisposable
         {
             ActionInput _owner;
-            readonly string _reason;
-
-            public Gate(ActionInput owner, string reason)
-            {
-                _owner = owner;
-                _reason = reason;
-            }
+            public Gate(ActionInput owner) => _owner = owner;
 
             public void Dispose()
             {
+                MainThreadGuard.Assert("ActionInput.Gate.Dispose");
                 ActionInput owner = _owner;
                 if (owner == null) return;
 
                 _owner = null;
-                owner._gates.Remove(_reason);
+                owner._suppressionCount--;
             }
         }
     }

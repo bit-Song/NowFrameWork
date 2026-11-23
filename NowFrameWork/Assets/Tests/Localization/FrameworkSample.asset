@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5be51871efa6c3e4eae1703925c8f5ac, type: 3}
+  m_Name: FrameworkSample
+  m_EditorClassIdentifier:
+  m_SharedTableData: {fileID: 11400000, guid: a5d226ecec0606b4db32f4201d5e22d9, type: 2}
+  m_Tables:
+  - {fileID: 11400000, guid: c09d33a614c09c24c9ec77293c742e75, type: 2}
+  - {fileID: 11400000, guid: ce16bbd3c0a12ee40b7c15b1a2ea1c3a, type: 2}
+  m_Extensions: []
+  m_Group: String Table
+  references:
+    version: 2
+    RefIds: []

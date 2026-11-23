@@ -23,7 +23,7 @@ namespace Game
 
         ActionInput _input;
         InputModule _back;
-        InputActionAssetHolder _holder;
+        InputAction _jump;
 
         void Awake()
         {
@@ -31,9 +31,10 @@ namespace Game
 
             if (_camera == null && Camera.main != null) _camera = Camera.main.transform;
 
-            var asset = InputDemo.BuildDefaultActions();
-            _holder = new InputActionAssetHolder(asset);
-            asset.Enable();
+            var rebind = GetComponent<InputRebindingDemo>();
+            if (rebind == null) rebind = gameObject.AddComponent<InputRebindingDemo>();
+            InputActionAsset asset = rebind.Initialize();
+            _jump = asset.FindAction("Player/Jump", throwIfNotFound: true);
 
             var sources = new List<IActionSource>
             {
@@ -77,27 +78,13 @@ namespace Game
         void OnDestroy()
         {
             if (_back != null) _back.ShutdownAsync(CancellationToken.None).GetAwaiter().GetResult();
-            _holder?.Dispose();
-        }
-
-        /// <summary>托管运行时创建的 InputActionAsset 生命周期。</summary>
-        sealed class InputActionAssetHolder
-        {
-            readonly InputActionAsset _asset;
-
-            public InputActionAssetHolder(InputActionAsset asset) => _asset = asset;
-
-            public void Dispose()
-            {
-                if (_asset != null) Object.Destroy(_asset);
-            }
         }
 
         void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(10, 10, 420, 90), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(Mathf.Max(10f, Screen.width - 430f), 10f, 420f, 90f), GUI.skin.box);
             GUILayout.Label("角色演示：WASD / 手柄左摇杆（相机相对）");
-            GUILayout.Label("空格：跳一下（演示用位移）");
+            GUILayout.Label((_jump?.GetBindingDisplayString(0) ?? "-") + "：跳一下（演示用位移）");
             GUILayout.Label("Move: " + (_input != null ? _input.GetVector(InputDemo.Move).ToString("F2") : "-"));
             GUILayout.EndArea();
         }

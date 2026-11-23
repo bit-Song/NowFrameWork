@@ -22,19 +22,30 @@ namespace Game
 
         public bool IsPressed { get; private set; }
 
-        public void OnPointerDown(PointerEventData eventData) => UpdateFrom(eventData);
+        int? _pointerId;
 
-        public void OnDrag(PointerEventData eventData) => UpdateFrom(eventData);
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (!_pointerId.HasValue && UpdateFrom(eventData)) _pointerId = eventData.pointerId;
+        }
 
-        public void OnPointerUp(PointerEventData eventData) => Reset();
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (_pointerId == eventData.pointerId) UpdateFrom(eventData);
+        }
 
-        void UpdateFrom(PointerEventData eventData)
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (_pointerId == eventData.pointerId) Reset();
+        }
+
+        bool UpdateFrom(PointerEventData eventData)
         {
             RectTransform area = _area != null ? _area : transform as RectTransform;
-            if (area == null) return;
+            if (area == null) return false;
 
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    area, eventData.position, eventData.pressEventCamera, out Vector2 local)) return;
+                    area, eventData.position, eventData.pressEventCamera, out Vector2 local)) return false;
 
             Vector2 delta = local - area.rect.center;
 
@@ -44,10 +55,12 @@ namespace Game
             IsPressed = true;
 
             if (_knob != null) _knob.anchoredPosition = Vector2.ClampMagnitude(delta, radius);
+            return true;
         }
 
         void Reset()
         {
+            _pointerId = null;
             Value = Vector2.zero;
             IsPressed = false;
 

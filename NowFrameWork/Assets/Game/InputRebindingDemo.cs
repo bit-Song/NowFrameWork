@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
+using NowFrameWork.Core.Storage;
 using NowFrameWork.Core.Threading;
+using NowFrameWork.Unity.Storage;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -12,37 +16,74 @@ namespace Game
     /// 重绑定演示（UGUI）：交互式改键、取消、保存与恢复。
     ///
     /// 运行时自建 Canvas/Button，不依赖预制体，也不与其它 OnGUI 调试面板抢点击。
-    /// 保存用 PlayerPrefs（演示）；正式项目应写入设置存储。
+    /// 持有动作资产和绑定设置，角色与改键界面共用这份运行时实例。
     /// </summary>
     public sealed class InputRebindingDemo : MonoBehaviour
     {
-        const string PrefsKey = "nowframework.input.bindingOverrides";
+        const string LegacyPrefsKey = "nowframework.input.bindingOverrides.v2";
 
-        // 只列单一 binding 的动作；Move 是 2D 复合（W/S/A/D 四条），
-        // 直接重绑定会命中复合节点，Input System 内部会因无单一状态而抛异常。
+        [Serializable]
+        sealed class BindingPreferences
+        {
+            public string Overrides = "";
+        }
+
+        // 每行改写一个普通绑定。Move 的复合节点需单独为各方向提供入口。
         static readonly string[] ActionPaths =
         {
             "Player/Jump",
             "Player/Interact",
         };
 
-        readonly List<(InputAction Action, Text Label)> _rows = new List<(InputAction, Text)>(3);
+        readonly List<(InputAction Action, int BindingIndex, string Device, Text Label)> _rows =
+            new List<(InputAction, int, string, Text)>(4);
 
         InputActionAsset _asset;
+        FileSettingsStore<BindingPreferences> _settings;
         InputActionRebindingExtensions.RebindingOperation _operation;
+        string _settingsWarning;
         Text _log;
         Font _font;
 
-        void Awake()
+        public bool IsRebinding => _operation != null;
+
+        /// <summary>加载绑定设置并启用动作。返回由本组件持有的资产。</summary>
+        public InputActionAsset Initialize(string settingsDirectory = null)
         {
+            if (_asset != null) return _asset;
             if (!MainThreadGuard.IsMainThread) MainThreadGuard.BindCurrentThread();
 
             _asset = InputDemo.BuildDefaultActions();
-            Restore();
+            try
+            {
+                string directory = settingsDirectory ?? Path.Combine(Application.persistentDataPath, "InputDemo");
+                var store = new FileSettingsStore<BindingPreferences>(directory, "input-bindings",
+                    new JsonSettingsCodec<BindingPreferences>());
+                SettingsLoadResult loaded = store.Load(() => new BindingPreferences());
+                bool migrate = settingsDirectory == null && loaded.Source == SettingsLoadSource.Defaults &&
+                    PlayerPrefs.HasKey(LegacyPrefsKey);
+                string overrides = migrate ? PlayerPrefs.GetString(LegacyPrefsKey) : store.Value.Overrides;
+                if (!string.IsNullOrEmpty(overrides)) _asset.LoadBindingOverridesFromJson(overrides);
+                _settings = store;
+                if (migrate) Save("已迁移旧版改键");
+            }
+            catch (Exception error)
+            {
+                _asset.RemoveAllBindingOverrides();
+                _settingsWarning = "无法恢复改键设置，当前使用默认绑定: " + error.Message;
+                Debug.LogWarning(_settingsWarning, this);
+            }
             _asset.Enable();
+            return _asset;
+        }
 
+        void Start()
+        {
+            Initialize();
             BuildUI();
         }
+
+        void OnDisable() => _operation?.Cancel();
 
         void OnDestroy()
         {
@@ -52,14 +93,18 @@ namespace Game
 
         // ---------------- 重绑定逻辑 ----------------
 
-        public void StartRebind(string actionPath)
+        public void StartRebind(string actionPath) => StartRebind(actionPath, 0);
+
+        public void StartRebind(string actionPath, int bindingIndex)
         {
             if (_operation != null) return;
+            Initialize();
 
             InputAction action = _asset.FindAction(actionPath, throwIfNotFound: false);
-            if (action == null)
+            if (action == null || bindingIndex < 0 || bindingIndex >= action.bindings.Count ||
+                action.bindings[bindingIndex].isComposite)
             {
-                SetLog("找不到动作: " + actionPath);
+                SetLog("找不到可重绑定的按键: " + actionPath);
                 return;
             }
 
@@ -67,52 +112,66 @@ namespace Game
             action.Disable();
             SetLog("请按下新按键（Esc 取消）：" + actionPath);
 
-            _operation = action.PerformInteractiveRebinding()
+            _operation = action.PerformInteractiveRebinding(bindingIndex)
                 .WithControlsExcluding("<Mouse>/position")
                 .WithControlsExcluding("<Mouse>/delta")
                 .WithCancelingThrough("<Keyboard>/escape")
-                .OnComplete(operation => Finish(operation, action, wasEnabled))
-                .OnCancel(operation => Finish(operation, action, wasEnabled));
+                .OnComplete(operation => Finish(operation, action, wasEnabled, save: true))
+                .OnCancel(operation => Finish(operation, action, wasEnabled, save: false));
+
+            string device = InputControlPath.TryGetDeviceLayout(action.bindings[bindingIndex].path);
+            if (!string.IsNullOrEmpty(device)) _operation.WithControlsHavingToMatchPath("<" + device + ">");
 
             _operation.Start();
         }
 
-        void Finish(InputActionRebindingExtensions.RebindingOperation operation, InputAction action, bool wasEnabled)
+        void Finish(InputActionRebindingExtensions.RebindingOperation operation, InputAction action, bool wasEnabled, bool save)
         {
             operation.Dispose();
             _operation = null;
 
             if (wasEnabled) action.Enable();
 
-            Save();
             RefreshLabels();
-            SetLog(action.name + " 当前绑定: " + action.GetBindingDisplayString());
+            if (!save) SetLog("已取消改键");
+            else Save(action.name + " 当前绑定: " + action.GetBindingDisplayString());
         }
 
         public void ResetAll()
         {
+            _operation?.Cancel();
+            Initialize();
             _asset.RemoveAllBindingOverrides();
-            PlayerPrefs.DeleteKey(PrefsKey);
             RefreshLabels();
-            SetLog("已恢复默认绑定");
+            Save("已恢复默认绑定");
         }
 
-        void Save()
+        void Save(string message)
         {
-            PlayerPrefs.SetString(PrefsKey, _asset.SaveBindingOverridesAsJson());
-            PlayerPrefs.Save();
-        }
-
-        void Restore()
-        {
-            string json = PlayerPrefs.GetString(PrefsKey, string.Empty);
-            if (!string.IsNullOrEmpty(json)) _asset.LoadBindingOverridesFromJson(json);
+            if (_settings == null)
+            {
+                SetLog(message + "（设置不可写，仅本次有效）");
+                return;
+            }
+            try
+            {
+                _settings.Value.Overrides = _asset.SaveBindingOverridesAsJson();
+                _settings.Save();
+                SetLog(message);
+            }
+            catch (Exception error)
+            {
+                SetLog(message + "（保存失败）");
+                Debug.LogWarning("无法保存改键设置: " + error.Message, this);
+            }
         }
 
         void RefreshLabels()
         {
-            foreach ((InputAction action, Text label) in _rows)
-                if (label != null) label.text = action.name + " = " + action.GetBindingDisplayString();
+            foreach (var row in _rows)
+                if (row.Label != null)
+                    row.Label.text = row.Action.name + " (" + row.Device + ") = " +
+                        row.Action.GetBindingDisplayString(row.BindingIndex);
         }
 
         void SetLog(string message)
@@ -141,28 +200,29 @@ namespace Game
             scaler.matchWidthOrHeight = 0.5f;
 
             RectTransform panel = CreateRect(canvasGo.transform, "Panel", new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(620f, 330f));
+                new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(620f, 355f));
 
             Image background = panel.gameObject.AddComponent<Image>();
             background.color = new Color(0f, 0f, 0f, 0.72f);
 
             _log = CreateText(panel, "Log", new Vector2(20f, -16f), new Vector2(580f, 40f), 18);
-            SetLog("点击「改键」后按下新按键，Esc 取消");
+            SetLog(_settingsWarning ?? "点击「改键」后按下新按键，Esc 取消");
 
             float y = -64f;
 
             foreach (string path in ActionPaths)
             {
-                InputAction action = _asset.FindAction(path, throwIfNotFound: false);
-
-                Text label = CreateText(panel, "Label-" + path, new Vector2(20f, y), new Vector2(430f, 40f), 20);
-                label.text = action != null ? action.name + " = " + action.GetBindingDisplayString() : path;
-
-                string captured = path;
-                CreateButton(panel, "改键", new Vector2(470f, y), new Vector2(120f, 40f), () => StartRebind(captured));
-
-                _rows.Add((action, label));
-                y -= 52f;
+                InputAction action = _asset.FindAction(path, throwIfNotFound: true);
+                for (int i = 0; i < action.bindings.Count; i++)
+                {
+                    int bindingIndex = i;
+                    string device = InputControlPath.TryGetDeviceLayout(action.bindings[i].path);
+                    Text label = CreateText(panel, "Label-" + path + "-" + i, new Vector2(20f, y), new Vector2(430f, 40f), 20);
+                    CreateButton(panel, "改键", new Vector2(470f, y), new Vector2(120f, 40f),
+                        () => StartRebind(path, bindingIndex));
+                    _rows.Add((action, bindingIndex, device, label));
+                    y -= 52f;
+                }
             }
 
             CreateButton(panel, "恢复默认", new Vector2(20f, y - 6f), new Vector2(180f, 40f), ResetAll);
@@ -170,12 +230,12 @@ namespace Game
             RefreshLabels();
         }
 
-        static void EnsureEventSystem()
+        void EnsureEventSystem()
         {
             if (EventSystem.current != null) return;
 
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            DontDestroyOnLoad(go);
+            go.transform.SetParent(transform, false);
         }
 
         static RectTransform CreateRect(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax,

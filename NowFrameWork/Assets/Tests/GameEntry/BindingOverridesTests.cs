@@ -15,22 +15,27 @@ namespace Game.Tests
             return asset;
         }
 
-        [Test]
-        public void Override_SurvivesSaveAndLoad()
+        [TestCase("Player/Jump", "<Gamepad>/buttonSouth")]
+        [TestCase("Player/Interact", "<Gamepad>/buttonWest")]
+        public void KeyboardOverride_SurvivesRecreatingDemoActions(string actionPath, string gamepadPath)
         {
-            InputActionAsset asset = CreateAsset();
-            InputAction jump = asset.FindAction("Player/Jump");
-
-            jump.ApplyBindingOverride(0, "<Keyboard>/j");
-            string json = asset.SaveBindingOverridesAsJson();
-
-            // 清空后按保存内容恢复
-            asset.RemoveAllBindingOverrides();
-            asset.LoadBindingOverridesFromJson(json);
-
-            StringAssert.Contains("J", jump.GetBindingDisplayString(), "恢复后应显示新按键");
-
-            Object.DestroyImmediate(asset);
+            var factory = typeof(InputDemo).GetMethod("BuildDefaultActions",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            var original = (InputActionAsset)factory.Invoke(null, null);
+            var reopened = (InputActionAsset)factory.Invoke(null, null);
+            try
+            {
+                original.FindAction(actionPath).ApplyBindingOverride(0, "<Keyboard>/j");
+                reopened.LoadBindingOverridesFromJson(original.SaveBindingOverridesAsJson());
+                var action = reopened.FindAction(actionPath);
+                Assert.That(action.bindings[0].effectivePath, Is.EqualTo("<Keyboard>/j"));
+                Assert.That(action.bindings[1].effectivePath, Is.EqualTo(gamepadPath));
+            }
+            finally
+            {
+                Object.DestroyImmediate(original);
+                Object.DestroyImmediate(reopened);
+            }
         }
 
         [Test]

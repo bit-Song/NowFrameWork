@@ -34,7 +34,8 @@ namespace NowFrameWork.Input
         bool _running;
         bool _paused;
         bool _dispatching;
-        bool _shutdown;
+        bool _allowFallback;
+        long _session;
 
         public InputModule(Func<CancellationToken, UniTask<bool>> tryUiBack, IBackFallback fallback = null,
             IAppLifecycle lifecycle = null, ILog log = null, params IBackSource[] sources)
@@ -94,10 +95,12 @@ namespace NowFrameWork.Input
         {
             MainThreadGuard.Assert("InputModule.ShutdownAsync");
 
-            if (_shutdown) return UniTask.CompletedTask;
-            _shutdown = true;
+            if (!_ready) return UniTask.CompletedTask;
+            _session++;
             _running = false;
             _ready = false;
+            _dispatching = false;
+            _allowFallback = false;
 
             if (_lifecycle != null) _lifecycle.StateChanged -= OnStateChanged;
 
@@ -108,7 +111,7 @@ namespace NowFrameWork.Input
         {
             MainThreadGuard.Assert("InputModule.Tick");
 
-            if (!_running || _paused || _dispatching || _shutdown) return;
+            if (!_running || _paused || _dispatching) return;
 
             bool pressed = false;
 
@@ -121,12 +124,13 @@ namespace NowFrameWork.Input
 
             if (!pressed) return;
 
-            DispatchAsync().Forget();
+            DispatchAsync(_session).Forget();
         }
 
-        async UniTaskVoid DispatchAsync()
+        async UniTaskVoid DispatchAsync(long session)
         {
             _dispatching = true;
+            _allowFallback = true;
             BackRoute route = BackRoute.Unhandled;
 
             try
@@ -135,24 +139,27 @@ namespace NowFrameWork.Input
                 {
                     route = BackRoute.Ui;
                 }
-                else if (!_shutdown && _fallback != null && _fallback.OnBack())
+                else if (session == _session && _allowFallback && _fallback != null && _fallback.OnBack())
                 {
                     route = BackRoute.Fallback;
                 }
             }
             catch (Exception error)
             {
-                if (_log.IsEnabled(LogLevel.Error))
+                if (session == _session && _log.IsEnabled(LogLevel.Error))
                     _log.Write(LogLevel.Error, "INPUT", "返回分发失败: " + error);
 
                 route = BackRoute.Unhandled;
             }
             finally
             {
-                // 先复位再暴露路由：订阅 LastRoute 的观察者可能立即发起下一次按键
-                _dispatching = false;
-                LastRoute = route;
-                BackCount++;
+                // 上一轮启动的请求不能更新新会话的状态。
+                if (session == _session)
+                {
+                    _dispatching = false;
+                    LastRoute = route;
+                    BackCount++;
+                }
             }
         }
 
@@ -160,6 +167,7 @@ namespace NowFrameWork.Input
         {
             // 进入后台后不再接收；恢复时不补发（不排队）
             _paused = IsBackground(state);
+            if (_paused) _allowFallback = false;
         }
 
         static bool IsBackground(AppState state)

@@ -13,11 +13,15 @@ namespace NowFrameWork.Assets.Adapter
     public sealed class AddressablesSceneService : ISceneService
     {
         readonly TimeSpan _timeout;
+        readonly AddressablesProvider _provider;
 
-        public AddressablesSceneService(TimeSpan? timeout = null)
+        public AddressablesSceneService(TimeSpan? timeout = null) : this(null, timeout) { }
+
+        public AddressablesSceneService(AddressablesProvider provider, TimeSpan? timeout)
         {
             MainThreadGuard.Assert("AddressablesSceneService.AddressablesSceneService");
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
+            _provider = provider;
         }
 
         public async UniTask<SceneLease> LoadAdditiveAsync(object key, CancellationToken ct)
@@ -25,7 +29,9 @@ namespace NowFrameWork.Assets.Adapter
             MainThreadGuard.Assert("AddressablesSceneService.LoadAdditiveAsync");
             if (key == null) throw new ArgumentNullException(nameof(key));
             ct.ThrowIfCancellationRequested();
-            var handle = Addressables.LoadSceneAsync(key, LoadSceneMode.Additive);
+            var location = _provider?.ResolveReleaseLocation(key, typeof(SceneInstance));
+            var handle = location == null ? Addressables.LoadSceneAsync(key, LoadSceneMode.Additive)
+                : Addressables.LoadSceneAsync(location, LoadSceneMode.Additive);
             var owner = new SceneOwner(handle, _timeout);
             try
             {
