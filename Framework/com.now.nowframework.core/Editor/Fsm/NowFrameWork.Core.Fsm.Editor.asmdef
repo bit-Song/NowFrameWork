@@ -1,0 +1,11 @@
+{
+  "name": "NowFrameWork.Core.Fsm.Editor",
+  "rootNamespace": "NowFrameWork.Core.Fsm.Editor",
+  "references": [
+    "NowFrameWork.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

@@ -3,6 +3,7 @@
 从一个具体任务进入对应文档。每篇包含服务入口、常用 API、代码片段和退出清理约定。片段中的 `context` 由 `IBootEntry.EnterAsync()` 注入，`ct` 是当前操作的取消令牌。使用 `GameEntry` 时先确认已绑定。
 
 - [Boot 与服务入口 API](01-Boot与服务入口.md)
+- [层级状态机 API](19-层级状态机.md)
 - [模块和 Scope API](02-模块与Scope.md)
 - [资源加载与卸载 API](03-资源加载与卸载.md)
 - [配置 API](04-配置.md)

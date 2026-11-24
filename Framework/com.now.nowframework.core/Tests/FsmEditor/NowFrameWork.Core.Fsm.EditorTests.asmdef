@@ -1,0 +1,15 @@
+{
+  "name": "NowFrameWork.Core.Fsm.EditorTests",
+  "rootNamespace": "NowFrameWork.Core.Fsm.EditorTests",
+  "references": [
+    "NowFrameWork.Core",
+    "NowFrameWork.Core.Fsm.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

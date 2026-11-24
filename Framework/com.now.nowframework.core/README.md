@@ -17,6 +17,7 @@ NowFrameWork 的核心层（C01 模块容器）。纯 C# 逻辑，不含任何 U
 
 - **小型设置存储**：`Storage/FileSettingsStore<T>`，类型化 DTO、显式同步保存、主/备份恢复与 schema 迁移；通过 `ISettingsCodec<T>` 注入编解码/语义校验。仅主线程、单文件单写入者；先 `Load` 再访问 `Value`/`SetValue`/`Save`。损坏不静默重置，新版本不降级覆盖，详见工程文档 19。
 - **线程诊断**：Editor/Development 使用 `MainThreadGuard`；纯 Core 宿主启动时须显式 `BindCurrentThread()`，Unity 适配包自动登记。
+- **层级状态机**：`NowFrameWork.Core.Fsm` 支持条件和事件转移、退出协调、历史恢复与可重试清理。宿主驱动根状态机。观察器位于独立的 `NowFrameWork.Core.Fsm.Editor` 程序集。
 
 ## 约束
 
@@ -28,3 +29,5 @@ NowFrameWork 的核心层（C01 模块容器）。纯 C# 逻辑，不含任何 U
 
 `Tests/EditMode` 包含模块、事件、池、线程与存储等回归；存储新增 38 项（含参数化用例）。在 Unity 的 Test Runner > EditMode 中运行；
 工程 `Packages/manifest.json` 的 `testables` 需要包含 `com.now.nowframework.core`。
+
+FSM 的状态推进与清理回归位于 `Tests/EditMode/StateMachineTests.cs`。观察器的窗口绘制用例需要图形设备，运行时的物理和动画集成用例由主工程的 PlayMode 测试程序集运行。

@@ -105,7 +105,8 @@ function Invoke-Stage([string]$Name, [string[]]$ConsumerPackages = @()) {
                 '-nwfPreflightReport', ('"' + $reportPath + '"'), '-quit')
         }
         else {
-            $argsList += @('-runTests', '-testPlatform', 'EditMode', '-testResults', ('"' + $reportPath + '"'))
+            $argsList += @('-runTests', '-testPlatform', 'EditMode', '-testCategory', '!RequiresGraphicsDevice',
+                '-testResults', ('"' + $reportPath + '"'))
         }
         Write-Host "[$Name] 开始"
         $process = Start-Process -FilePath $EditorPath -ArgumentList $argsList -WindowStyle Hidden -PassThru
