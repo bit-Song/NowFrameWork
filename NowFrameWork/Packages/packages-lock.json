@@ -81,6 +81,14 @@
         "com.cysharp.unitask": "2.5.11"
       }
     },
+    "com.now.nowframework.input.inputsystem": {
+      "version": "file:../../Framework/com.now.nowframework.input.inputsystem",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.inputsystem": "1.14.4-t4"
+      }
+    },
     "com.now.nowframework.ui.dotween": {
       "version": "file:../../Framework/com.now.nowframework.ui.dotween",
       "depth": 0,

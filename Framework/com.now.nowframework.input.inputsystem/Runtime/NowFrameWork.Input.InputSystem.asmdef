@@ -1,0 +1,6 @@
+{
+  "name": "NowFrameWork.Input.InputSystem",
+  "rootNamespace": "NowFrameWork.Input.InputSystem",
+  "references": ["Unity.InputSystem"],
+  "autoReferenced": false
+}

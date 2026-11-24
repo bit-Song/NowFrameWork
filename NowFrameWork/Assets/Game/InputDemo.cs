@@ -119,13 +119,13 @@ namespace Game
             var asset = ScriptableObject.CreateInstance<InputActionAsset>();
             InputActionMap map = asset.AddActionMap("Player");
 
-            InputAction move = map.AddAction("Move", InputActionType.Value);
-            move.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/w")
-                .With("Down", "<Keyboard>/s")
-                .With("Left", "<Keyboard>/a")
-                .With("Right", "<Keyboard>/d");
-            move.AddBinding("<Gamepad>/leftStick");
+            InputAction move = map.AddAction("Move", InputActionType.Value, expectedControlLayout: "Vector2");
+            move.AddCompositeBinding("2DVector");
+            AddMovePart(move, "Up", "w", "8e3ba508-aac8-4bef-8741-f068050fd3d6");
+            AddMovePart(move, "Down", "s", "5c87da16-1882-4eb7-bc40-97aaf92c6a4e");
+            AddMovePart(move, "Left", "a", "c4cc3b94-6bb1-4acb-a80a-87e227c7c2d3");
+            AddMovePart(move, "Right", "d", "191cbbb9-b15d-4987-823d-680f8c00c68d");
+            move.AddBinding(new InputBinding { path = "<Gamepad>/leftStick", id = new Guid("e71029c7-4f32-4aed-a503-b44f4c251174") });
 
             // 可重绑定的演示按键使用稳定 ID，保存的覆盖能在重新创建动作后找到原绑定。
             InputAction jump = map.AddAction("Jump", InputActionType.Button);
@@ -137,6 +137,12 @@ namespace Game
             interact.AddBinding(new InputBinding { path = "<Gamepad>/buttonWest", id = new Guid("5b75cb36-cb2f-45a3-bf63-326b58011860") });
 
             return asset;
+        }
+
+        static void AddMovePart(InputAction move, string part, string key, string id)
+        {
+            move.AddBinding(new InputBinding { name = part, path = "<Keyboard>/" + key,
+                isPartOfComposite = true, id = new Guid(id) });
         }
 
         sealed class MessageFallback : IBackFallback

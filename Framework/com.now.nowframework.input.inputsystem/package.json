@@ -1,0 +1,10 @@
+{
+  "name": "com.now.nowframework.input.inputsystem",
+  "version": "0.1.0",
+  "displayName": "NowFrameWork Input System Adapter",
+  "description": "Input System 绑定检测，支持复合绑定的分项改键。",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.unity.inputsystem": "1.14.4-t4"
+  }
+}

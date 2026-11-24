@@ -44,6 +44,17 @@ namespace NowFrameWork.Tests
                 await UniTask.WaitUntil(() => !panel.IsRebinding, cancellationToken: ct);
                 Assert.That(File.Exists(Path.Combine(directory, "settings-input-bindings.nwf")), Is.True);
 
+                panel.StartRebind("Player/Move", 1);
+                await PressAsync(keyboard, Key.S, ct, capturedByRebind: true);
+                await UniTask.WaitUntil(() => !panel.IsRebinding, cancellationToken: ct);
+                var move = panel.Initialize(directory).FindAction("Player/Move");
+                Assert.That(move.bindings[1].effectivePath, Is.EqualTo("<Keyboard>/w"));
+
+                panel.StartRebind("Player/Move", 1);
+                await PressAsync(keyboard, Key.I, ct, capturedByRebind: true);
+                await UniTask.WaitUntil(() => !panel.IsRebinding, cancellationToken: ct);
+                Assert.That(move.bindings[1].effectivePath, Is.EqualTo("<Keyboard>/i"));
+
                 float height = host.transform.position.y;
                 await PressAsync(keyboard, Key.Space, ct);
                 Assert.That(host.transform.position.y, Is.EqualTo(height));
@@ -61,10 +72,26 @@ namespace NowFrameWork.Tests
                 await PressAsync(keyboard, Key.J, ct);
                 Assert.That(host.transform.position.y, Is.EqualTo(height + 1.5f));
 
+                var jump = panel.Initialize(directory).FindAction("Player/Jump");
+                foreach (var (index, expected) in new[] { (0, "<Keyboard>/j"), (1, "<Gamepad>/buttonSouth") })
+                {
+                    panel.StartRebind("Player/Jump", index);
+                    Assert.That(jump.enabled, Is.False);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.East));
+                    await UniTask.NextFrame(PlayerLoopTiming.LastPostLateUpdate, cancellationToken: ct);
+                    Assert.That(panel.IsRebinding, Is.False, "手柄返回应直接取消本轮改键");
+                    Assert.That(jump.enabled, Is.True);
+                    Assert.That(jump.bindings[index].effectivePath, Is.EqualTo(expected));
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState());
+                    await UniTask.NextFrame(PlayerLoopTiming.LastPostLateUpdate, cancellationToken: ct);
+                }
+
                 Object.Destroy(host);
                 await UniTask.NextFrame(cancellationToken: ct);
                 host = CreateCharacter(directory, out panel);
                 await UniTask.NextFrame(cancellationToken: ct);
+                Assert.That(panel.Initialize(directory).FindAction("Player/Move").bindings[1].effectivePath,
+                    Is.EqualTo("<Keyboard>/i"));
                 await PressAsync(keyboard, Key.J, ct);
                 Assert.That(host.transform.position.y, Is.EqualTo(0.5f));
 

@@ -8,6 +8,9 @@ using NowFrameWork.Boot;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -36,6 +39,69 @@ namespace NowFrameWork.Tests
             Assert.That(sample, Is.Not.Null);
             await VerifyAsync(sample.GetComponent<BootFlow>(), sample.VerifyFlowAsync, timeout.Token);
         });
+
+        [UnityTest]
+        public IEnumerator WindowsScene_NativeKeyboardAndGamepadMoveAndRestoreModalFocus() => UniTask.ToCoroutine(async () =>
+        {
+            using var timeout = new CancellationTokenSource();
+            using var timer = timeout.CancelAfterSlim(System.TimeSpan.FromSeconds(35));
+            CancellationToken ct = timeout.Token;
+            var originalSettings = InputSystem.settings;
+            var inputSettings = Object.Instantiate(originalSettings);
+            inputSettings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
+            inputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            inputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.settings = inputSettings;
+            var keyboard = InputSystem.AddDevice<Keyboard>();
+            var gamepad = InputSystem.AddDevice<Gamepad>();
+            try
+            {
+                await OpenSceneAsync("UIWindows", ct);
+                var sample = Object.FindObjectOfType<UiWindowsSample>();
+                Assert.That(sample, Is.Not.Null);
+                await VerifyAsync(sample.GetComponent<BootFlow>(), async token =>
+                {
+                    await WaitForFocusAsync("Next page", token);
+                    InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.DownArrow));
+                    await WaitForFocusAsync("Settings", token);
+                    InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                    await UniTask.NextFrame(cancellationToken: token);
+                    InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Enter));
+                    await WaitForFocusAsync("Confirm", token);
+                    InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.DpadDown));
+                    await WaitForFocusAsync("Back", token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState());
+                    await UniTask.NextFrame(cancellationToken: token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.up });
+                    await WaitForFocusAsync("Confirm", token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState());
+                    await UniTask.NextFrame(cancellationToken: token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.down });
+                    await WaitForFocusAsync("Back", token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState());
+                    await UniTask.NextFrame(cancellationToken: token);
+                    Assert.That(sample.Service.TopPopup.IsValid, Is.True);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South));
+                    await WaitForFocusAsync("Settings", token);
+                    InputSystem.QueueStateEvent(gamepad, new GamepadState());
+                    Assert.That(sample.Service.TopPopup.IsValid, Is.False);
+                }, ct);
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(keyboard);
+                InputSystem.RemoveDevice(gamepad);
+                InputSystem.settings = originalSettings;
+                Object.Destroy(inputSettings);
+            }
+        });
+
+        static UniTask WaitForFocusAsync(string expected, CancellationToken token) =>
+            UniTask.WaitUntil(() => EventSystem.current != null &&
+                EventSystem.current.currentSelectedGameObject != null &&
+                EventSystem.current.currentSelectedGameObject.name == expected, cancellationToken: token);
 
         static async UniTask OpenSceneAsync(string name, CancellationToken ct)
         {

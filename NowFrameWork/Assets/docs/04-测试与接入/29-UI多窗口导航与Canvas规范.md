@@ -109,12 +109,13 @@ EditMode 全量 361/361 通过，新增 18 项覆盖窗口排序、模态、焦�
 
 ## 6 键盘与手柄焦点导航
 
-本节为后续接入方案。普通菜单和弹窗采用 Unity UGUI 原生导航。
+普通菜单和弹窗采用 Unity UGUI 原生导航。`UIWindows.scene` 样例已接入，可以使用方向键、手柄十字键或摇杆在按钮间移动，并用确认键点击当前按钮。
 
 ### 原生导航接入点
 
 - 项目在传给 `UiRoot` 的 `EventSystem` 上配置 `InputSystemUIInputModule`。方向键、手柄十字键和左摇杆绑定到 `Move`，确认键绑定到 `Submit`。返回键由项目输入层统一调用 `IUiService.RequestBackAsync()`，同一次输入只分发一次。 [Unity Input System UI 模块](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/manual/UISupport.html)
 - 面板用 `UiView.DefaultFocus` 指定初始选中控件。简单布局用 `Selectable.Navigation` 的 `Automatic`，需要固定方向关系的弹窗和网格用 `Explicit`，目标限定在当前可交互面板内。开关模态继续使用窗口层已有的焦点清理与恢复。 [Unity UGUI 导航选项](https://docs.unity3d.com/2022.3/Documentation/Manual/script-SelectableNavigation.html)
+- 一列或一行控件可调用 `ConfigureVerticalNavigation(buttons)` 或 `ConfigureHorizontalNavigation(buttons)`。传入当前面板的完整控件顺序。框架用 Unity 的显式链接连接可用项，并将首项设为默认焦点。面板打开时或按钮显隐、禁用、排序改变之后重新配置。网格可直接配置 Unity 的四向显式链接。
 
 ### 虚拟列表参考方案
 

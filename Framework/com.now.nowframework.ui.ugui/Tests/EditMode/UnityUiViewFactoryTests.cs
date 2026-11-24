@@ -6,6 +6,7 @@ using NowFrameWork.Assets;
 using NowFrameWork.Core.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace NowFrameWork.UI.Tests
 {
@@ -114,6 +115,110 @@ namespace NowFrameWork.UI.Tests
             Assert.AreEqual(1, _provider.Released);
             service.ShutdownAsync().GetAwaiter().GetResult();
             factory.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        [Test]
+        public void Module_LowMemoryClearsCachedPanelsAndLeavesOpenLeases()
+        {
+            var cached = Definition;
+            cached.CacheOnClose = true;
+            var active = new UiDefinition(2, "Active", AssetKey.From("panel"));
+            var module = new UiModule(_assets, _root, new[] { cached, active }, destroy: ImmediateDestroy);
+            try
+            {
+                module.InitializeAsync(default).GetAwaiter().GetResult();
+                module.StartAsync(default).GetAwaiter().GetResult();
+                var closed = module.Service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult();
+                module.Service.CloseAsync(closed.Handle).GetAwaiter().GetResult();
+                var open = module.Service.OpenAsync(new UiKey<EmptyArgs>(2, "Active"), EmptyArgs.Default).GetAwaiter().GetResult();
+                Assert.That(_assets.ActiveLeases, Is.EqualTo(2));
+                Assert.That(module.Service.CachedCount, Is.EqualTo(1));
+                module.TrimForLowMemoryAsync().GetAwaiter().GetResult();
+                Assert.That(module.Service.CachedCount, Is.Zero);
+                Assert.That(_assets.ActiveLeases, Is.EqualTo(1));
+                module.Service.CloseAsync(open.Handle).GetAwaiter().GetResult();
+                Assert.That(_assets.ActiveLeases, Is.Zero);
+            }
+            finally { module.DisposeAsync().GetAwaiter().GetResult(); }
+        }
+
+        [Test]
+        public void Module_LowMemoryWhileTrimmingSweepsPanelsCachedAfterFirstSnapshot()
+        {
+            var first = Definition;
+            first.CacheOnClose = true;
+            var second = new UiDefinition(2, "Second", AssetKey.From("panel")) { CacheOnClose = true };
+            var frame = new UniTaskCompletionSource();
+            GameObject deferred = null;
+            bool deferNextView = true;
+            var module = new UiModule(_assets, _root, new[] { first, second },
+                destroy: go =>
+                {
+                    if (deferNextView && go != null && go.GetComponent<UiView>() != null)
+                    {
+                        deferNextView = false;
+                        deferred = go;
+                    }
+                    else ImmediateDestroy(go);
+                },
+                frameWaiter: () => frame.Task,
+                cacheOptions: new UiCacheOptions(capacity: 2));
+            try
+            {
+                module.InitializeAsync(default).GetAwaiter().GetResult();
+                module.StartAsync(default).GetAwaiter().GetResult();
+                var firstOpen = module.Service.OpenAsync(Key, EmptyArgs.Default).GetAwaiter().GetResult();
+                var secondOpen = module.Service.OpenAsync(new UiKey<EmptyArgs>(2, "Second"), EmptyArgs.Default).GetAwaiter().GetResult();
+                module.Service.CloseAsync(firstOpen.Handle).GetAwaiter().GetResult();
+                var firstTrim = module.TrimForLowMemoryAsync();
+                Assert.That(firstTrim.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+                module.Service.CloseAsync(secondOpen.Handle).GetAwaiter().GetResult();
+                Assert.That(module.Service.CachedCount, Is.EqualTo(1));
+                var followUp = module.TrimForLowMemoryAsync();
+                Assert.That(followUp.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+                ImmediateDestroy(deferred);
+                frame.TrySetResult();
+                firstTrim.GetAwaiter().GetResult();
+                followUp.GetAwaiter().GetResult();
+                Assert.That(module.Service.CachedCount, Is.Zero);
+                Assert.That(_assets.ActiveLeases, Is.Zero);
+                Assert.That(_provider.Released, Is.EqualTo(1), "同地址的底层资源只需释放一次");
+            }
+            finally
+            {
+                deferNextView = false;
+                ImmediateDestroy(deferred);
+                frame.TrySetResult();
+                module.DisposeAsync().GetAwaiter().GetResult();
+            }
+        }
+
+        [Test]
+        public void VerticalNavigation_UsesNativeLinksAndSkipsUnavailableButtons()
+        {
+            var view = _prefab.GetComponent<UiView>();
+            Button Add(string name)
+            {
+                var button = new GameObject(name, typeof(RectTransform), typeof(Button)).GetComponent<Button>();
+                button.transform.SetParent(view.transform);
+                return button;
+            }
+            Button first = Add("first");
+            Button hidden = Add("hidden");
+            Button last = Add("last");
+            hidden.gameObject.SetActive(false);
+            view.ConfigureVerticalNavigation(first, hidden, last);
+            Assert.That(view.DefaultFocus, Is.SameAs(first));
+            Assert.That(first.navigation.mode, Is.EqualTo(Navigation.Mode.Explicit));
+            Assert.That(first.navigation.selectOnDown, Is.SameAs(last));
+            Assert.That(last.navigation.selectOnUp, Is.SameAs(first));
+            Assert.That(last.navigation.selectOnDown, Is.Null);
+            last.interactable = false;
+            view.ConfigureVerticalNavigation(first, hidden, last);
+            Assert.That(first.navigation.selectOnDown, Is.Null);
+            Assert.That(last.navigation.selectOnUp, Is.Null);
         }
 
         [Test]

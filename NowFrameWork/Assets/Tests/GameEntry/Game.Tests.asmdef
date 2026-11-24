@@ -1,7 +1,7 @@
 {
   "name": "Game.Tests",
   "rootNamespace": "Game.Tests",
-  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Core", "NowFrameWork.Unity", "NowFrameWork.Assets", "NowFrameWork.UI.UGUI", "NowFrameWork.Input", "UniTask", "Unity.InputSystem", "UnityEngine.UI", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": ["Game", "NowFrameWork.Boot", "NowFrameWork.Core", "NowFrameWork.Unity", "NowFrameWork.Assets", "NowFrameWork.UI.UGUI", "NowFrameWork.Input", "NowFrameWork.Input.InputSystem", "UniTask", "Unity.InputSystem", "UnityEngine.UI", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": ["Editor"],
   "overrideReferences": true,
   "precompiledReferences": ["nunit.framework.dll"],

@@ -33,6 +33,52 @@ namespace NowFrameWork.UI
         public CanvasGroup VisualGroup { get { Capture(); return _group; } }
         public bool InputBlocked => _inputBlocked;
         public Selectable DefaultFocus { get => _defaultFocus; set => _defaultFocus = value; }
+
+        /// <summary>用 UGUI 原生显式导航连接本面板可用控件。控件显隐或顺序变化后重新调用。</summary>
+        public void ConfigureVerticalNavigation(params Selectable[] controls) => ConfigureNavigation(controls, vertical: true);
+
+        /// <summary>用 UGUI 原生左右方向连接同一面板内的控件。</summary>
+        public void ConfigureHorizontalNavigation(params Selectable[] controls) => ConfigureNavigation(controls, vertical: false);
+
+        void ConfigureNavigation(Selectable[] controls, bool vertical)
+        {
+            if (controls == null) throw new ArgumentNullException(nameof(controls));
+            var seen = new System.Collections.Generic.HashSet<Selectable>();
+            foreach (Selectable control in controls)
+                if (control == null || control.GetComponentInParent<UiView>(true) != this || !seen.Add(control))
+                    throw new ArgumentException("导航控件必须是当前面板内互不重复的 Selectable。", nameof(controls));
+
+            _defaultFocus = null;
+            Selectable previous = null;
+            foreach (Selectable control in controls)
+            {
+                control.navigation = new Navigation { mode = Navigation.Mode.Explicit };
+                if (!control.enabled || !control.interactable || !IsNavigationControlVisible(control.transform)) continue;
+                if (_defaultFocus == null) _defaultFocus = control;
+                var navigation = control.navigation;
+                if (vertical) navigation.selectOnUp = previous;
+                else navigation.selectOnLeft = previous;
+                control.navigation = navigation;
+                if (previous != null)
+                {
+                    var previousNavigation = previous.navigation;
+                    if (vertical) previousNavigation.selectOnDown = control;
+                    else previousNavigation.selectOnRight = control;
+                    previous.navigation = previousNavigation;
+                }
+                previous = control;
+            }
+            var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            if (selected != null && selected.transform.IsChildOf(transform))
+                RestoreFocus();
+        }
+
+        bool IsNavigationControlVisible(Transform child)
+        {
+            for (Transform current = child; current != transform; current = current.parent)
+                if (!current.gameObject.activeSelf) return false;
+            return true;
+        }
         internal float ShownAlpha { get { Capture(); return _alpha; } }
         public float VisibleAlpha => ShownAlpha;
 
@@ -188,12 +234,20 @@ namespace NowFrameWork.UI
         {
             var system = EventSystem.current;
             if (system == null || !_shown || _inputBlocked) return;
-            if (system.currentSelectedGameObject != null && system.currentSelectedGameObject.transform.IsChildOf(transform)) return;
+            var selected = system.currentSelectedGameObject;
+            if (selected != null && selected.transform.IsChildOf(transform))
+            {
+                var selectedControl = selected.GetComponent<Selectable>();
+                if (selected.activeInHierarchy && (selectedControl == null || CanFocus(selectedControl))) return;
+                system.SetSelectedGameObject(null);
+            }
             Selectable target = _lastFocus != null ? _lastFocus.GetComponent<Selectable>() : null;
-            if (target == null || !target.transform.IsChildOf(transform) || !target.IsActive() || !target.IsInteractable()) target = _defaultFocus;
-            if (target != null && target.transform.IsChildOf(transform) && target.IsActive() && target.IsInteractable())
-                system.SetSelectedGameObject(target.gameObject);
+            if (!CanFocus(target)) target = _defaultFocus;
+            if (CanFocus(target)) system.SetSelectedGameObject(target.gameObject);
         }
+
+        bool CanFocus(Selectable control) => control != null && control.transform.IsChildOf(transform)
+            && control.IsActive() && control.IsInteractable();
 
         internal void SetSorting(int order, int layer)
         {

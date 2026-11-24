@@ -24,6 +24,9 @@ namespace NowFrameWork.UI
         GameObject _staging;
         UniTaskCompletionSource _disposing;
         bool _initialized;
+        bool _listeningForLowMemory;
+        bool _lowMemoryTrimRequested;
+        UniTaskCompletionSource _lowMemoryTrim;
 
         public UiModule(IAssetService assets, UiRoot rootPrefab, IEnumerable<UiDefinition> definitions,
             IUiTransition transition = null, UnityEngine.EventSystems.EventSystem eventSystem = null,
@@ -76,7 +79,57 @@ namespace NowFrameWork.UI
             ct.ThrowIfCancellationRequested();
             if (!_initialized) throw new InvalidOperationException("UiModule 未初始化");
             Service.StartService();
+            if (!_listeningForLowMemory)
+            {
+                Application.lowMemory += OnLowMemory;
+                _listeningForLowMemory = true;
+            }
             return UniTask.CompletedTask;
+        }
+
+        void OnLowMemory()
+        {
+            if (!_listeningForLowMemory) return;
+            if (_lowMemoryTrim != null)
+            {
+                _lowMemoryTrimRequested = true;
+                return;
+            }
+            TrimForLowMemoryAsync().Forget(error =>
+            {
+                if (_log.IsEnabled(LogLevel.Error)) _log.Write(LogLevel.Error, "UI", "低内存缓存清理失败: " + error);
+            });
+        }
+
+        /// <summary>处理低内存信号，也可由测试宿主主动触发；只回收已关闭的缓存面板。</summary>
+        public UniTask TrimForLowMemoryAsync()
+        {
+            MainThreadGuard.Assert();
+            if (!_listeningForLowMemory) return UniTask.CompletedTask;
+            if (_lowMemoryTrim != null)
+            {
+                _lowMemoryTrimRequested = true;
+                return _lowMemoryTrim.Task;
+            }
+            var completion = new UniTaskCompletionSource();
+            _lowMemoryTrim = completion;
+            TrimForLowMemoryCoreAsync(completion).Forget();
+            return completion.Task;
+        }
+
+        async UniTask TrimForLowMemoryCoreAsync(UniTaskCompletionSource completion)
+        {
+            Exception error;
+            do
+            {
+                _lowMemoryTrimRequested = false;
+                error = null;
+                try { await Service.TrimCacheAsync(); }
+                catch (Exception failure) { error = failure; }
+            } while (_listeningForLowMemory && _lowMemoryTrimRequested);
+            _lowMemoryTrim = null;
+            if (error == null) completion.TrySetResult();
+            else completion.TrySetException(error);
         }
 
         public async UniTask ShutdownAsync(CancellationToken ct)
@@ -92,6 +145,11 @@ namespace NowFrameWork.UI
         {
             MainThreadGuard.Assert("UiModule.DisposeAsync");
             if (_disposing != null) return _disposing.Task;
+            if (_listeningForLowMemory)
+            {
+                Application.lowMemory -= OnLowMemory;
+                _listeningForLowMemory = false;
+            }
             var completion = new UniTaskCompletionSource(); _disposing = completion;
             DisposeCoreAsync(completion).Forget();
             return completion.Task;

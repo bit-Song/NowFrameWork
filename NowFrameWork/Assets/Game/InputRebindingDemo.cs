@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using NowFrameWork.Core.Storage;
 using NowFrameWork.Core.Threading;
+using NowFrameWork.Input.InputSystem;
 using NowFrameWork.Unity.Storage;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 namespace Game
 {
     /// <summary>
-    /// 重绑定演示（UGUI）：交互式改键、取消、保存与恢复。
+    /// 重绑定演示（UGUI）：交互式改键、复合方向、冲突提示、保存与恢复。
     ///
     /// 运行时自建 Canvas/Button，不依赖预制体，也不与其它 OnGUI 调试面板抢点击。
     /// 持有动作资产和绑定设置，角色与改键界面共用这份运行时实例。
@@ -21,6 +22,7 @@ namespace Game
     public sealed class InputRebindingDemo : MonoBehaviour
     {
         const string LegacyPrefsKey = "nowframework.input.bindingOverrides.v2";
+        const float RebindTimeoutSeconds = 10f;
 
         [Serializable]
         sealed class BindingPreferences
@@ -28,9 +30,9 @@ namespace Game
             public string Overrides = "";
         }
 
-        // 每行改写一个普通绑定。Move 的复合节点需单独为各方向提供入口。
         static readonly string[] ActionPaths =
         {
+            "Player/Move",
             "Player/Jump",
             "Player/Interact",
         };
@@ -93,7 +95,13 @@ namespace Game
 
         // ---------------- 重绑定逻辑 ----------------
 
-        public void StartRebind(string actionPath) => StartRebind(actionPath, 0);
+        public void StartRebind(string actionPath)
+        {
+            var action = Initialize().FindAction(actionPath, throwIfNotFound: false);
+            int index = 0;
+            while (action != null && index < action.bindings.Count && action.bindings[index].isComposite) index++;
+            StartRebind(actionPath, index);
+        }
 
         public void StartRebind(string actionPath, int bindingIndex)
         {
@@ -110,22 +118,47 @@ namespace Game
 
             bool wasEnabled = action.enabled;
             action.Disable();
-            SetLog("请按下新按键（Esc 取消）：" + actionPath);
+            SetLog("请按下新按键（Esc / 手柄返回取消）：" + actionPath);
 
-            _operation = action.PerformInteractiveRebinding(bindingIndex)
+            string conflict = null;
+            try
+            {
+                _operation = action.PerformInteractiveRebinding(bindingIndex)
                 .WithControlsExcluding("<Mouse>/position")
                 .WithControlsExcluding("<Mouse>/delta")
-                .WithCancelingThrough("<Keyboard>/escape")
-                .OnComplete(operation => Finish(operation, action, wasEnabled, save: true))
-                .OnCancel(operation => Finish(operation, action, wasEnabled, save: false));
+                .WithCancelingThrough("*/{Cancel}")
+                .WithTimeout(RebindTimeoutSeconds)
+                .OnApplyBinding((operation, path) =>
+                {
+                    if (InputBindingConflicts.TryFind(action, bindingIndex, path, operation.selectedControl, out var other, out int index))
+                    {
+                        conflict = other.name + " / " + other.GetBindingDisplayString(index);
+                        return;
+                    }
+                    InputBinding binding = action.bindings[bindingIndex];
+                    binding.overridePath = path;
+                    action.ApplyBindingOverride(bindingIndex, binding);
+                })
+                .OnComplete(operation => Finish(operation, action, bindingIndex, wasEnabled, completed: true, conflict: conflict))
+                .OnCancel(operation => Finish(operation, action, bindingIndex, wasEnabled, completed: false));
 
-            string device = InputControlPath.TryGetDeviceLayout(action.bindings[bindingIndex].path);
-            if (!string.IsNullOrEmpty(device)) _operation.WithControlsHavingToMatchPath("<" + device + ">");
+                string device = InputControlPath.TryGetDeviceLayout(action.bindings[bindingIndex].path);
+                if (!string.IsNullOrEmpty(device)) _operation.WithControlsHavingToMatchPath("<" + device + ">");
 
-            _operation.Start();
+                _operation.Start();
+            }
+            catch (Exception error)
+            {
+                _operation?.Dispose();
+                _operation = null;
+                if (wasEnabled) action.Enable();
+                SetLog("无法开始改键: " + error.Message);
+                Debug.LogWarning(error, this);
+            }
         }
 
-        void Finish(InputActionRebindingExtensions.RebindingOperation operation, InputAction action, bool wasEnabled, bool save)
+        void Finish(InputActionRebindingExtensions.RebindingOperation operation, InputAction action, int index,
+            bool wasEnabled, bool completed, string conflict = null)
         {
             operation.Dispose();
             _operation = null;
@@ -133,8 +166,9 @@ namespace Game
             if (wasEnabled) action.Enable();
 
             RefreshLabels();
-            if (!save) SetLog("已取消改键");
-            else Save(action.name + " 当前绑定: " + action.GetBindingDisplayString());
+            if (!completed) SetLog("已取消改键");
+            else if (conflict != null) SetLog("按键已被 " + conflict + " 使用，原绑定已保留");
+            else Save(action.name + " 当前绑定: " + action.GetBindingDisplayString(index));
         }
 
         public void ResetAll()
@@ -170,8 +204,14 @@ namespace Game
         {
             foreach (var row in _rows)
                 if (row.Label != null)
-                    row.Label.text = row.Action.name + " (" + row.Device + ") = " +
+                    row.Label.text = BindingLabel(row.Action, row.BindingIndex) + " (" + row.Device + ") = " +
                         row.Action.GetBindingDisplayString(row.BindingIndex);
+        }
+
+        static string BindingLabel(InputAction action, int index)
+        {
+            InputBinding binding = action.bindings[index];
+            return binding.isPartOfComposite ? action.name + " / " + binding.name : action.name;
         }
 
         void SetLog(string message)
@@ -206,7 +246,7 @@ namespace Game
             background.color = new Color(0f, 0f, 0f, 0.72f);
 
             _log = CreateText(panel, "Log", new Vector2(20f, -16f), new Vector2(580f, 40f), 18);
-            SetLog(_settingsWarning ?? "点击「改键」后按下新按键，Esc 取消");
+            SetLog(_settingsWarning ?? "点击「改键」后按下新按键，Esc 或手柄返回取消");
 
             float y = -64f;
 
@@ -215,6 +255,7 @@ namespace Game
                 InputAction action = _asset.FindAction(path, throwIfNotFound: true);
                 for (int i = 0; i < action.bindings.Count; i++)
                 {
+                    if (action.bindings[i].isComposite) continue;
                     int bindingIndex = i;
                     string device = InputControlPath.TryGetDeviceLayout(action.bindings[i].path);
                     Text label = CreateText(panel, "Label-" + path + "-" + i, new Vector2(20f, y), new Vector2(430f, 40f), 20);
@@ -226,6 +267,7 @@ namespace Game
             }
 
             CreateButton(panel, "恢复默认", new Vector2(20f, y - 6f), new Vector2(180f, 40f), ResetAll);
+            panel.sizeDelta = new Vector2(panel.sizeDelta.x, -y + 65f);
 
             RefreshLabels();
         }

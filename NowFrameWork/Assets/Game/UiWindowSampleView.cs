@@ -35,6 +35,7 @@ namespace Game
             _motion.anchoredPosition = Vector2.zero;
             _next.gameObject.SetActive(_args.Next != null); _settings.gameObject.SetActive(_args.Settings != null);
             _confirm.gameObject.SetActive(_args.Confirm != null); _back.gameObject.SetActive(_args.Back != null);
+            ConfigureVerticalNavigation(_next, _settings, _confirm, _back);
             return UniTask.CompletedTask;
         }
         void Next() => _args?.Next?.Invoke();
