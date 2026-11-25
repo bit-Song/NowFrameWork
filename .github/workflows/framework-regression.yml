@@ -32,17 +32,43 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
+          Write-Host "仓库: $env:GITHUB_REPOSITORY  提交: $env:GITHUB_SHA"
+          Write-Host "工作目录: $(Get-Location)"
+          Write-Host "编辑器路径变量: [$env:EDITOR]"
+          Write-Host "执行策略(Process): $(Get-ExecutionPolicy -Scope Process)"
+
           if (-not $env:EDITOR) {
             throw "仓库变量 TUANJIE_EDITOR_PATH 未配置（Settings > Secrets and variables > Actions > Variables）"
           }
 
-          ./Tools/Run-FrameworkRegression.ps1 -EditorPath $env:EDITOR
+          if (-not (Test-Path -LiteralPath $env:EDITOR -PathType Leaf)) {
+            throw "编辑器路径不存在或不是文件: $env:EDITOR"
+          }
+
+          # 自托管机器常为 Restricted，显式放开本次进程，避免脚本无法加载
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+          if (-not (Test-Path -LiteralPath "./Tools/Run-FrameworkRegression.ps1" -PathType Leaf)) {
+            throw "找不到 Tools/Run-FrameworkRegression.ps1，检查 checkout 是否完整"
+          }
+
+          try {
+            & "./Tools/Run-FrameworkRegression.ps1" -EditorPath $env:EDITOR
+          }
+          catch {
+            Write-Host "脚本异常: $($_.Exception.GetType().FullName): $($_.Exception.Message)"
+            throw
+          }
+
+          Write-Host "回归脚本退出码: $LASTEXITCODE"
 
       - name: Summarize report
         if: always()
         shell: powershell
         run: |
           $summary = $env:GITHUB_STEP_SUMMARY
+          if (-not $summary) { Write-Host "没有 GITHUB_STEP_SUMMARY，跳过汇总"; exit 0 }
+
           $root = "NowFrameWork/Build/FrameworkRegression"
 
           if (-not (Test-Path $root)) {
