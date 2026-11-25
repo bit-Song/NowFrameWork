@@ -8,6 +8,7 @@ using NowFrameWork.Unity.Storage;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -42,12 +43,18 @@ namespace Game
 
         InputActionAsset _asset;
         FileSettingsStore<BindingPreferences> _settings;
-        InputActionRebindingExtensions.RebindingOperation _operation;
+        // 不用 PerformInteractiveRebinding：该版本的 RebindingOperation 在部分状态事件下
+        // 会每帧触发 GetStatePtrFromStateEvent 断言；改为在 Update 里轮询按下。
+        InputAction _pendingAction;
+        int _pendingIndex;
+        bool _pendingWasEnabled;
+        string _pendingDevice;
+        float _pendingStartedAt;
         string _settingsWarning;
         Text _log;
         Font _font;
 
-        public bool IsRebinding => _operation != null;
+        public bool IsRebinding => _pendingAction != null;
 
         /// <summary>加载绑定设置并启用动作。返回由本组件持有的资产。</summary>
         public InputActionAsset Initialize(string settingsDirectory = null)
@@ -85,12 +92,65 @@ namespace Game
             BuildUI();
         }
 
-        void OnDisable() => _operation?.Cancel();
+        void OnDisable() => CancelPending(null);
 
         void OnDestroy()
         {
-            _operation?.Dispose();
+            CancelPending(null);
             if (_asset != null) Destroy(_asset);
+        }
+
+        void Update()
+        {
+            if (_pendingAction == null) return;
+
+            if (Time.unscaledTime - _pendingStartedAt > RebindTimeoutSeconds)
+            {
+                CancelPending("改键超时，已取消");
+                return;
+            }
+
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                CancelPending("已取消改键");
+                return;
+            }
+
+            if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
+            {
+                CancelPending("已取消改键");
+                return;
+            }
+
+            InputControl control = FindPressedControl();
+            if (control != null) ApplyPending(control);
+        }
+
+        InputControl FindPressedControl()
+        {
+            Keyboard keyboard = Keyboard.current;
+
+            if (keyboard != null && Accepts(keyboard))
+                foreach (KeyControl key in keyboard.allKeys)
+                    if (key.wasPressedThisFrame && key.keyCode != Key.Escape) return key;
+
+            Gamepad gamepad = Gamepad.current;
+
+            if (gamepad != null && Accepts(gamepad))
+                foreach (InputControl control in gamepad.allControls)
+                    if (control is ButtonControl button && button.wasPressedThisFrame) return button;
+
+            return null;
+        }
+
+        /// <summary>只接受原绑定所属设备布局的按键，避免把键盘动作改成手柄键。</summary>
+        bool Accepts(InputDevice device)
+        {
+            if (string.IsNullOrEmpty(_pendingDevice)) return true;
+            if (_pendingDevice == "Keyboard") return device is Keyboard;
+            if (_pendingDevice == "Gamepad") return device is Gamepad;
+
+            return device.layout == _pendingDevice;
         }
 
         // ---------------- 重绑定逻辑 ----------------
@@ -105,7 +165,7 @@ namespace Game
 
         public void StartRebind(string actionPath, int bindingIndex)
         {
-            if (_operation != null) return;
+            if (_pendingAction != null) return;
             Initialize();
 
             InputAction action = _asset.FindAction(actionPath, throwIfNotFound: false);
@@ -116,64 +176,65 @@ namespace Game
                 return;
             }
 
-            bool wasEnabled = action.enabled;
+            _pendingAction = action;
+            _pendingIndex = bindingIndex;
+            _pendingWasEnabled = action.enabled;
+            _pendingStartedAt = Time.unscaledTime;
+            _pendingDevice = InputControlPath.TryGetDeviceLayout(action.bindings[bindingIndex].path);
+
             action.Disable();
             SetLog("请按下新按键（Esc / 手柄返回取消）：" + actionPath);
+        }
 
-            string conflict = null;
+        void ApplyPending(InputControl control)
+        {
+            InputAction action = _pendingAction;
+            int index = _pendingIndex;
+            bool wasEnabled = _pendingWasEnabled;
+
+            _pendingAction = null;
+
             try
             {
-                _operation = action.PerformInteractiveRebinding(bindingIndex)
-                .WithControlsExcluding("<Mouse>/position")
-                .WithControlsExcluding("<Mouse>/delta")
-                .WithCancelingThrough("*/{Cancel}")
-                .WithTimeout(RebindTimeoutSeconds)
-                .OnApplyBinding((operation, path) =>
+                if (InputBindingConflicts.TryFind(action, index, control.path, control,
+                        out InputAction other, out int otherIndex))
                 {
-                    if (InputBindingConflicts.TryFind(action, bindingIndex, path, operation.selectedControl, out var other, out int index))
-                    {
-                        conflict = other.name + " / " + other.GetBindingDisplayString(index);
-                        return;
-                    }
-                    InputBinding binding = action.bindings[bindingIndex];
-                    binding.overridePath = path;
-                    action.ApplyBindingOverride(bindingIndex, binding);
-                })
-                .OnComplete(operation => Finish(operation, action, bindingIndex, wasEnabled, completed: true, conflict: conflict))
-                .OnCancel(operation => Finish(operation, action, bindingIndex, wasEnabled, completed: false));
-
-                string device = InputControlPath.TryGetDeviceLayout(action.bindings[bindingIndex].path);
-                if (!string.IsNullOrEmpty(device)) _operation.WithControlsHavingToMatchPath("<" + device + ">");
-
-                _operation.Start();
+                    SetLog("按键已被 " + other.name + " / " + other.GetBindingDisplayString(otherIndex) + " 使用，原绑定已保留");
+                }
+                else
+                {
+                    InputBinding binding = action.bindings[index];
+                    binding.overridePath = control.path;
+                    action.ApplyBindingOverride(index, binding);
+                    Save(action.name + " 当前绑定: " + action.GetBindingDisplayString(index));
+                }
             }
-            catch (Exception error)
+            finally
             {
-                _operation?.Dispose();
-                _operation = null;
                 if (wasEnabled) action.Enable();
-                SetLog("无法开始改键: " + error.Message);
-                Debug.LogWarning(error, this);
+
+                RefreshLabels();
             }
         }
 
-        void Finish(InputActionRebindingExtensions.RebindingOperation operation, InputAction action, int index,
-            bool wasEnabled, bool completed, string conflict = null)
+        void CancelPending(string message)
         {
-            operation.Dispose();
-            _operation = null;
+            if (_pendingAction == null) return;
+
+            InputAction action = _pendingAction;
+            bool wasEnabled = _pendingWasEnabled;
+            _pendingAction = null;
 
             if (wasEnabled) action.Enable();
 
             RefreshLabels();
-            if (!completed) SetLog("已取消改键");
-            else if (conflict != null) SetLog("按键已被 " + conflict + " 使用，原绑定已保留");
-            else Save(action.name + " 当前绑定: " + action.GetBindingDisplayString(index));
+
+            if (!string.IsNullOrEmpty(message)) SetLog(message);
         }
 
         public void ResetAll()
         {
-            _operation?.Cancel();
+            CancelPending(null);
             Initialize();
             _asset.RemoveAllBindingOverrides();
             RefreshLabels();
