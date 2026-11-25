@@ -137,6 +137,7 @@ GameObject:
   - component: {fileID: 1942143200}
   - component: {fileID: 1942143201}
   - component: {fileID: 1942143202}
+  - component: {fileID: 1942143203}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: BootIntegration
@@ -226,6 +227,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66fdff384ab39054c9d37a46d6e4eb77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!81 &1942143203
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942143197}
+  m_Enabled: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
