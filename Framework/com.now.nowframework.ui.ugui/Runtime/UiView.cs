@@ -48,36 +48,99 @@ namespace NowFrameWork.UI
                 if (control == null || control.GetComponentInParent<UiView>(true) != this || !seen.Add(control))
                     throw new ArgumentException("导航控件必须是当前面板内互不重复的 Selectable。", nameof(controls));
 
+            EventSystem system = EventSystem.current;
+            GameObject previousSelected = system != null ? system.currentSelectedGameObject : null;
+            Selectable previousControl = previousSelected != null ? previousSelected.GetComponent<Selectable>() : null;
+            int previousIndex = previousControl != null ? System.Array.IndexOf(controls, previousControl) : -1;
+
             _defaultFocus = null;
+            var navigable = new System.Collections.Generic.List<Selectable>(controls.Length);
             Selectable previous = null;
+
             foreach (Selectable control in controls)
             {
-                control.navigation = new Navigation { mode = Navigation.Mode.Explicit };
-                if (!control.enabled || !control.interactable || !IsNavigationControlVisible(control.transform)) continue;
+                // 保留另一方向的显式链接；本方向先清空，避免失效控件残留旧链路
+                Navigation own = control.navigation;
+                own.mode = Navigation.Mode.Explicit;
+
+                if (vertical) { own.selectOnUp = null; own.selectOnDown = null; }
+                else { own.selectOnLeft = null; own.selectOnRight = null; }
+
+                control.navigation = own;
+
+                if (!CanNavigate(control)) continue;
+
+                navigable.Add(control);
                 if (_defaultFocus == null) _defaultFocus = control;
-                var navigation = control.navigation;
+
+                Navigation navigation = control.navigation;
                 if (vertical) navigation.selectOnUp = previous;
                 else navigation.selectOnLeft = previous;
                 control.navigation = navigation;
+
                 if (previous != null)
                 {
-                    var previousNavigation = previous.navigation;
+                    Navigation previousNavigation = previous.navigation;
                     if (vertical) previousNavigation.selectOnDown = control;
                     else previousNavigation.selectOnRight = control;
                     previous.navigation = previousNavigation;
                 }
+
                 previous = control;
             }
-            var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-            if (selected != null && selected.transform.IsChildOf(transform))
-                RestoreFocus();
+
+            if (previousSelected == null || !previousSelected.transform.IsChildOf(transform)) return;
+
+            // 原焦点仍可导航：保持；已不可用（禁用/隐藏/祖先 CanvasGroup 关闭）则移到最近可用项，
+            // 而不是清空焦点——否则禁用当前按钮后重建导航会丢失焦点。
+            if (previousControl != null && navigable.Contains(previousControl)) return;
+
+            Selectable replacement = FindNearestNavigable(controls, navigable, previousIndex);
+
+            Capture();
+            if (replacement == null || system == null || !_group.interactable) return;
+
+            system.SetSelectedGameObject(replacement.gameObject);
+
+            if (!_shown) _lastFocus = replacement.gameObject;
         }
 
-        bool IsNavigationControlVisible(Transform child)
+        /// <summary>
+        /// 控件是否可成为导航目标：自身启用且 interactable，祖先子级的 CanvasGroup 允许交互与射线。
+        /// 面板根的 CanvasGroup 由显示/输入控制，不在此判断。
+        /// </summary>
+        bool CanNavigate(Selectable control)
         {
-            for (Transform current = child; current != transform; current = current.parent)
+            if (control == null || !control.transform.IsChildOf(transform)) return false;
+
+            // 不用 IsInteractable()/IsActive()：它们计入面板根 CanvasGroup 与 activeInHierarchy，
+            // 面板隐藏或控件位于预制体资产时会把全部控件判死；根组状态由 ApplyInput 单独控制。
+            if (!control.enabled || !control.interactable) return false;
+
+            for (Transform current = control.transform; current != null && current != transform; current = current.parent)
+            {
                 if (!current.gameObject.activeSelf) return false;
+
+                // CanvasGroup 的 interactable 依赖 OnCanvasGroupChanged 刷新，运行时修改后可能滞后；直接查父链。
+                CanvasGroup group = current.GetComponent<CanvasGroup>();
+                if (group != null && (!group.interactable || !group.blocksRaycasts)) return false;
+            }
+
             return true;
+        }
+
+        internal Selectable FindNearestNavigable(Selectable[] controls, System.Collections.Generic.List<Selectable> navigable, int previousIndex)
+        {
+            if (navigable.Count == 0) return null;
+            if (previousIndex < 0) return _defaultFocus != null ? _defaultFocus : navigable[0];
+
+            for (int step = 1; step <= controls.Length; step++)
+            {
+                int index = (previousIndex + step) % controls.Length;
+                if (navigable.Contains(controls[index])) return controls[index];
+            }
+
+            return _defaultFocus != null ? _defaultFocus : navigable[0];
         }
         internal float ShownAlpha { get { Capture(); return _alpha; } }
         public float VisibleAlpha => ShownAlpha;
@@ -238,16 +301,20 @@ namespace NowFrameWork.UI
             if (selected != null && selected.transform.IsChildOf(transform))
             {
                 var selectedControl = selected.GetComponent<Selectable>();
-                if (selected.activeInHierarchy && (selectedControl == null || CanFocus(selectedControl))) return;
+                if (selectedControl == null || CanNavigate(selectedControl))
+                {
+                    _lastFocus = selected;
+                    return;
+                }
                 system.SetSelectedGameObject(null);
             }
             Selectable target = _lastFocus != null ? _lastFocus.GetComponent<Selectable>() : null;
-            if (!CanFocus(target)) target = _defaultFocus;
-            if (CanFocus(target)) system.SetSelectedGameObject(target.gameObject);
-        }
+            if (!CanNavigate(target)) target = _defaultFocus;
+            if (!CanNavigate(target)) return;
 
-        bool CanFocus(Selectable control) => control != null && control.transform.IsChildOf(transform)
-            && control.IsActive() && control.IsInteractable();
+            system.SetSelectedGameObject(target.gameObject);
+            _lastFocus = target.gameObject;
+        }
 
         internal void SetSorting(int order, int layer)
         {
