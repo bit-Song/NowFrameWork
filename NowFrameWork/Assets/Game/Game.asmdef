@@ -8,6 +8,7 @@
         "NowFrameWork.Assets.Addressables",
         "NowFrameWork.Boot",
         "NowFrameWork.Boot.Addressables",
+        "NowFrameWork.Audio",
         "NowFrameWork.Generated.AssetKeys",
         "NowFrameWork.Input",
         "NowFrameWork.Input.InputSystem",

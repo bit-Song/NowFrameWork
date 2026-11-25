@@ -160,6 +160,7 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.41 | 2026-11-20 | **使用手册与导览**：新增 [32 使用手册](04-测试与接入/32-NowFrameWork框架使用手册.md)、[33 结构图与 API 导览](04-测试与接入/33-NowFrameWork结构图与API导览.md)，补充 Boot 验收记录 |
 | v0.4.42 | 2026-11-20 | **模块 API 文档拆分**：新增 `06-模块API/` 15 篇（Boot/模块/资源/配置/存储/场景/池/UI/事件/时钟/取消/日志/更新/平台/音频）与索引 |
 | v0.4.43 | 2026-11-20 | **UI 样例与测试脚本**：保存样例场景与资源测试脚本改动 |
+| v0.4.62 | 2026-11-25 | **音频接入 Boot**：`BootContext` 注册 `AudioModule`，`GameEntry.HasAudio/Audio` 暴露入口，`BootFlow.Context` 可查；新增 `audio/bgm`、`audio/sfx` 样例与 `AudioProbe`；修复 `AudioModule` 编辑模式销毁报错（R30）；481/481 通过 |
 | v0.4.61 | 2026-11-25 | **Windows 试用期强杀验收通过**：暂存 v2 → 试用启动 → 检测到 `TrialManifest=v2` 后 10ms 内强杀 → 重启回退 `v3（已确认）`，Trial/Pending 清空；新增 `-stageRelease` 命令行入口、Mono 验收包构建入口与 `Tools/ReleaseKillProbe.ps1`；证据见 [验收记录](evidence/2026-11-25-release-kill-trial/README.md) |
 | v0.4.60 | 2026-11-25 | **PlayMode 不纳入 CI 的评估结论**：batchmode 下 17 条 PlayMode 用例 14 条失败，本地化专项放宽到 120 秒仍超时（UI 场景 + Boot + Addressables 组合不成立）；保留本地交互验证，证据见 [评估记录](evidence/2026-11-25-playmode-batchmode/README.md) |
 | v0.4.59 | 2026-11-25 | **CI 失败归档验收通过**（运行 #7）：失败结论、`run.json` 478/479、XML 注入消息、`ci-step.log`、17.5MB artifact 均符合预期；过程中修复"失败不传播"（`exit` → `throw`）与"脚本 BOM 丢失"两个真实缺陷；证据见 [2026-11-25 CI 失败归档验收](evidence/2026-11-25-ci-failure-path/README.md) |

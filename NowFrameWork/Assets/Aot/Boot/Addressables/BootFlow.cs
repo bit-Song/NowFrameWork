@@ -48,6 +48,9 @@ namespace NowFrameWork.Boot
 
         void Start() { if (_runOnStart) Run().Forget(); }
 
+        /// <summary>当前会话上下文；未启动或已停止时为 null。</summary>
+        public BootContext Context => _session?.Context;
+
         public async UniTask Run()
         {
             if (_destroyed || _runningAttempt) return;

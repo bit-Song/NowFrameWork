@@ -5,6 +5,7 @@
     "NowFrameWork.Core",
     "NowFrameWork.Unity",
     "NowFrameWork.Assets",
+    "NowFrameWork.Audio",
     "UniTask"
   ],
   "includePlatforms": [],

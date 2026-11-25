@@ -34,6 +34,11 @@ namespace Game
         public static TimerService Timers => Current.Context.App.Timers;
         public static bool HasUI => Current.UI != null;
         public static bool HasScenes => Current.Context.Scenes != null;
+        public static bool HasAudio => Current.Context.Audio != null;
+
+        /// <summary>音频模块；Boot 已默认注册，未启用时抛错而不是返回 null。</summary>
+        public static NowFrameWork.Audio.AudioModule Audio => Current.Context.Audio
+            ?? throw new InvalidOperationException("当前入口未启用音频模块。");
         public static IUiService UI => Current.UI
             ?? throw new InvalidOperationException("当前项目入口未启用 UI 模块。");
 

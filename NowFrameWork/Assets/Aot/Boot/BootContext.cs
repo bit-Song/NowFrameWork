@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using NowFrameWork.Assets;
+using NowFrameWork.Audio;
 using NowFrameWork.Core.Storage;
 using NowFrameWork.Unity;
 
@@ -11,6 +12,7 @@ namespace NowFrameWork.Boot
     {
         public App App { get; }
         public AssetService Assets { get; }
+        public AudioModule Audio { get; }
         public ConfigService Configs { get; }
         public FileSettingsStore<BootPreferences> Settings { get; }
         public ISceneService Scenes { get; }
@@ -28,6 +30,9 @@ namespace NowFrameWork.Boot
             Scenes = scenes;
             Configs = new ConfigService(assets);
             App.Hub.Register(new AssetsModule(assets, App.Log));
+
+            Audio = new AudioModule(assets, App.Lifecycle, log: App.Log);
+            App.Hub.Register(Audio);
         }
     }
 }

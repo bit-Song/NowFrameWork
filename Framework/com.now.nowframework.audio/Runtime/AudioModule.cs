@@ -60,6 +60,21 @@ namespace NowFrameWork.Audio
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>编辑模式必须用 DestroyImmediate，否则 EditMode 测试与编辑器内停止都会报错。</summary>
+        static void DestroyRoot(UnityEngine.Object target)
+        {
+            if (target == null) return;
+
+#if UNITY_EDITOR
+            if (!UnityEngine.Application.isPlaying)
+            {
+                UnityEngine.Object.DestroyImmediate(target);
+                return;
+            }
+#endif
+            UnityEngine.Object.Destroy(target);
+        }
+
         public string Id => "audio";
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
         public bool IsPaused => _paused || _background;
@@ -82,7 +97,7 @@ namespace NowFrameWork.Audio
             {
                 // 部分初始化失败必须回滚，否则 _root != null 会让模块永久无法再次初始化
                 if (_lifetime != null) { _lifetime.Dispose(); _lifetime = null; }
-                if (_root != null) { UnityEngine.Object.Destroy(_root); _root = null; }
+                if (_root != null) { DestroyRoot(_root); _root = null; }
                 _music = null;
                 throw;
             }
@@ -337,7 +352,7 @@ namespace NowFrameWork.Audio
                 foreach (var voice in _effects)
                     if (voice.Clip != null) Detach(voice);
                 ReleaseUnused(throwOnError: true);
-                UnityEngine.Object.Destroy(_root);
+                DestroyRoot(_root);
                 _root = null;
                 _music = null;
                 _effects.Clear();
