@@ -32,6 +32,14 @@ namespace Game
 
         void Start()
         {
+            if (Application.platform != RuntimePlatform.WindowsPlayer &&
+                Application.platform != RuntimePlatform.WindowsEditor)
+            {
+                Debug.Log("[ReleaseProbe] 非 Windows 平台，跳过发布验收");
+                enabled = false;
+                return;
+            }
+
             // 验收脚本用命令行参数触发，避免合成键盘事件被 Input System 忽略。
             string[] args = Environment.GetCommandLineArgs();
 

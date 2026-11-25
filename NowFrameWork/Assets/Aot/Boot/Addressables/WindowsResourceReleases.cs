@@ -31,7 +31,13 @@ namespace NowFrameWork.Boot
 
         internal async UniTask<ReleaseSelection> SelectAsync(CancellationToken ct)
         {
-            RequireWindows();
+            if (!IsSupported())
+            {
+                // 移动端/其它平台没有 Windows 发布集，直接使用随包内容，避免 Boot 启动失败。
+                Debug.LogWarning("当前平台不是 Windows x64，跳过发布恢复样例，使用随包内容。", this);
+                _selected = true;
+                return null;
+            }
             if (_failedTrial) throw new InvalidOperationException("试用启动失败，请重启以恢复上一版");
             if (_selected) return _selection;
             try { _selection = await Store.SelectForBootAsync(ct); }
@@ -100,11 +106,16 @@ namespace NowFrameWork.Boot
             }, ct);
         }
 
+        static bool IsSupported()
+        {
+            return (Application.platform == RuntimePlatform.WindowsPlayer ||
+                    Application.platform == RuntimePlatform.WindowsEditor) &&
+                   RuntimeInformation.ProcessArchitecture == Architecture.X64;
+        }
+
         static void RequireWindows()
         {
-            if ((Application.platform != RuntimePlatform.WindowsPlayer && Application.platform != RuntimePlatform.WindowsEditor) ||
-                RuntimeInformation.ProcessArchitecture != Architecture.X64)
-                throw new PlatformNotSupportedException("发布样例仅支持 Windows x64 普通 AOT");
+            if (!IsSupported()) throw new PlatformNotSupportedException("发布样例仅支持 Windows x64 普通 AOT");
         }
     }
 }

@@ -15,7 +15,7 @@ Windows x64 的 `BootFlow` 可以选配 `WindowsResourceReleases`。将组件赋
 
 可更新分组的运行时 Load Path 使用 `{NowFrameWork.ReleaseRoot}/...`，保留该占位符进入 Catalog。发布集应包含本次所需的 Bundle 及依赖。Provider 会拒绝调用 Catalog 中未在已校验文件列表里的 Bundle。随包 Catalog 关闭启动时自动更新，作为离线兜底。
 
-当前发布接入限定普通 AOT，清单的代码集使用 `builtin`。资源通过框架资源和场景服务访问。后续接入 HybridCLR 时，将 DLL、AOT 元数据和对应 Catalog 纳入同一个发布集。
+当前发布接入限定普通 AOT，清单的代码集使用 `builtin`。**非 Windows x64 平台**（Android/iOS 等）启动时跳过发布选择、直接使用随包内容，不阻断 Boot；仅在调用暂存接口时才抛 `PlatformNotSupportedException`。资源通过框架资源和场景服务访问。后续接入 HybridCLR 时，将 DLL、AOT 元数据和对应 Catalog 纳入同一个发布集。
 
 ## 验收样例
 
