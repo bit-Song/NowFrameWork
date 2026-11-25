@@ -1,4 +1,4 @@
-﻿param([string]$EditorPath = $env:TUANJIE_EDITOR_PATH)
+param([string]$EditorPath = $env:TUANJIE_EDITOR_PATH)
 
 $ErrorActionPreference = "Stop"
 
@@ -28,7 +28,11 @@ try {
     }
 
     & $regression -EditorPath $EditorPath
-    Write-Host "回归脚本退出码: $LASTEXITCODE"
+
+    $exitCode = $LASTEXITCODE
+    Write-Host "回归脚本退出码: $exitCode"
+
+    if ($exitCode -ne 0) { throw "框架回归失败，退出码 $exitCode" }
 }
 catch {
     Write-Host "步骤异常: $($_.Exception.GetType().FullName): $($_.Exception.Message)"

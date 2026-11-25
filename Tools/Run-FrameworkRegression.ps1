@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$EditorPath = $env:TUANJIE_EDITOR_PATH,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_-]*$')]
     [string]$RunName = ('{0}-{1}' -f (Get-Date -Format 'yyyyMMdd-HHmmss'), ([guid]::NewGuid().ToString('N').Substring(0, 8))),
@@ -168,5 +168,7 @@ $summary = Join-Path $runRoot 'run.json'
     stages = $stages
 } | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 -LiteralPath $summary
 Write-Host "回归报告 $summary"
-if ($failed) { exit 1 }
-exit 0
+
+# 用 throw 而不是 exit：exit 只退出本脚本并设置 $LASTEXITCODE，
+# 嵌套调用方（如 CI 包装脚本）若未检查就会把失败当成功。
+if ($failed) { throw "框架回归失败：$failed 个阶段未通过，详见 $summary" }
