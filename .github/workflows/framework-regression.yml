@@ -3,7 +3,10 @@ name: Framework Regression
 # 需要装有团结（Tuanjie）编辑器的 Windows 自托管 runner：
 #   runs-on 标签：self-hosted, windows, tuanjie
 #   仓库变量：TUANJIE_EDITOR_PATH = 编辑器可执行文件路径
-# 脚本与产物说明见 Assets/docs/04-测试与接入/34-CI回归接入.md
+#
+# 自托管机器常把 PowerShell 执行策略设为 Restricted，GitHub 生成的临时 .ps1 会被直接拒绝；
+# 因此步骤统一用 cmd 包装，显式以 -ExecutionPolicy Bypass 调 Tools/Ci-*.ps1。
+# 说明见 Assets/docs/04-测试与接入/34-CI回归接入.md
 
 on:
   workflow_dispatch:
@@ -12,7 +15,7 @@ on:
 
 concurrency:
   group: framework-regression
-  cancel-in-progress: false      # 同一 runner 上不允许两套 Unity 同时跑
+  cancel-in-progress: false
 
 jobs:
   regression:
@@ -26,90 +29,15 @@ jobs:
           clean: true
 
       - name: Run framework regression
-        shell: powershell
+        shell: cmd
         env:
-          EDITOR: ${{ vars.TUANJIE_EDITOR_PATH }}
-        run: |
-          $ErrorActionPreference = "Stop"
-
-          $copyDir = "NowFrameWork/Build/FrameworkRegression"
-          $transcript = Join-Path $env:RUNNER_TEMP "ci-step.log"
-
-          try {
-            try { Start-Transcript -Path $transcript -Force | Out-Null } catch { }
-
-            Write-Host "仓库: $env:GITHUB_REPOSITORY  提交: $env:GITHUB_SHA"
-            Write-Host "工作目录: $(Get-Location)"
-            Write-Host "编辑器路径变量: [$env:EDITOR]"
-            Write-Host "执行策略(Process): $(Get-ExecutionPolicy -Scope Process)"
-
-            if (-not $env:EDITOR) {
-              throw "仓库变量 TUANJIE_EDITOR_PATH 未配置（Settings > Secrets and variables > Actions > Variables）"
-            }
-
-            if (-not (Test-Path -LiteralPath $env:EDITOR -PathType Leaf)) {
-              throw "编辑器路径不存在或不是文件: $env:EDITOR"
-            }
-
-            # 自托管机器常为 Restricted，显式放开本次进程，避免脚本无法加载
-            Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-
-            if (-not (Test-Path -LiteralPath "./Tools/Run-FrameworkRegression.ps1" -PathType Leaf)) {
-              throw "找不到 Tools/Run-FrameworkRegression.ps1，检查 checkout 是否完整"
-            }
-
-            & "./Tools/Run-FrameworkRegression.ps1" -EditorPath $env:EDITOR
-            Write-Host "回归脚本退出码: $LASTEXITCODE"
-          }
-          catch {
-            Write-Host "步骤异常: $($_.Exception.GetType().FullName): $($_.Exception.Message)"
-            throw
-          }
-          finally {
-            try { Stop-Transcript | Out-Null } catch { }
-
-            # 无论成功失败都把转录复制进 Build，随已有 artifact 路径上传
-            try {
-              New-Item -ItemType Directory -Force -Path $copyDir | Out-Null
-              if (Test-Path $transcript) { Copy-Item $transcript (Join-Path $copyDir "ci-step.log") -Force }
-            }
-            catch { }
-          }
+          TUANJIE_EDITOR_PATH: ${{ vars.TUANJIE_EDITOR_PATH }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File "%GITHUB_WORKSPACE%\Tools\Ci-RunRegression.ps1"
 
       - name: Summarize report
         if: always()
-        shell: powershell
-        run: |
-          $summary = $env:GITHUB_STEP_SUMMARY
-          if (-not $summary) { Write-Host "没有 GITHUB_STEP_SUMMARY，跳过汇总"; exit 0 }
-
-          $root = "NowFrameWork/Build/FrameworkRegression"
-
-          if (-not (Test-Path $root)) {
-            Add-Content $summary "## 框架回归`n`n未生成回归目录（脚本可能在启动阶段失败）。"
-            exit 0
-          }
-
-          $dir = Get-ChildItem $root -Directory | Sort-Object LastWriteTime | Select-Object -Last 1
-          $json = Join-Path $dir.FullName "run.json"
-
-          if (-not (Test-Path $json)) {
-            Add-Content $summary "## 框架回归`n`n缺少 run.json，请查看上传的日志。"
-            exit 0
-          }
-
-          $run = Get-Content $json -Raw | ConvertFrom-Json
-
-          Add-Content $summary "## 框架回归 ``$($run.runName)``"
-          Add-Content $summary ""
-          Add-Content $summary "**状态**：``$($run.status)``"
-          Add-Content $summary ""
-          Add-Content $summary "| 阶段 | 通过 | 失败 | 跳过 | 耗时(s) |"
-          Add-Content $summary "|---|---|---|---|---|"
-
-          foreach ($stage in $run.stages) {
-            Add-Content $summary "| $($stage.name) | $($stage.passed)/$($stage.total) | $($stage.failed) | $($stage.skipped) | $([math]::Round($stage.seconds, 1)) |"
-          }
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File "%GITHUB_WORKSPACE%\Tools\Ci-Summarize.ps1"
 
       - name: Upload regression artifacts
         if: always()
