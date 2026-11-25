@@ -160,6 +160,7 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.41 | 2026-11-20 | **使用手册与导览**：新增 [32 使用手册](04-测试与接入/32-NowFrameWork框架使用手册.md)、[33 结构图与 API 导览](04-测试与接入/33-NowFrameWork结构图与API导览.md)，补充 Boot 验收记录 |
 | v0.4.42 | 2026-11-20 | **模块 API 文档拆分**：新增 `06-模块API/` 15 篇（Boot/模块/资源/配置/存储/场景/池/UI/事件/时钟/取消/日志/更新/平台/音频）与索引 |
 | v0.4.43 | 2026-11-20 | **UI 样例与测试脚本**：保存样例场景与资源测试脚本改动 |
+| v0.4.60 | 2026-11-25 | **PlayMode 不纳入 CI 的评估结论**：batchmode 下 17 条 PlayMode 用例 14 条失败，本地化专项放宽到 120 秒仍超时（UI 场景 + Boot + Addressables 组合不成立）；保留本地交互验证，证据见 [评估记录](evidence/2026-11-25-playmode-batchmode/README.md) |
 | v0.4.59 | 2026-11-25 | **CI 失败归档验收通过**（运行 #7）：失败结论、`run.json` 478/479、XML 注入消息、`ci-step.log`、17.5MB artifact 均符合预期；过程中修复"失败不传播"（`exit` → `throw`）与"脚本 BOM 丢失"两个真实缺陷；证据见 [2026-11-25 CI 失败归档验收](evidence/2026-11-25-ci-failure-path/README.md) |
 | v0.4.58 | 2026-11-25 | **CI 首次通过**：自托管 runner `tuanjie-win`，运行 #3 耗时 10 分 4 秒，四阶段 2/2、479/479、191/191、324/324；修复执行策略导致临时 `.ps1` 无法加载的问题（改用 `cmd` + `-ExecutionPolicy Bypass` 调 `Tools/Ci-*.ps1`）；证据见 [2026-11-25 CI 首次通过](evidence/2026-11-25-ci-first-run/README.md) |
 | v0.4.57 | 2026-11-25 | **Windows 真实 HTTP 发布验收通过**：正常升级、同 ID 拒绝覆盖、坏文件、传输中断、恢复后重试；证据见 [2026-11-25 Windows HTTP 发布验收](evidence/2026-11-25-windows-http-release/README.md)；新增 `Tools/DropServer.py` 断流辅助 |
