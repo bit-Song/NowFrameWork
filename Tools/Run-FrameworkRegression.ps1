@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$EditorPath = $env:TUANJIE_EDITOR_PATH,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_-]*$')]
     [string]$RunName = ('{0}-{1}' -f (Get-Date -Format 'yyyyMMdd-HHmmss'), ([guid]::NewGuid().ToString('N').Substring(0, 8))),

@@ -1,10 +1,11 @@
-param([string]$EditorPath = $env:TUANJIE_EDITOR_PATH)
+﻿param([string]$EditorPath = $env:TUANJIE_EDITOR_PATH)
 
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
 $copyDir = Join-Path $root "NowFrameWork/Build/FrameworkRegression"
-$transcript = Join-Path $env:RUNNER_TEMP "ci-step.log"
+$tempDir = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [System.IO.Path]::GetTempPath() }
+$transcript = Join-Path $tempDir "ci-step.log"
 
 try {
     try { Start-Transcript -Path $transcript -Force | Out-Null } catch { }
