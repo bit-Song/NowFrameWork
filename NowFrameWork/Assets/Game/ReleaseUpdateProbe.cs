@@ -30,6 +30,19 @@ namespace Game
                 _status = "场景里没有 WindowsResourceReleases";
         }
 
+        void Start()
+        {
+            // 验收脚本用命令行参数触发，避免合成键盘事件被 Input System 忽略。
+            string[] args = Environment.GetCommandLineArgs();
+
+            for (int i = 0; i < args.Length - 1; i++)
+                if (args[i] == "-stageRelease")
+                {
+                    Download(args[i + 1]);
+                    return;
+                }
+        }
+
         void Update()
         {
             if (Keyboard.current == null) return;

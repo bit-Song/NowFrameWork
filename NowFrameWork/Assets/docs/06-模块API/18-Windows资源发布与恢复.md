@@ -28,5 +28,5 @@ Windows x64 的 `BootFlow` 可以选配 `WindowsResourceReleases`。将组件赋
 2026-11-23 登记，本轮暂缓。现有报告已覆盖 Windows IL2CPP 中的真实 Catalog 与 Bundle 选版、测试传输取消，以及重新打开持久状态后的试用回退。
 
 - [x] **实际 HTTP 发布**（2026-11-25 通过）。从本地 HTTP 服务下载 V2，验证正常升级、传输中断和服务端返回损坏文件。失败后重启应继续使用 V1，服务恢复后应能重新下载 V2。
-- [ ] **强制终止 Player**（启动窗口短，待脚本化计时；PlayMode 已覆盖回退语义）。V2 写入试用状态后、Boot 进入 `Running` 前终止进程。重启应选择 V1。重新完整试用 V2 并确认后，再启动应继续选择 V2。
+- [x] **强制终止 Player**（2026-11-25 通过，脚本化 10ms 轮询试用状态后强杀；重启回退到已确认版本，见 [验收记录](../evidence/2026-11-25-release-kill-trial/README.md)）。V2 写入试用状态后、Boot 进入 `Running` 前终止进程。重启应选择 V1。重新完整试用 V2 并确认后，再启动应继续选择 V2。
 - [x] **归档证据**（见 [2026-11-25 Windows HTTP 发布验收](../evidence/2026-11-25-windows-http-release/README.md)）。记录 HTTP 请求、Player 启动选版和确认日志，以及终止前后持久状态的变化。
