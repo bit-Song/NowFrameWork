@@ -229,3 +229,133 @@ HybridCLR 代码加载通过可选的 `HybridClrBootLoader` 接入。只有明�
 资源问题可以用 `FrameworkApiSample` 的「2.输出资源诊断」查看 `Pending`、`ActiveLeases` 和租约明细。项目也可以在编辑器或 Development Player 中引用 `NowFrameWork.Diagnostics`，用 `DiagnosticsOverlay.Install(context.Assets, context.App.Errors)` 安装诊断面板，退出时管理该面板的生命周期。正式构建会返回空引用。
 
 修改框架后，可以从 **NowFrameWork → Tests → 运行全部 EditMode 测试** 验证回归。当前实现状态、已验收平台和后续模块以进度文档为准。键盘与手柄的控件焦点导航和虚拟列表见后续方案。 [进度与下一步](../05-进度与评审/15-进度与下一步.md) · [验收证据](../evidence/README.md)
+
+## 8. 服务速查
+
+| 需要什么 | 从哪里取 | 接口 |
+|---|---|---|
+| 资源 | `context.Assets` / `GameEntry.Assets` | `IAssetService` |
+| 配置 | `context.Configs` / `GameEntry.Configs` | `ConfigService` |
+| 设置 | `context.Settings` / `GameEntry.Settings` | `FileSettingsStore<BootPreferences>` |
+| 场景 | `context.Scenes` / `GameEntry.Scenes` | `ISceneService` |
+| UI | `GameEntry.UI` | `IUiService` |
+| 音频 | `GameEntry.Audio` / `context.Audio` | `AudioModule` |
+| 动作 | `GameEntry.Actions` | `ActionInput` |
+| 日志 / 事件 / 时钟 / 池 | `context.App.Log/Events/Clock/Pools` | core 接口 |
+
+先判断 `GameEntry.IsReady`/`HasUI`/`HasAudio` 再取服务；可选服务未装配时取用会抛异常，而不是返回 null。
+
+## 9. 音频
+
+音频模块随 Boot 注册，入口在 `GameEntry.Audio`。资源必须是 Addressables 条目（样例：`audio/bgm`、`audio/sfx`）。
+
+```csharp
+await GameEntry.Audio.PlayMusicAsync("audio/bgm");   // 循环 BGM，后一次请求替换前一次
+await GameEntry.Audio.PlayEffectAsync("audio/sfx");  // 并发音效，受 maxEffects 限制
+GameEntry.Audio.SetVolumes(0.8f, 1f);                // 0..1
+GameEntry.Audio.StopMusic();
+```
+
+| 行为 | 说明 |
+|---|---|
+| 后台暂停 | 由 `IAppLifecycle` 驱动，`IsPaused` 可查；回前台继续，不从头播 |
+| 通道上限 | 音效满时返回 `false`，不抛异常，调用方决定是否丢弃 |
+| 资源释放 | 切歌/停止后，无引用的 Clip 租约自动释放 |
+| 平台差异 | 非 Windows x64 跳过发布恢复，但音频本身仍走随包 Catalog |
+
+常见坑：音频资源只放进资源目录、没标 Addressable，运行时报「找不到唯一资源」。
+
+## 10. 输入
+
+| 层 | 职责 |
+|---|---|
+| `IActionSource` | 设备适配：Input Actions、手柄、虚拟摇杆 |
+| `ActionInput` | 多来源合并、门控、取值 |
+| `InputModule` | 返回键分发：一帧一次、后台不补发、异常隔离 |
+| `IBackSource` / `IBackFallback` | 返回键来源 / UI 不处理时的兜底 |
+
+```csharp
+var input = new ActionInput(
+    new InputActionsSource(asset, (Actions.Move, "Player/Move")),
+    new JoystickActionSource(joystick, Actions.Move));
+
+Vector2 move = input.GetVector(Actions.Move);
+input.SetGate("ui.modal", topModal);   // 每帧同步，幂等
+```
+
+| 约定 | 说明 |
+|---|---|
+| 门控分域 | `SetGate` 是幂等开关；`Suppress` 返回 `IDisposable` 令牌，两者可叠加 |
+| 热路径轮询 | 用 `GetVector`/`WasPressed`，不要再订阅动作回调，避免双触发 |
+| 二维动作 | `ActionState.Value` 是长度（强度），方向用 `Vector2 Vector` |
+| 改键 | 复合动作要按 binding 索引逐方向改；同 ID 冲突只提示同一 Action Map |
+
+## 11. 本地化
+
+Unity Localization 负责查表、回退与格式化；项目接入层负责语言选择与保存。
+
+```csharp
+await language.InitializeAsync(store.Load(() => new BootPreferences()).Source, ct);
+await language.SwitchAsync(LanguageSelection.Chinese, ct);
+```
+
+| 约定 | 说明 |
+|---|---|
+| 缺译回退 | 表缺键回退英文，不抛错 |
+| 持久化 | 选择写入 `BootPreferences`，重启恢复 |
+| 字体 | 中文需自带字体；当前按横屏设计，竖屏适配未做 |
+
+## 12. Windows 资源发布与恢复
+
+```csharp
+await releases.StageFromServerAsync(new Uri("http://127.0.0.1:8080/v2/release.json"), ct);
+// 暂存成功 → 下次启动试用 → Boot 进入 Running 才确认
+```
+
+| 规则 | 说明 |
+|---|---|
+| 清单校验 | 每个文件记录长度与 SHA-256；坏文件/断流失败且不落盘 |
+| 同 ID 拒绝 | 不能用当前确认版本 ID 再暂存，重发内容必须换 ID |
+| 回退 | 试用期失败或强杀，重启回到已确认版本 |
+| 平台 | 非 Windows x64 跳过发布选择，直接用随包内容 |
+
+验收脚本 `Tools/ReleaseKillProbe.ps1` 可复现「暂存 → 试用 → 强杀 → 回退」。
+
+## 13. 层级状态机
+
+```csharp
+var fsm = new StateMachine<Phase>();
+fsm.AddState(Phase.Ready, new ReadyState());
+fsm.SetInitialState(Phase.Ready);
+fsm.AddEventTransition(Phase.Ready, "Begin", Phase.Active);
+fsm.Enter();
+```
+
+| 约定 | 说明 |
+|---|---|
+| 回调内请求 | 状态回调里的切换在回调结束后统一处理 |
+| 退出协调 | 实现 `IStateExitHandler` 可延迟切换；强制规则可打断等待 |
+| 异常 | 回调抛错停止活动链，用 `Faulted`/`FaultPath`/`LastException` 定位 |
+| 清理重试 | `Exit()` 失败保留待清理状态，`HasPendingCleanup` 后重试 |
+
+## 14. 取消、错误与性能
+
+| 规则 | 做法 |
+|---|---|
+| 取消是正常路径 | `OperationCanceledException` 不记 Error |
+| 即发即忘 | 走 `TaskRunner.Run`，异常进 `ErrorBudget` |
+| 等待外部资源 | 销毁/卸载必须带超时与重试路径，失败保留句柄 |
+| 热路径零分配 | 避免闭包、LINQ、字符串拼接；缓存委托 |
+| 断言 | `MainThreadGuard.Assert` 带 `[Conditional]`，正式包零成本 |
+| 资源计数 | `ActiveLeases`/`PendingRequests` 用于验收，不要每帧轮询 |
+
+## 15. 测试与 CI
+
+| 入口 | 用途 |
+|---|---|
+| 菜单 `NowFrameWork → Tests → 运行全部 EditMode 测试` | 编辑器内全量（481 条） |
+| `Tools/Run-FrameworkRegression.ps1` | 预检 + 主工程 + 两套消费工程 |
+| GitHub Actions `Framework Regression` | 自托管 runner；失败也上传 artifact |
+| PlayMode | 本地交互验证；batchmode 下不可靠，不纳入 CI |
+
+CI 排障顺序：看 `run.json` 阶段名 → 对应 `.log`/`.xml` → `ci-step.log`。
