@@ -1,6 +1,6 @@
 # NowFrameWork Unity 通用框架设计与路线图
 
-> 内核、资源、存储、Boot、UI、基础音频、输入、GameEntry 和 Core 层级状态机已实现。主工程无图形 EditMode **477/477** 通过（2026-11-24）。Android IL2CPP 真机 UI 冒烟通过（2026-11-22），iOS 与移动端输入和音频待验。 [当前进度](05-进度与评审/15-进度与下一步.md) · [审查记录](05-进度与评审/16-框架审查与修复记录.md)
+> 内核、资源、存储、Boot、UI、音频、输入、本地化、GameEntry 与 Core 层级状态机均已实现。主工程无图形 EditMode **481/481** 通过（2026-11-25）；GitHub Actions 回归与失败归档验收通过；Windows 发布恢复（HTTP/坏文件/断流/强杀）通过；Android 真机输入/UI/本地化/音频播放通过，iOS 未开始。 [当前进度](05-进度与评审/15-进度与下一步.md) · [审查记录](05-进度与评审/16-框架审查与修复记录.md)
 > 目标平台：Android、iOS、PC（电脑端首版为 Windows x64）｜ 项目维度：2D 与 3D
 
 NowFrameWork 提供可复用的 Unity 工程底座：启动与生命周期、资源与场景、UI 与输入、配置与存档。框架通过 UPM 包交付，业务源码与框架分离。本项目只交付框架及验证载体，不开发具体游戏。首版先覆盖单机与离线运行，普通 AOT 模式独立可用，HybridCLR 是可选适配。
@@ -160,6 +160,7 @@ M0 用原型证伪假设，不要求先写完整框架。M1 不提前验收尚�
 | v0.4.41 | 2026-11-20 | **使用手册与导览**：新增 [32 使用手册](04-测试与接入/32-NowFrameWork框架使用手册.md)、[33 结构图与 API 导览](04-测试与接入/33-NowFrameWork结构图与API导览.md)，补充 Boot 验收记录 |
 | v0.4.42 | 2026-11-20 | **模块 API 文档拆分**：新增 `06-模块API/` 15 篇（Boot/模块/资源/配置/存储/场景/池/UI/事件/时钟/取消/日志/更新/平台/音频）与索引 |
 | v0.4.43 | 2026-11-20 | **UI 样例与测试脚本**：保存样例场景与资源测试脚本改动 |
+| v0.4.64 | 2026-11-25 | **文档收口**：重写 [26 阶段总结](05-进度与评审/26-阶段总结与下一步.md)（能力总览、验证结果、证据索引、未完成项、下一步）；修正 15 号输入/本地化过期描述；README 状态行更新到 481/481 与当前验收结论 |
 | v0.4.63 | 2026-11-25 | **移动端可用性修复**：非 Windows x64 平台跳过 Windows 发布恢复、直接使用随包内容（此前 `PlatformNotSupportedException` 会阻断 Boot）；发布探针在非 Windows 自动隐藏；音频探针随 Boot 正常就绪，481/481 通过 |
 | v0.4.62 | 2026-11-25 | **音频接入 Boot**：`BootContext` 注册 `AudioModule`，`GameEntry.HasAudio/Audio` 暴露入口，`BootFlow.Context` 可查；新增 `audio/bgm`、`audio/sfx` 样例与 `AudioProbe`；修复 `AudioModule` 编辑模式销毁报错（R30）；481/481 通过 |
 | v0.4.61 | 2026-11-25 | **Windows 试用期强杀验收通过**：暂存 v2 → 试用启动 → 检测到 `TrialManifest=v2` 后 10ms 内强杀 → 重启回退 `v3（已确认）`，Trial/Pending 清空；新增 `-stageRelease` 命令行入口、Mono 验收包构建入口与 `Tools/ReleaseKillProbe.ps1`；证据见 [验收记录](evidence/2026-11-25-release-kill-trial/README.md) |
