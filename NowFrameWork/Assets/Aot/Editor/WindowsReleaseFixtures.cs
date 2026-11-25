@@ -24,6 +24,7 @@ namespace NowFrameWork.EditorTools
             {
                 BuildRelease("v1");
                 BuildRelease("v2");
+                BuildRelease("v3"); // 坏文件/回退测试需要"与当前确认版本不同 ID"的发布集
             }
             finally { AssetDatabase.DeleteAsset(Source); }
         }

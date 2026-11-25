@@ -134,6 +134,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1942143199}
   - component: {fileID: 1942143198}
+  - component: {fileID: 1942143200}
+  - component: {fileID: 1942143201}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: BootIntegration
@@ -152,16 +154,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b08c7a72a58654c418fd00d0128e1207, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  _configAddress:
-  _sceneAddress:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _configAddress: 
+  _sceneAddress: 
   _runOnStart: 1
   _checkResourceUpdates: 0
-  _updateKey:
+  _updateKey: 
   _loadCode: 0
   _codeLoader: {fileID: 0}
   _projectEntry: {fileID: 0}
+  _resourceReleases: {fileID: 1942143200}
 --- !u!4 &1942143199
 Transform:
   m_ObjectHideFlags: 0
@@ -177,6 +180,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1942143200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942143197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 881ef30376029fc4aa219b8b567012c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _clientBuildId: windows-aot-v1
+  _contract: 1
+  _saveSchemaMin: 1
+  _saveSchemaMax: 1
+  _saveSchemaWrite: 1
+--- !u!114 &1942143201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942143197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 022cf44f4e11a1e4a98032265684be38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _serverRoot: http://127.0.0.1:8080
+  _release: v2
+  _showHud: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
