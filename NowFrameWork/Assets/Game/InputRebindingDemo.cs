@@ -131,8 +131,14 @@ namespace Game
             Keyboard keyboard = Keyboard.current;
 
             if (keyboard != null && Accepts(keyboard))
+            {
+                // allKeys 按 Key 枚举长度分配，布局里不存在的键是 null，必须逐个判空
                 foreach (KeyControl key in keyboard.allKeys)
-                    if (key.wasPressedThisFrame && key.keyCode != Key.Escape) return key;
+                {
+                    if (key == null || !key.wasPressedThisFrame) continue;
+                    if (key.keyCode != Key.Escape) return key;
+                }
+            }
 
             Gamepad gamepad = Gamepad.current;
 

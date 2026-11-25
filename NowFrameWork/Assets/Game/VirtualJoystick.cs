@@ -24,6 +24,15 @@ namespace Game
 
         int? _pointerId;
 
+        /// <summary>运行时装配：区域、摇杆头与手感参数。</summary>
+        public void Configure(RectTransform area, RectTransform knob, float radius = 0f, float deadzone = 0.15f)
+        {
+            _area = area != null ? area : transform as RectTransform;
+            _knob = knob;
+            _radius = Mathf.Max(0f, radius);
+            _deadzone = Mathf.Clamp(deadzone, 0f, 0.9f);
+        }
+
         public void OnPointerDown(PointerEventData eventData)
         {
             if (!_pointerId.HasValue && UpdateFrom(eventData)) _pointerId = eventData.pointerId;
