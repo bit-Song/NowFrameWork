@@ -38,15 +38,18 @@ namespace NowFrameWork.Core.Platform
     {
         AppState _state = AppState.Starting;
 
+        /// <summary>当前应用状态。</summary>
         public AppState State => _state;
 
         Action<AppState> _stateChanged;
+        /// <summary>应用状态变化事件。</summary>
         public event Action<AppState> StateChanged
         {
             add { MainThreadGuard.Assert("AppLifecycle.StateChanged.add"); _stateChanged += value; }
             remove { MainThreadGuard.Assert("AppLifecycle.StateChanged.remove"); _stateChanged -= value; }
         }
 
+        /// <summary>宿主通知进入后台或暂停。</summary>
         public void NotifyPause()
         {
             MainThreadGuard.Assert("AppLifecycle.NotifyPause");
@@ -54,12 +57,14 @@ namespace NowFrameWork.Core.Platform
             if (_state == AppState.Foreground || _state == AppState.Starting) SetState(AppState.Background);
         }
 
+        /// <summary>宿主通知回到前台或恢复。</summary>
         public void NotifyResume()
         {
             MainThreadGuard.Assert("AppLifecycle.NotifyResume");
             if (_state == AppState.Starting || _state == AppState.Background) SetState(AppState.Foreground);
         }
 
+        /// <summary>宿主通知即将退出。</summary>
         public void NotifyQuit()
         {
             MainThreadGuard.Assert("AppLifecycle.NotifyQuit");

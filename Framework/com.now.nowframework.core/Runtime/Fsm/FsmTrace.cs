@@ -27,7 +27,9 @@ namespace NowFrameWork.Core.Fsm
     {
         private static long _sequence; // 所有状态机共用的轨迹序号。
         private static long _machineId; // 所有状态机共用的实例标识。
+        /// <summary>取下一个全局轨迹序号。</summary>
         public static long Next() { return Interlocked.Increment(ref _sequence); }
+        /// <summary>取下一个状态机实例标识。</summary>
         public static long NextMachineId() { return Interlocked.Increment(ref _machineId); }
     }
 

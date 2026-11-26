@@ -7,6 +7,7 @@ namespace NowFrameWork.Core.Pooling
     /// <summary>池的运行时统计。Created 与 Destroyed 用于**对账**：池释放后两者必须相等。</summary>
     public readonly struct PoolStats
     {
+        /// <summary>池的累计统计快照。</summary>
         public PoolStats(int created, int destroyed, int active, int inactive, int reserved, int maxSize)
         {
             Created = created;
@@ -23,7 +24,9 @@ namespace NowFrameWork.Core.Pooling
         /// <summary>累计销毁数。池释放后应等于 <see cref="Created"/>。</summary>
         public int Destroyed { get; }
 
+        /// <summary>当前借出数量。</summary>
         public int Active { get; }
+        /// <summary>当前空闲数量。</summary>
         public int Inactive { get; }
 
         /// <summary>正在异步创建中（已占名额、尚未交付）的数量。</summary>
@@ -32,6 +35,7 @@ namespace NowFrameWork.Core.Pooling
         /// <summary>0 表示不限。</summary>
         public int MaxSize { get; }
 
+        /// <summary>便于日志输出的统计摘要。</summary>
         public override string ToString()
             => "pool created=" + Created + " destroyed=" + Destroyed + " active=" + Active + " inactive=" + Inactive;
     }

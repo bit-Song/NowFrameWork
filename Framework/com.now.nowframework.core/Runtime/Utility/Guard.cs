@@ -10,30 +10,35 @@ namespace NowFrameWork.Core.Utility
     /// </summary>
     public static class Guard
     {
+        /// <summary>值为 null 时抛 ArgumentNullException。</summary>
         public static T NotNull<T>(T value, string name) where T : class
         {
             if (value == null) throw new ArgumentNullException(name);
             return value;
         }
 
+        /// <summary>空或空白字符串时抛异常。</summary>
         public static string NotNullOrEmpty(string value, string name)
         {
             if (string.IsNullOrEmpty(value)) throw new ArgumentException("不能为空", name);
             return value;
         }
 
+        /// <summary>小于等于 0 时抛异常。</summary>
         public static int Positive(int value, string name)
         {
             if (value <= 0) throw new ArgumentOutOfRangeException(name, value, "必须大于 0");
             return value;
         }
 
+        /// <summary>小于 0 时抛异常。</summary>
         public static int NotNegative(int value, string name)
         {
             if (value < 0) throw new ArgumentOutOfRangeException(name, value, "不能为负");
             return value;
         }
 
+        /// <summary>超出范围时抛异常。</summary>
         public static float InRange(float value, float min, float max, string name)
         {
             if (value < min || value > max)

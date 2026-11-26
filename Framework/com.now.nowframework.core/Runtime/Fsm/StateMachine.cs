@@ -117,7 +117,9 @@ namespace NowFrameWork.Core.Fsm
         public Exception LastCleanupException { get; private set; }
         /// <summary>观察者抛出的最近一次异常，不影响业务状态推进。</summary>
         public Exception LastObserverException { get; private set; }
+        /// <summary>最近一次诊断时钟/轨迹异常。</summary>
         public Exception LastDiagnosticsException { get; private set; }
+        /// <summary>是否有等待重试清理的状态。</summary>
         public bool HasPendingCleanup => _pendingCleanup != null;
         /// <summary>是否因业务异常停止，显式 Enter/Restart 后清空。</summary>
         public bool IsFaulted => !IsRunning && LastException != null;

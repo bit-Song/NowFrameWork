@@ -14,6 +14,7 @@ namespace NowFrameWork.Core.Time
         float _delta;
         float _unscaledDelta;
 
+        /// <summary>当前游戏时间（受 TimeScale 影响）。</summary>
         public double Now
         {
             get
@@ -22,6 +23,7 @@ namespace NowFrameWork.Core.Time
                 return _now;
             }
         }
+        /// <summary>当前真实时间（不受 TimeScale 影响）。</summary>
         public double UnscaledNow
         {
             get
@@ -30,6 +32,7 @@ namespace NowFrameWork.Core.Time
                 return _unscaledNow;
             }
         }
+        /// <summary>上一帧的游戏时间增量。</summary>
         public float DeltaTime
         {
             get
@@ -38,6 +41,7 @@ namespace NowFrameWork.Core.Time
                 return _delta;
             }
         }
+        /// <summary>上一帧的真实时间增量。</summary>
         public float UnscaledDeltaTime
         {
             get
