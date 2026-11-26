@@ -26,13 +26,20 @@ namespace NowFrameWork.UI
         CancellationTokenSource _session;
         CancellationTokenSource _visible;
 
+        /// <summary>面板定义 ID。</summary>
         public int UiId { get; internal set; }
+        /// <summary>会话序号。</summary>
         public int Session { get; internal set; }
+        /// <summary>会话期取消令牌。</summary>
         public CancellationToken SessionToken => _session == null ? new CancellationToken(true) : _session.Token;
+        /// <summary>可见期取消令牌。</summary>
         public CancellationToken VisibleToken => _visible == null ? new CancellationToken(true) : _visible.Token;
+        /// <summary>根 CanvasGroup。</summary>
         public CanvasGroup VisualGroup { get { Capture(); return _group; } }
+        /// <summary>是否被上层模态阻挡。</summary>
         public bool InputBlocked => _inputBlocked;
         internal bool OwnsNavigationFocus { get; set; }
+        /// <summary>默认焦点控件。</summary>
         public Selectable DefaultFocus { get => _defaultFocus; set => _defaultFocus = value; }
 
         /// <summary>用 UGUI 原生显式导航连接本面板可用控件。控件显隐或顺序变化后重新调用。</summary>
@@ -146,6 +153,7 @@ namespace NowFrameWork.UI
             return _defaultFocus != null ? _defaultFocus : navigable[0];
         }
         internal float ShownAlpha { get { Capture(); return _alpha; } }
+        /// <summary>显示目标透明度。</summary>
         public float VisibleAlpha => ShownAlpha;
 
         internal IUiTransition ResolveTransition(IUiTransition fallback)

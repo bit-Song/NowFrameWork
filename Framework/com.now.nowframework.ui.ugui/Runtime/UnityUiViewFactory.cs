@@ -13,9 +13,13 @@ namespace NowFrameWork.UI
     {
         sealed class Record
         {
+            /// <summary>面板实例。</summary>
             public GameObject Instance;
+            /// <summary>面板视图组件。</summary>
             public UiView View;
+            /// <summary>Prefab 租约。</summary>
             public AssetLease<GameObject> Lease;
+            /// <summary>是否已请求销毁。</summary>
             public bool DestroyRequested;
         }
 
@@ -30,6 +34,7 @@ namespace NowFrameWork.UI
         bool _closing;
         UniTaskCompletionSource _disposing;
 
+        /// <summary>创建工厂：负责实例化、销毁并归还租约。</summary>
         public UnityUiViewFactory(IAssetService assets, UiRoot root = null, int maxDestroyFrames = 60,
             Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null, int maxTrackedRecords = 512)
         {
@@ -41,9 +46,11 @@ namespace NowFrameWork.UI
             _destroy = destroy ?? (go => UnityEngine.Object.Destroy(go));
         }
 
+        /// <summary>尚未完成释放的记录数。</summary>
         public int TrackedCount => _records.Count;
         internal void AttachRoot(UiRoot root) => _root = root;
 
+        /// <summary>按定义实例化面板。</summary>
         public async UniTask<UiView> CreateAsync(UiDefinition definition, Transform parent, CancellationToken ct)
         {
             MainThreadGuard.Assert("UnityUiViewFactory.CreateAsync");
@@ -93,12 +100,14 @@ namespace NowFrameWork.UI
             }
         }
 
+        /// <summary>请求销毁面板实例。</summary>
         public void Destroy(UiView view)
         {
             MainThreadGuard.Assert("UnityUiViewFactory.Destroy");
             DestroyRecord(Find(view));
         }
 
+        /// <summary>等待实例销毁并归还租约。</summary>
         public UniTask<bool> ReleaseAsync(UiView view)
         {
             MainThreadGuard.Assert("UnityUiViewFactory.ReleaseAsync");

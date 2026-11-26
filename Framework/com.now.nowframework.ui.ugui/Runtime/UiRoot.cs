@@ -21,10 +21,15 @@ namespace NowFrameWork.UI
         Canvas _backdrop, _transitionBlocker;
         Action _backdropClicked;
 
+        /// <summary>根 Canvas。</summary>
         public Canvas Canvas => _canvas;
+        /// <summary>焦点与导航使用的 EventSystem。</summary>
         public EventSystem EventSystem => _eventSystem;
+        /// <summary>共享遮罩是否可见。</summary>
         public bool BackdropVisible => _backdrop != null && _backdrop.gameObject.activeSelf;
+        /// <summary>遮罩排序值。</summary>
         public int BackdropSortingOrder => _backdrop == null ? 0 : _backdrop.sortingOrder;
+        /// <summary>切换过渡期间是否阻挡导航。</summary>
         public bool NavigationBlocked => _transitionBlocker != null && _transitionBlocker.gameObject.activeSelf;
 
         internal void PreparePresentation(Action backdropClicked)
@@ -62,6 +67,7 @@ namespace NowFrameWork.UI
             _transitionBlocker.gameObject.SetActive(blockAll);
         }
 
+        /// <summary>注入 Canvas、安全区与各层节点。</summary>
         public void Configure(Canvas canvas, RectTransform safeArea, Transform page, Transform popup, Transform toast,
             EventSystem eventSystem = null)
         {
@@ -69,8 +75,10 @@ namespace NowFrameWork.UI
             _eventSystem = eventSystem; _layoutReady = false;
         }
 
+        /// <summary>替换使用的 EventSystem。</summary>
         public void SetEventSystem(EventSystem eventSystem) => _eventSystem = eventSystem;
 
+        /// <summary>取指定层的父节点。</summary>
         public Transform GetLayer(UiLayer layer)
         {
             Transform result;
@@ -85,6 +93,7 @@ namespace NowFrameWork.UI
             return result;
         }
 
+        /// <summary>校验必要节点，缺失时抛异常。</summary>
         public void Validate()
         {
             if (_canvas == null || _canvas.transform != transform || _safeArea == null || _safeArea.transform == transform || !_safeArea.IsChildOf(transform))

@@ -29,6 +29,7 @@ namespace NowFrameWork.UI
         readonly UiCacheOptions _cacheOptions;
         readonly List<CachedView> _cache = new List<CachedView>();
 
+        /// <summary>缓存中的面板数量。</summary>
         public int CachedCount
         {
             get
@@ -118,6 +119,7 @@ namespace NowFrameWork.UI
             completion.TrySetResult();
         }
 
+        /// <summary>回收全部空闲缓存。</summary>
         public UniTask TrimCacheAsync(CancellationToken ct = default)
         {
             MainThreadGuard.Assert("UiService.TrimCacheAsync");

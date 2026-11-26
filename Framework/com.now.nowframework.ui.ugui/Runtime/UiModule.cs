@@ -28,6 +28,7 @@ namespace NowFrameWork.UI
         bool _lowMemoryTrimRequested;
         UniTaskCompletionSource _lowMemoryTrim;
 
+        /// <summary>创建 UI 模块：根预制体、面板定义与默认过渡。</summary>
         public UiModule(IAssetService assets, UiRoot rootPrefab, IEnumerable<UiDefinition> definitions,
             IUiTransition transition = null, UnityEngine.EventSystems.EventSystem eventSystem = null,
             Transform parent = null, ILog log = null, Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null,
@@ -42,11 +43,16 @@ namespace NowFrameWork.UI
             Service = new UiService(_factory, definitions, transition, startReady: false, cacheOptions: cacheOptions);
         }
 
+        /// <summary>模块 ID。</summary>
         public string Id => "ui";
+        /// <summary>不依赖其他模块。</summary>
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
+        /// <summary>UI 服务入口。</summary>
         public UiService Service { get; }
+        /// <summary>运行时创建的根节点。</summary>
         public UiRoot Root => _root;
 
+        /// <summary>实例化根预制体并创建服务。</summary>
         public async UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("UiModule.InitializeAsync");
@@ -73,6 +79,7 @@ namespace NowFrameWork.UI
             }
         }
 
+        /// <summary>启动服务并注册低内存回调。</summary>
         public UniTask StartAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("UiModule.StartAsync");
@@ -132,6 +139,7 @@ namespace NowFrameWork.UI
             else completion.TrySetException(error);
         }
 
+        /// <summary>关闭服务并销毁根节点。</summary>
         public async UniTask ShutdownAsync(CancellationToken ct)
         {
             try { await DisposeAsync(); }
@@ -141,6 +149,7 @@ namespace NowFrameWork.UI
             }
         }
 
+        /// <summary>释放模块持有的资源。</summary>
         public UniTask DisposeAsync()
         {
             MainThreadGuard.Assert("UiModule.DisposeAsync");

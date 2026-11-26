@@ -25,21 +25,36 @@ namespace NowFrameWork.UI
     {
         sealed class UiSession
         {
+            /// <summary>面板定义 ID。</summary>
             public int Id;
+            /// <summary>面板定义。</summary>
             public UiDefinition Definition;
+            /// <summary>打开/关闭状态。</summary>
             public UiState State;
+            /// <summary>当前视图实例。</summary>
             public UiView View;
+            /// <summary>本会话句柄。</summary>
             public UiHandle Handle;
+            /// <summary>是否处于可见状态。</summary>
             public bool Visible;
+            /// <summary>是否因异常失败。</summary>
             public bool Faulted;
+            /// <summary>是否已请求销毁。</summary>
             public bool DestroyRequested;
+            /// <summary>打开阶段取消源。</summary>
             public CancellationTokenSource OpeningCancellation;
+            /// <summary>打开流程完成信号。</summary>
             public readonly UniTaskCompletionSource OpeningFinished = new UniTaskCompletionSource();
+            /// <summary>关闭流程完成信号。</summary>
             public UniTaskCompletionSource Closing;
+            /// <summary>进行中的显隐操作。</summary>
             public VisibilityOperation Transition;
+            /// <summary>操作版本，用于丢弃过期结果。</summary>
             public long OperationVersion;
             public UiVisibilityState Visibility = UiVisibilityState.Hidden;
+            /// <summary>打开顺序，用于层级排序。</summary>
             public long Order;
+            /// <summary>本会话使用的过渡实现。</summary>
             public IUiTransition VisualTransition;
         }
 
@@ -47,11 +62,16 @@ namespace NowFrameWork.UI
         {
             public bool Visible;
             public long Version;
+            /// <summary>本次显隐操作的取消源。</summary>
             public readonly CancellationTokenSource Cancellation = new CancellationTokenSource();
+            /// <summary>显隐操作完成信号。</summary>
             public readonly UniTaskCompletionSource Completion = new UniTaskCompletionSource();
+            /// <summary>过渡收尾完成信号。</summary>
             public readonly UniTaskCompletionSource Finished = new UniTaskCompletionSource();
+            /// <summary>本次操作的取消令牌。</summary>
             public CancellationToken Token;
 
+            /// <summary>取消本次显隐操作。</summary>
             public Exception Cancel()
             {
                 if (Finished.Task.Status != UniTaskStatus.Pending) return null;
@@ -76,6 +96,7 @@ namespace NowFrameWork.UI
         bool _ready;
         UniTaskCompletionSource _shutdown;
 
+        /// <summary>创建 UI 服务；工厂负责实例化，定义表决定面板。</summary>
         public UiService(IUiViewFactory factory, IEnumerable<UiDefinition> definitions, IUiTransition defaultTransition = null,
             bool startReady = true, UiCacheOptions cacheOptions = null)
         {
@@ -106,11 +127,16 @@ namespace NowFrameWork.UI
             }
         }
 
+        /// <summary>正在打开的数量。</summary>
         public int OpeningCount { get { MainThreadGuard.Assert(); return _openingCount; } }
+        /// <summary>当前可见数量。</summary>
         public int VisibleCount { get { MainThreadGuard.Assert(); return _visibleCount; } }
+        /// <summary>失败的数量。</summary>
         public int FaultedCount { get { MainThreadGuard.Assert(); return _faultedCount; } }
+        /// <summary>活动会话数。</summary>
         public int SessionCount { get { MainThreadGuard.Assert(); return _sessions.Count; } }
 
+        /// <summary>打开面板；每次打开产生新句柄。</summary>
         public UniTask<UiOpenResult> OpenAsync<TArgs>(UiKey<TArgs> key, TArgs args, CancellationToken ct = default)
             where TArgs : class
         {
@@ -193,12 +219,14 @@ namespace NowFrameWork.UI
             }
         }
 
+        /// <summary>显示指定句柄。</summary>
         public UniTask ShowAsync(UiHandle handle, CancellationToken ct = default)
         {
             MainThreadGuard.Assert("UiService.ShowAsync");
             return ChangeVisibilityAsync(handle, true, ct);
         }
 
+        /// <summary>隐藏指定句柄（保留会话）。</summary>
         public UniTask HideAsync(UiHandle handle, CancellationToken ct = default)
         {
             MainThreadGuard.Assert("UiService.HideAsync");
@@ -277,12 +305,14 @@ namespace NowFrameWork.UI
             => session.State == UiState.Open && session.OperationVersion == operation.Version
                 && ReferenceEquals(session.Transition, operation);
 
+        /// <summary>查询句柄当前可见性。</summary>
         public UiVisibilityState GetVisibilityState(UiHandle handle)
         {
             MainThreadGuard.Assert("UiService.GetVisibilityState");
             return TryGet(handle, out UiSession session) ? session.Visibility : UiVisibilityState.Unknown;
         }
 
+        /// <summary>隐藏中的数量。</summary>
         public int HiddenCount
         {
             get

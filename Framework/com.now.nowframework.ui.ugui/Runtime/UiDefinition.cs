@@ -17,6 +17,7 @@ namespace NowFrameWork.UI
     /// </summary>
     public sealed class UiDefinition
     {
+        /// <summary>声明一个面板：ID、名称与 Prefab 地址。</summary>
         public UiDefinition(int id, string name, AssetKey prefab)
         {
             Id = id;
@@ -24,12 +25,16 @@ namespace NowFrameWork.UI
             Prefab = prefab;
         }
 
+        /// <summary>面板 ID，需与 UiKey 一致。</summary>
         public int Id { get; }
 
+        /// <summary>面板名称（诊断用）。</summary>
         public string Name { get; }
 
+        /// <summary>面板 Prefab 地址。</summary>
         public AssetKey Prefab { get; }
 
+        /// <summary>所在层：Page/Popup/Toast。</summary>
         public UiLayer Layer { get; set; } = UiLayer.Page;
 
         /// <summary>是否允许同一界面同时存在多个实例。</summary>
@@ -37,12 +42,15 @@ namespace NowFrameWork.UI
 
         /// <summary>模态窗口仅允许放在 Popup 层；阻挡下方输入，但不自动隐藏下方内容。</summary>
         public bool Modal { get; set; }
+        /// <summary>点遮罩是否关闭；仅模态允许。</summary>
         public bool CloseOnBackdrop { get; set; }
+        /// <summary>返回键处理方式：关闭/拦截/忽略。</summary>
         public UiBackBehavior BackBehavior { get; set; } = UiBackBehavior.Close;
 
         /// <summary>成功关闭时是否允许按模块缓存策略保留实例。默认关闭后销毁。</summary>
         public bool CacheOnClose { get; set; }
 
+        /// <summary>调试输出。</summary>
         public override string ToString() => "UiDef(" + Name + "#" + Id + ", " + Layer + ")";
     }
 }

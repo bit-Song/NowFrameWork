@@ -20,8 +20,11 @@ namespace NowFrameWork.UI
         UniTaskCompletionSource<bool> _back;
         TaskRunner _presentationTasks;
 
+        /// <summary>页面导航器。</summary>
         public UiNavigator Navigation { get; }
+        /// <summary>最顶层弹窗句柄。</summary>
         public UiHandle TopPopup { get { MainThreadGuard.Assert(); return _topPopup; } }
+        /// <summary>最顶层模态句柄。</summary>
         public UiHandle TopModal { get { MainThreadGuard.Assert(); return _topModal; } }
 
         internal void AttachPresentation(UiRoot root, ILog log)

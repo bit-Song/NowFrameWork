@@ -22,10 +22,14 @@ namespace NowFrameWork.UI
         UiHandle _pendingPop;
 
         internal UiNavigator(UiService service) => _service = service;
+        /// <summary>是否有切页操作进行中。</summary>
         public bool IsBusy { get { MainThreadGuard.Assert(); return _busy; } }
+        /// <summary>页面栈深度。</summary>
         public int PageCount { get { MainThreadGuard.Assert(); Prune(); return _pages.Count; } }
+        /// <summary>栈顶页面句柄。</summary>
         public UiHandle CurrentPage { get { MainThreadGuard.Assert(); Prune(); return _pages.Count == 0 ? default : _pages[_pages.Count - 1]; } }
 
+        /// <summary>入栈一个页面。</summary>
         public UniTask<UiOpenResult> PushAsync<TArgs>(UiKey<TArgs> key, TArgs args, CancellationToken ct = default) where TArgs : class
         {
             MainThreadGuard.Assert("UiNavigator.PushAsync");
@@ -72,6 +76,7 @@ namespace NowFrameWork.UI
             finally { End(); }
         }
 
+        /// <summary>出栈当前页面。</summary>
         public UniTask<bool> PopAsync(CancellationToken ct = default)
         {
             MainThreadGuard.Assert("UiNavigator.PopAsync");
@@ -99,6 +104,7 @@ namespace NowFrameWork.UI
             finally { End(); }
         }
 
+        /// <summary>先处理弹窗，再返回上一页。</summary>
         public async UniTask<bool> BackAsync(CancellationToken ct = default)
         {
             MainThreadGuard.Assert("UiNavigator.BackAsync");
