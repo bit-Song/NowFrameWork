@@ -29,16 +29,25 @@ namespace NowFrameWork.Core.Time
 
         struct Slot
         {
+            /// <summary>下次到期的时间点。</summary>
             public double Due;
+            /// <summary>重复间隔（秒）。</summary>
             public double Interval;
+            /// <summary>到期回调。</summary>
             public Action Callback;
+            /// <summary>句柄版本，用于识别复用槽位。</summary>
             public int Version;
+            /// <summary>登记时的帧号。</summary>
             public int Frame;
+            /// <summary>是否仍在计时。</summary>
             public bool Active;
+            /// <summary>是否使用非缩放时间。</summary>
             public bool Unscaled;
+            /// <summary>是否重复触发。</summary>
             public bool Repeating;
         }
 
+        /// <summary>创建计时器服务；注入时钟与日志。</summary>
         public TimerService(IClock clock, ILog log = null, int initialCapacity = 16)
         {
             MainThreadGuard.Assert("TimerService.TimerService");
@@ -50,6 +59,7 @@ namespace NowFrameWork.Core.Time
             _free = new int[initialCapacity];
         }
 
+        /// <summary>待触发的计时器数量。</summary>
         public int PendingCount
         {
             get
@@ -59,15 +69,19 @@ namespace NowFrameWork.Core.Time
             }
         }
 
+        /// <summary>延迟执行一次，返回可取消的句柄。</summary>
         public TimerHandle Delay(double seconds, Action callback)
             => Add(seconds, 0d, repeating: false, unscaled: false, callback);
 
+        /// <summary>延迟执行一次，使用非缩放时间。</summary>
         public TimerHandle DelayUnscaled(double seconds, Action callback)
             => Add(seconds, 0d, repeating: false, unscaled: true, callback);
 
+        /// <summary>按间隔重复执行，可选择立即触发首次。</summary>
         public TimerHandle Interval(double seconds, Action callback, bool immediate = false)
             => Add(immediate ? 0d : seconds, seconds, repeating: true, unscaled: false, callback);
 
+        /// <summary>按间隔重复执行，使用非缩放时间。</summary>
         public TimerHandle IntervalUnscaled(double seconds, Action callback, bool immediate = false)
             => Add(immediate ? 0d : seconds, seconds, repeating: true, unscaled: true, callback);
 
@@ -94,6 +108,7 @@ namespace NowFrameWork.Core.Time
             return new TimerHandle(index, _slots[index].Version);
         }
 
+        /// <summary>取消句柄对应的计时器。</summary>
         public bool Cancel(in TimerHandle handle)
         {
             MainThreadGuard.Assert("TimerService.Cancel");
@@ -106,6 +121,7 @@ namespace NowFrameWork.Core.Time
             return true;
         }
 
+        /// <summary>清空全部计时器。</summary>
         public void Clear()
         {
             MainThreadGuard.Assert("TimerService.Clear");
@@ -122,6 +138,7 @@ namespace NowFrameWork.Core.Time
             _activeCount = 0;
         }
 
+        /// <summary>由宿主每帧调用，触发到期的回调。</summary>
         public void Update()
         {
             MainThreadGuard.Assert("TimerService.Update");

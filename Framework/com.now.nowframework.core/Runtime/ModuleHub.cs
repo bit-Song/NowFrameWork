@@ -57,6 +57,7 @@ namespace NowFrameWork.Core
             _modulesView = _modules.AsReadOnly();   // 构造一次，之后每次访问都复用
         }
 
+        /// <summary>已注册的模块，按注册顺序。</summary>
         public IReadOnlyList<IAppModule> Modules
         {
             get
@@ -66,6 +67,7 @@ namespace NowFrameWork.Core
             }
         }
 
+        /// <summary>注册模块；启动后禁止再注册。</summary>
         public void Register(IAppModule module)
         {
             MainThreadGuard.Assert("ModuleHub.Register");
@@ -79,6 +81,7 @@ namespace NowFrameWork.Core
             _byId.Add(module.Id, module);
         }
 
+        /// <summary>按依赖拓扑初始化并启动全部模块。</summary>
         public UniTask StartupAsync(CancellationToken ct = default) => StartupAsync(ct, null);
 
         /// <summary>
@@ -155,6 +158,7 @@ namespace NowFrameWork.Core
             }
         }
 
+        /// <summary>按逆序关闭模块并清理。</summary>
         public UniTask ShutdownAsync(CancellationToken ct = default)
         {
             MainThreadGuard.Assert("ModuleHub.ShutdownAsync");
@@ -270,6 +274,7 @@ namespace NowFrameWork.Core
             _sortOrder.Add(module);
         }
 
+        /// <summary>驱动实现 ITickable 的模块。</summary>
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
             MainThreadGuard.Assert("ModuleHub.Tick");
@@ -281,6 +286,7 @@ namespace NowFrameWork.Core
             }
         }
 
+        /// <summary>驱动实现 ILateTickable 的模块。</summary>
         public void LateTick()
         {
             MainThreadGuard.Assert("ModuleHub.LateTick");
@@ -292,6 +298,7 @@ namespace NowFrameWork.Core
             }
         }
 
+        /// <summary>驱动实现 IFixedTickable 的模块。</summary>
         public void FixedTick(float fixedDeltaTime)
         {
             MainThreadGuard.Assert("ModuleHub.FixedTick");
@@ -316,6 +323,7 @@ namespace NowFrameWork.Core
                 "模块回调失败(" + phase + "): " + id + " -> " + e.GetType().Name + ": " + e.Message);
         }
 
+        /// <summary>取唯一模块；缺失或存在多个时抛异常。</summary>
         public T Get<T>() where T : class
         {
             MainThreadGuard.Assert("ModuleHub.Get");
@@ -323,6 +331,7 @@ namespace NowFrameWork.Core
             throw new InvalidOperationException("模块未注册: " + typeof(T).Name);
         }
 
+        /// <summary>尝试取唯一模块。</summary>
         public bool TryGet<T>(out T module) where T : class
         {
             MainThreadGuard.Assert("ModuleHub.TryGet");
@@ -339,6 +348,7 @@ namespace NowFrameWork.Core
             return false;
         }
 
+        /// <summary>把所有实现 T 的模块写入缓冲并返回数量。</summary>
         public int TryGetAll<T>(List<T> buffer) where T : class
         {
             MainThreadGuard.Assert("ModuleHub.TryGetAll");

@@ -18,10 +18,14 @@ namespace NowFrameWork.Core.Storage
         bool _primaryValid;
         T _value;
 
+        /// <summary>主文件完整路径。</summary>
         public string FilePath { get; }
+        /// <summary>备份文件路径。</summary>
         public string BackupPath => FilePath + ".bak";
+        /// <summary>临时文件路径（提交前写入）。</summary>
         public string TemporaryPath => FilePath + ".tmp";
 
+        /// <summary>创建设置存储；目录与 id 决定文件名。</summary>
         public FileSettingsStore(string directory, string id, ISettingsCodec<T> codec, int maxPayloadBytes = 1024 * 1024)
         {
             MainThreadGuard.Assert("FileSettingsStore.ctor");

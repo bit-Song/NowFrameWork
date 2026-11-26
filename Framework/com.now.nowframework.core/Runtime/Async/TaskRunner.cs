@@ -24,6 +24,7 @@ namespace NowFrameWork.Core.Async
         int _running;
         bool _disposed;
 
+        /// <summary>创建任务运行器；日志记录真异常。</summary>
         public TaskRunner(ILog log = null)
         {
             MainThreadGuard.Assert("TaskRunner.TaskRunner");
@@ -40,6 +41,7 @@ namespace NowFrameWork.Core.Async
             }
         }
 
+        /// <summary>仍在运行的任务数量。</summary>
         public int Running
         {
             get
@@ -81,12 +83,14 @@ namespace NowFrameWork.Core.Async
             }
         }
 
+        /// <summary>取消全部任务。</summary>
         public void CancelAll()
         {
             MainThreadGuard.Assert("TaskRunner.CancelAll");
             if (!_disposed) _cts.Cancel();
         }
 
+        /// <summary>取消并释放运行器。</summary>
         public void Dispose()
         {
             MainThreadGuard.Assert("TaskRunner.Dispose");

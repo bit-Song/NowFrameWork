@@ -19,6 +19,7 @@ namespace NowFrameWork.Core.Async
         readonly CancellationTokenSource _cts;
         bool _disposed;
 
+        /// <summary>创建取消范围，可链接父令牌。</summary>
         public CancellationScope(CancellationToken parent = default)
         {
             MainThreadGuard.Assert("CancellationScope.CancellationScope");
@@ -27,6 +28,7 @@ namespace NowFrameWork.Core.Async
                 : new CancellationTokenSource();
         }
 
+        /// <summary>本范围的取消令牌。</summary>
         public CancellationToken Token
         {
             get
@@ -36,6 +38,7 @@ namespace NowFrameWork.Core.Async
             }
         }
 
+        /// <summary>是否已请求取消。</summary>
         public bool IsCancellationRequested
         {
             get
@@ -60,6 +63,7 @@ namespace NowFrameWork.Core.Async
             _cts.Cancel();
         }
 
+        /// <summary>释放并取消本范围。</summary>
         public void Dispose()
         {
             MainThreadGuard.Assert("CancellationScope.Dispose");

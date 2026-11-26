@@ -38,12 +38,14 @@ namespace NowFrameWork.Core.Events
 
         const string C04Tag = "C04";
 
+        /// <summary>创建事件总线；日志用于记录订阅者异常。</summary>
         public EventBus(ILog log = null)
         {
             MainThreadGuard.Assert("EventBus.EventBus");
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>订阅由委托处理的事件，返回的令牌释放即退订。</summary>
         public IEventSubscription Subscribe<T>(EventHandler<T> handler) where T : struct
         {
             MainThreadGuard.Assert("EventBus.Subscribe");
@@ -54,6 +56,7 @@ namespace NowFrameWork.Core.Events
             return new Subscription(this, typeof(T), handler);
         }
 
+        /// <summary>订阅实现 IEventHandler<T> 的对象。</summary>
         public IEventSubscription Subscribe<T>(IEventHandler<T> handler) where T : struct
         {
             MainThreadGuard.Assert("EventBus.Subscribe");
@@ -64,6 +67,7 @@ namespace NowFrameWork.Core.Events
             return new Subscription(this, typeof(T), handler);
         }
 
+        /// <summary>同步派发事件；派发期间增删订阅是安全的。</summary>
         public void Publish<T>(in T evt) where T : struct
         {
             MainThreadGuard.Assert("EventBus.Publish");
@@ -88,12 +92,14 @@ namespace NowFrameWork.Core.Events
             }
         }
 
+        /// <summary>事件入队，等待 FlushDeferred 统一派发。</summary>
         public void PublishDeferred<T>(in T evt) where T : struct
         {
             MainThreadGuard.Assert("EventBus.PublishDeferred");
             GetOrCreateChannel<T>().Enqueue(in evt);
         }
 
+        /// <summary>按入队顺序派发延迟事件。</summary>
         public void FlushDeferred()
         {
             MainThreadGuard.Assert("EventBus.FlushDeferred");
@@ -107,6 +113,7 @@ namespace NowFrameWork.Core.Events
                 if (_channels.TryGetValue(_flushKeys[i], out IChannel channel)) channel.FlushDeferred(_log);
         }
 
+        /// <summary>清空订阅与延迟队列。</summary>
         public void Clear()
         {
             MainThreadGuard.Assert("EventBus.Clear");
@@ -149,18 +156,21 @@ namespace NowFrameWork.Core.Events
 
             bool _dirty;
 
+            /// <summary>添加委托形式的处理器（内部通道）。</summary>
             public void AddDelegate(EventHandler<T> handler)
             {
                 _delegates.Add(handler);
                 _dirty = true;
             }
 
+            /// <summary>添加对象形式的处理器（内部通道）。</summary>
             public void AddHandler(IEventHandler<T> handler)
             {
                 _handlers.Add(handler);
                 _dirty = true;
             }
 
+            /// <summary>移除处理器（内部通道）。</summary>
             public void Remove(object handler)
             {
                 if (handler is EventHandler<T> d) _delegates.Remove(d);
@@ -170,8 +180,10 @@ namespace NowFrameWork.Core.Events
                 _dirty = true;
             }
 
+            /// <summary>延迟事件入队（内部通道）。</summary>
             public void Enqueue(in T evt) => _deferred.Add(evt);
 
+            /// <summary>同步派发并记录订阅者异常。</summary>
             public void Publish(in T evt, ILog log)
             {
                 EnsureSnapshot();
@@ -192,6 +204,7 @@ namespace NowFrameWork.Core.Events
                 }
             }
 
+            /// <summary>按顺序派发延迟事件并记录异常。</summary>
             public void FlushDeferred(ILog log)
             {
                 if (_deferred.Count == 0) return;
@@ -213,6 +226,7 @@ namespace NowFrameWork.Core.Events
                 _deferred.Clear();
             }
 
+            /// <summary>清空本通道的订阅与延迟队列。</summary>
             public void Clear()
             {
                 _delegates.Clear();
@@ -254,6 +268,7 @@ namespace NowFrameWork.Core.Events
         {
             readonly EventBus _bus;
 
+            /// <summary>创建订阅令牌；释放时解除订阅。</summary>
             public Subscription(EventBus bus, Type eventType, object handler)
             {
                 _bus = bus;
@@ -261,10 +276,14 @@ namespace NowFrameWork.Core.Events
                 Handler = handler;
             }
 
+            /// <summary>订阅的事件类型。</summary>
             public Type EventType { get; }
+            /// <summary>订阅的处理器。</summary>
             public object Handler { get; }
+            /// <summary>是否已解除订阅。</summary>
             public bool IsDisposed { get; private set; }
 
+            /// <summary>解除订阅，重复释放无副作用。</summary>
             public void Dispose()
             {
                 MainThreadGuard.Assert("EventSubscription.Dispose");

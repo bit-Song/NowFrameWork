@@ -27,7 +27,9 @@ namespace NowFrameWork.Core.Pooling
     {
         struct IdleEntry
         {
+            /// <summary>槽位中的对象。</summary>
             public T Value;
+            /// <summary>槽位进入空闲的时间点。</summary>
             public double Since;
         }
 
@@ -36,14 +38,17 @@ namespace NowFrameWork.Core.Pooling
             readonly Func<T> _create;
             readonly Action<T> _destroy;
 
+            /// <summary>用创建/销毁委托构造工厂。</summary>
             public DelegateFactory(Func<T> create, Action<T> destroy)
             {
                 _create = create;
                 _destroy = destroy;
             }
 
+            /// <summary>调用创建委托。</summary>
             public T Create() => _create();
 
+            /// <summary>调用销毁委托（可为空）。</summary>
             public void Destroy(T item) => _destroy?.Invoke(item);
         }
 
@@ -66,6 +71,7 @@ namespace NowFrameWork.Core.Pooling
         int _reserved;  // 异步创建中
         bool _disposed;
 
+        /// <summary>创建对象池；可限制容量与空闲超时。</summary>
         public ObjectPool(Func<T> create, Action<T> destroy = null, int maxSize = 0,
             double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null, IClock clock = null, ILog log = null,
             IAsyncPoolItemFactory<T> asyncFactory = null)
@@ -99,6 +105,7 @@ namespace NowFrameWork.Core.Pooling
             if (prewarm > 0) Prewarm(prewarm);
         }
 
+        /// <summary>当前借出未归还的数量。</summary>
         public int ActiveCount
         {
             get
@@ -107,6 +114,7 @@ namespace NowFrameWork.Core.Pooling
                 return _active.Count;
             }
         }
+        /// <summary>当前空闲待复用的数量。</summary>
         public int InactiveCount
         {
             get
@@ -115,6 +123,7 @@ namespace NowFrameWork.Core.Pooling
                 return _idleCount;
             }
         }
+        /// <summary>池内对象总数（借出 + 空闲）。</summary>
         public int TotalCount
         {
             get
@@ -123,6 +132,7 @@ namespace NowFrameWork.Core.Pooling
                 return _live;
             }
         }
+        /// <summary>池是否已释放。</summary>
         public bool IsDisposed
         {
             get
@@ -132,6 +142,7 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>创建、复用与销毁的累计统计。</summary>
         public PoolStats Stats
         {
             get
@@ -141,6 +152,7 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>取一个对象；无空闲时创建。</summary>
         public T Get()
         {
             MainThreadGuard.Assert("ObjectPool.Get");
@@ -164,6 +176,7 @@ namespace NowFrameWork.Core.Pooling
             return created;
         }
 
+        /// <summary>尝试取一个对象，池已释放时返回 false。</summary>
         public bool TryGet(out T item)
         {
             MainThreadGuard.Assert("ObjectPool.TryGet");
@@ -228,6 +241,7 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>归还对象；重复归还或未知对象会报错。</summary>
         public void Release(T item)
         {
             MainThreadGuard.Assert("ObjectPool.Release");
@@ -255,6 +269,7 @@ namespace NowFrameWork.Core.Pooling
             PushIdle(item);
         }
 
+        /// <summary>预热指定数量，返回实际创建数。</summary>
         public int Prewarm(int count)
         {
             MainThreadGuard.Assert("ObjectPool.Prewarm");
@@ -272,6 +287,7 @@ namespace NowFrameWork.Core.Pooling
             return made;
         }
 
+        /// <summary>按空闲超时回收，由池服务驱动。</summary>
         public void Tick(double now)
         {
             MainThreadGuard.Assert("ObjectPool.Tick");
@@ -288,6 +304,7 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>清空池，可选择是否连同借出对象一起销毁。</summary>
         public void Clear(bool includeActive)
         {
             MainThreadGuard.Assert("ObjectPool.Clear");
@@ -301,8 +318,10 @@ namespace NowFrameWork.Core.Pooling
             _active.Clear();
         }
 
+        /// <summary>释放池；仍有借出对象时失败。</summary>
         public void Dispose() => Dispose(force: false);
 
+        /// <summary>释放池，可强制销毁借出对象。</summary>
         public void Dispose(bool force)
         {
             MainThreadGuard.Assert("ObjectPool.Dispose");

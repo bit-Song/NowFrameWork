@@ -40,6 +40,7 @@ namespace NowFrameWork.Core.Logging
             _clock = clock ?? s_zeroClock;
         }
 
+        /// <summary>当前最低输出级别。</summary>
         public LogLevel MinLevel
         {
             get
@@ -49,18 +50,21 @@ namespace NowFrameWork.Core.Logging
             }
         }
 
+        /// <summary>指定级别是否会被输出（供调用方省去字符串拼接）。</summary>
         public bool IsEnabled(LogLevel level)
         {
             MainThreadGuard.Assert("Logger.IsEnabled");
             return level >= _minLevel && level != LogLevel.Off;
         }
 
+        /// <summary>调整最低输出级别。</summary>
         public void SetMinLevel(LogLevel level)
         {
             MainThreadGuard.Assert("Logger.SetMinLevel");
             _minLevel = level;
         }
 
+        /// <summary>添加输出端；重复添加会忽略。</summary>
         public void AddSink(ILogSink sink)
         {
             MainThreadGuard.Assert("Logger.AddSink");
@@ -69,12 +73,14 @@ namespace NowFrameWork.Core.Logging
             _sinks.Add(sink);
         }
 
+        /// <summary>移除输出端。</summary>
         public void RemoveSink(ILogSink sink)
         {
             MainThreadGuard.Assert("Logger.RemoveSink");
             _sinks.Remove(sink);
         }
 
+        /// <summary>写一条日志，按级别过滤并分发到各输出端。</summary>
         public void Write(LogLevel level, string tag, string message)
         {
             MainThreadGuard.Assert("Logger.Write");

@@ -26,6 +26,7 @@ namespace NowFrameWork.Core.Pooling
 
         bool _disposed;
 
+        /// <summary>创建对象池服务；时钟用于统计空闲时间。</summary>
         public PoolService(IClock clock, ILog log = null)
         {
             MainThreadGuard.Assert("PoolService.PoolService");
@@ -33,6 +34,7 @@ namespace NowFrameWork.Core.Pooling
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>当前登记的对象池数量。</summary>
         public int PoolCount
         {
             get
@@ -42,6 +44,7 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>按 key 获取或创建对象池；同 key 不同类型会报错。</summary>
         public ObjectPool<T> GetOrCreate<T>(string key, Func<T> create, Action<T> destroy = null,
             int maxSize = 0, double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null)
             where T : class
@@ -51,6 +54,7 @@ namespace NowFrameWork.Core.Pooling
             return GetOrCreate(key, new DelegateFactory<T>(create, destroy), maxSize, autoRecycleSeconds, prewarm, isValid);
         }
 
+        /// <summary>用工厂按 key 获取或创建对象池。</summary>
         public ObjectPool<T> GetOrCreate<T>(string key, IPoolItemFactory<T> factory,
             int maxSize = 0, double autoRecycleSeconds = 0d, int prewarm = 0, Func<T, bool> isValid = null)
             where T : class
@@ -71,6 +75,7 @@ namespace NowFrameWork.Core.Pooling
             return pool;
         }
 
+        /// <summary>尝试获取已存在的池，不创建。</summary>
         public bool TryGetPool<T>(string key, out ObjectPool<T> pool) where T : class
         {
             MainThreadGuard.Assert("PoolService.TryGetPool");
@@ -124,12 +129,14 @@ namespace NowFrameWork.Core.Pooling
             }
         }
 
+        /// <summary>清空全部池，可选择是否包含仍在使用的对象。</summary>
         public void ClearAll(bool includeActive)
         {
             MainThreadGuard.Assert("PoolService.ClearAll");
             for (int i = 0; i < _all.Count; i++) _all[i].Clear(includeActive);
         }
 
+        /// <summary>释放全部池。</summary>
         public void Dispose()
         {
             MainThreadGuard.Assert("PoolService.Dispose");
@@ -152,14 +159,17 @@ namespace NowFrameWork.Core.Pooling
             readonly Func<T> _create;
             readonly Action<T> _destroy;
 
+            /// <summary>用委托实现池的创建与销毁。</summary>
             public DelegateFactory(Func<T> create, Action<T> destroy)
             {
                 _create = create ?? throw new ArgumentNullException(nameof(create));
                 _destroy = destroy;
             }
 
+            /// <summary>调用创建委托。</summary>
             public T Create() => _create();
 
+            /// <summary>调用销毁委托。</summary>
             public void Destroy(T item) => _destroy?.Invoke(item);
         }
     }
