@@ -9,6 +9,7 @@ namespace NowFrameWork.Assets.Adapter
     /// <summary>只等待、不转移句柄所有权。超时与取消在 Unity PlayerLoop 中检查，释放由调用方负责。</summary>
     internal static class AddressablesOperation
     {
+        /// <summary>等待 Addressables 操作完成，带超时与取消。</summary>
         public static async UniTask WaitAsync(AsyncOperationHandle handle, TimeSpan timeout,
             CancellationToken ct, IProgress<float> progress = null)
         {
@@ -29,11 +30,13 @@ namespace NowFrameWork.Assets.Adapter
             progress?.Report(1f);
         }
 
+        /// <summary>安全释放操作句柄。</summary>
         public static void Release(AsyncOperationHandle handle)
         {
             if (handle.IsValid()) UnityEngine.AddressableAssets.Addressables.Release(handle);
         }
 
+        /// <summary>等待 UniTask 完成，带超时。</summary>
         public static async UniTask WaitAsync(UniTask task, TimeSpan timeout, CancellationToken ct)
         {
             long start = Stopwatch.GetTimestamp();

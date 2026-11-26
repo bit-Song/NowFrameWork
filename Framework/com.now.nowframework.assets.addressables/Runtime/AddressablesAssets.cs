@@ -16,6 +16,7 @@ namespace NowFrameWork.Assets.Adapter
     /// </summary>
     public static class AddressablesAssets
     {
+        /// <summary>创建 Addressables 资源服务与模块。</summary>
         public static (IAssetService Service, AssetsModule Module) Create(TimeSpan? timeout = null, ILog log = null)
         {
             var provider = new AddressablesProvider(timeout);

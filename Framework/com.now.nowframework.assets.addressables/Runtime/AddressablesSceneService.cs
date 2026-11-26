@@ -15,8 +15,10 @@ namespace NowFrameWork.Assets.Adapter
         readonly TimeSpan _timeout;
         readonly AddressablesProvider _provider;
 
+        /// <summary>创建场景服务，使用默认提供者配置。</summary>
         public AddressablesSceneService(TimeSpan? timeout = null) : this(null, timeout) { }
 
+        /// <summary>复用已有提供者的 Catalog 配置。</summary>
         public AddressablesSceneService(AddressablesProvider provider, TimeSpan? timeout)
         {
             MainThreadGuard.Assert("AddressablesSceneService.AddressablesSceneService");
@@ -24,6 +26,7 @@ namespace NowFrameWork.Assets.Adapter
             _provider = provider;
         }
 
+        /// <summary>附加加载场景并返回租约。</summary>
         public async UniTask<SceneLease> LoadAdditiveAsync(object key, CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesSceneService.LoadAdditiveAsync");
@@ -52,12 +55,14 @@ namespace NowFrameWork.Assets.Adapter
             UniTaskCompletionSource _unloading;
             bool _unloaded;
 
+            /// <summary>场景加载操作的所有者。</summary>
             public SceneOwner(AsyncOperationHandle<SceneInstance> load, TimeSpan timeout)
             {
                 _load = load;
                 _timeout = timeout;
             }
 
+            /// <summary>卸载场景并等待完成。</summary>
             public async UniTask UnloadAsync()
             {
                 if (_unloaded) return;
@@ -91,6 +96,7 @@ namespace NowFrameWork.Assets.Adapter
                 finally { AddressablesOperation.Release(operation); }
             }
 
+            /// <summary>清理未正常卸载的残留场景。</summary>
             public async UniTask CleanupAbandonedAsync()
             {
                 try

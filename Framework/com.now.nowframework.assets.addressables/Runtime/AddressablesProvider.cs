@@ -21,8 +21,10 @@ namespace NowFrameWork.Assets.Adapter
         IResourceLocator _releaseLocator;
         readonly Dictionary<string, IResourceLocation> _locations = new Dictionary<string, IResourceLocation>(StringComparer.Ordinal);
 
+        /// <summary>创建提供者，使用默认 Catalog。</summary>
         public AddressablesProvider(TimeSpan? timeout = null) : this(null, timeout) { }
 
+        /// <summary>创建提供者，优先加载指定发布集的 Catalog。</summary>
         public AddressablesProvider(ReleaseSelection release, TimeSpan? timeout)
         {
             MainThreadGuard.Assert("AddressablesProvider.AddressablesProvider");
@@ -30,6 +32,7 @@ namespace NowFrameWork.Assets.Adapter
             _timeout = timeout ?? TimeSpan.FromSeconds(30);
         }
 
+        /// <summary>初始化 Addressables 并加载发布集 Catalog。</summary>
         public async UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.InitializeAsync");
@@ -100,9 +103,11 @@ namespace NowFrameWork.Assets.Adapter
             return locations[0];
         }
 
+        /// <summary>解析资源键为规范化地址。</summary>
         public UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, CancellationToken ct)
             => ResolveCanonicalKeyAsync(key, typeof(UnityEngine.Object), ct);
 
+        /// <summary>按资源类型解析规范化地址。</summary>
         public async UniTask<string> ResolveCanonicalKeyAsync(AssetKey key, Type assetType, CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.ResolveCanonicalKeyAsync");
@@ -132,6 +137,7 @@ namespace NowFrameWork.Assets.Adapter
             return canonical;
         }
 
+        /// <summary>加载资源并返回句柄。</summary>
         public async UniTask<ProviderHandle> LoadAsync(string canonicalKey, CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.LoadAsync");
@@ -152,6 +158,7 @@ namespace NowFrameWork.Assets.Adapter
             }
         }
 
+        /// <summary>释放提供者句柄。</summary>
         public void Release(ProviderHandle handle)
         {
             MainThreadGuard.Assert("AddressablesProvider.Release");
@@ -159,6 +166,7 @@ namespace NowFrameWork.Assets.Adapter
                 AddressablesOperation.Release(op);
         }
 
+        /// <summary>检查 Catalog 更新。</summary>
         public async UniTask<bool> CheckForUpdatesAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.CheckForUpdatesAsync");
@@ -172,6 +180,7 @@ namespace NowFrameWork.Assets.Adapter
             finally { AddressablesOperation.Release(handle); }
         }
 
+        /// <summary>更新 Catalog，返回数量。</summary>
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.UpdateCatalogsAsync");
@@ -185,6 +194,7 @@ namespace NowFrameWork.Assets.Adapter
             finally { AddressablesOperation.Release(handle); }
         }
 
+        /// <summary>查询下载大小。</summary>
         public async UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.GetDownloadSizeAsync");
@@ -198,6 +208,7 @@ namespace NowFrameWork.Assets.Adapter
             finally { AddressablesOperation.Release(handle); }
         }
 
+        /// <summary>下载资源并报告进度。</summary>
         public async UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct)
         {
             MainThreadGuard.Assert("AddressablesProvider.DownloadAsync");
