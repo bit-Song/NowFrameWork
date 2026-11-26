@@ -13,6 +13,7 @@ namespace NowFrameWork.Core.Startup
         readonly float _from;
         readonly float _to;
 
+        /// <summary>把子阶段进度映射到总进度区间。</summary>
         public ScaledProgress(IStartupProgress inner, float from, float to)
         {
             _inner = inner;
@@ -20,8 +21,10 @@ namespace NowFrameWork.Core.Startup
             _to = to;
         }
 
+        /// <summary>转发阶段变更。</summary>
         public void Phase(string name) => _inner?.Phase(name);
 
+        /// <summary>按区间缩放后转发进度。</summary>
         public void Progress(float value01)
         {
             if (value01 < 0f) value01 = 0f;
@@ -30,6 +33,7 @@ namespace NowFrameWork.Core.Startup
             _inner?.Progress(_from + (_to - _from) * value01);
         }
 
+        /// <summary>转发失败信息。</summary>
         public void Failed(string phase, string moduleId) => _inner?.Failed(phase, moduleId);
     }
 }

@@ -10,8 +10,11 @@ namespace NowFrameWork.Core.Logging
 
         sealed class NullLog : ILog
         {
+            /// <summary>空日志不输出任何级别。</summary>
             public LogLevel MinLevel => LogLevel.Off;
+            /// <summary>空日志始终返回 false。</summary>
             public bool IsEnabled(LogLevel level) => false;
+            /// <summary>空实现。</summary>
             public void Write(LogLevel level, string tag, string message) { }
         }
     }

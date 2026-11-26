@@ -15,10 +15,14 @@ namespace NowFrameWork.Core.Fsm
         public long MachineId, ParentId, RootId; // 当前编辑器运行代次内的实例标识。
         public int Depth; // 父子层级深度。
         public string MachineName; // 状态机名称快照。
+        /// <summary>记录时间与状态停留时长。</summary>
         public double Time, Duration; // 单调时钟时间与本次状态/等待持续时间。
+        /// <summary>记录类型。</summary>
         public FsmTraceKind Kind; // 记录类型。
         public string State, Target; // 来源/退出状态与进入/等待目标。
+        /// <summary>切换原因。</summary>
         public StateChangeReason Reason; // 切换来源。
+        /// <summary>规则名与诊断说明。</summary>
         public string RuleName, Detail; // 规则名与诊断说明。
     }
 
@@ -43,10 +47,13 @@ namespace NowFrameWork.Core.Fsm
 
         private struct Entry
         {
+            /// <summary>轨迹版本与全局序号。</summary>
             public long Version, Sequence;
             public double Time, Duration;
             public FsmTraceKind Kind;
+            /// <summary>来源状态与目标状态。</summary>
             public TStateId State, Target;
+            /// <summary>状态/目标是否有效（默认 ID 不代表存在）。</summary>
             public bool HasState, HasTarget;
             public StateChangeReason Reason;
             public string RuleName, Detail;

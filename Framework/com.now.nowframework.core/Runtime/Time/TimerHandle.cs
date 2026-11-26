@@ -9,13 +9,16 @@ namespace NowFrameWork.Core.Time
     /// </summary>
     public readonly struct TimerHandle : IEquatable<TimerHandle>
     {
+        /// <summary>指向计时器槽位与版本的句柄。</summary>
         internal TimerHandle(int index, int version)
         {
             Index = index;
             Version = version;
         }
 
+        /// <summary>槽位下标。</summary>
         internal int Index { get; }
+        /// <summary>槽位版本，防止复用误取消。</summary>
         internal int Version { get; }
 
         /// <summary>是否为非默认构造出的句柄（default 的 Version 为 0）。</summary>

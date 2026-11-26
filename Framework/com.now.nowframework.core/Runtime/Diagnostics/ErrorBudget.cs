@@ -22,9 +22,13 @@ namespace NowFrameWork.Core.Diagnostics
     {
         struct Bucket
         {
+            /// <summary>该错误累计出现次数。</summary>
             public int Count;
+            /// <summary>首次出现时间。</summary>
             public double First;
+            /// <summary>最近一次出现时间。</summary>
             public double Last;
+            /// <summary>是否达到致命阈值。</summary>
             public bool Fatal;
         }
 
@@ -82,14 +86,17 @@ namespace NowFrameWork.Core.Diagnostics
 
         /// <summary>某条错误首次越过阈值时触发一次（不会重复触发）。</summary>
         Action<ErrorEntry> _fatalRaised;
+        /// <summary>首次达到致命阈值时触发。</summary>
         public event Action<ErrorEntry> FatalRaised
         {
             add { MainThreadGuard.Assert("ErrorBudget.FatalRaised.add"); _fatalRaised += value; }
             remove { MainThreadGuard.Assert("ErrorBudget.FatalRaised.remove"); _fatalRaised -= value; }
         }
 
+        /// <summary>只接收 Error 及以上级别。</summary>
         public bool IsEnabled(LogLevel level) => level >= LogLevel.Error;
 
+        /// <summary>以日志条目形式上报。</summary>
         public void Write(in LogEntry entry) => Report(entry.Tag, entry.Message);
 
         /// <summary>记录一条错误；module 与 message 相同视为同类。</summary>
@@ -140,6 +147,7 @@ namespace NowFrameWork.Core.Diagnostics
             }
         }
 
+        /// <summary>清空全部统计。</summary>
         public void Reset()
         {
             MainThreadGuard.Assert("ErrorBudget.Reset");

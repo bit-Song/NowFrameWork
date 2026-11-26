@@ -8,6 +8,7 @@ namespace NowFrameWork.Core.Logging
     /// </summary>
     public readonly struct LogEntry
     {
+        /// <summary>创建一条日志记录。</summary>
         public LogEntry(LogLevel level, string tag, string message, double time)
         {
             Level = level;
@@ -16,11 +17,13 @@ namespace NowFrameWork.Core.Logging
             Time = time;
         }
 
+        /// <summary>日志级别。</summary>
         public LogLevel Level { get; }
 
         /// <summary>模块或子系统标记，例如 "C01"。注册期就固定，运行期只传引用。</summary>
         public string Tag { get; }
 
+        /// <summary>日志正文。</summary>
         public string Message { get; }
 
         /// <summary>由注入的时钟提供；Core 不引用 UnityEngine.Time。</summary>
