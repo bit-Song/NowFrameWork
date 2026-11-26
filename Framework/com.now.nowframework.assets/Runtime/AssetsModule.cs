@@ -23,6 +23,7 @@ namespace NowFrameWork.Assets
         readonly IAssetService _service;
         readonly ILog _log;
 
+        /// <summary>把资源服务包装成 App 模块。</summary>
         public AssetsModule(IAssetService service, ILog log = null)
         {
             MainThreadGuard.Assert("AssetsModule.AssetsModule");
@@ -30,22 +31,27 @@ namespace NowFrameWork.Assets
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>模块 ID。</summary>
         public string Id => "assets";
 
+        /// <summary>不依赖其他模块。</summary>
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
 
+        /// <summary>初始化资源服务。</summary>
         public UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetsModule.InitializeAsync");
             return _service.InitializeAsync(ct);
         }
 
+        /// <summary>标记模块开始运行。</summary>
         public UniTask StartAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetsModule.StartAsync");
             return UniTask.CompletedTask;
         }
 
+        /// <summary>释放资源服务。</summary>
         public UniTask ShutdownAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetsModule.ShutdownAsync");

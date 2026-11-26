@@ -60,12 +60,16 @@ namespace NowFrameWork.Assets
 
         static UniTask DefaultWaiter() => UniTask.NextFrame();
 
+        /// <summary>池对应的资源键。</summary>
         public AssetKey Key => _keepAlive.Key;
 
+        /// <summary>规范化资源键。</summary>
         public string CanonicalKey => _keepAlive.CanonicalKey;
 
+        /// <summary>借出未归还的数量。</summary>
         public int ActiveCount => _pool.ActiveCount;
 
+        /// <summary>空闲可复用数量。</summary>
         public int InactiveCount => _pool.InactiveCount;
 
         /// <summary>创建池：先拿保活租约，再建内部对象池。</summary>
@@ -93,8 +97,10 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>取一个实例；无空闲时创建。</summary>
         public T Rent() => _pool.Get();
 
+        /// <summary>异步取实例（等待资源就绪）。</summary>
         public UniTask<T> RentAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetPool.RentAsync");
@@ -102,8 +108,10 @@ namespace NowFrameWork.Assets
             return UniTask.FromResult(_pool.Get());
         }
 
+        /// <summary>归还实例；重复归还会报错。</summary>
         public void Release(T item) => _pool.Release(item);
 
+        /// <summary>按空闲超时回收实例，由池服务驱动。</summary>
         public void Tick(double now) => _pool.Tick(now);
 
         /// <summary>销毁全部实例 → 等它们真的消失 → 释放保活租约。</summary>
@@ -141,6 +149,7 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>即发即忘地释放池。</summary>
         public void Dispose() => DisposeAsync().Forget();
 
     }

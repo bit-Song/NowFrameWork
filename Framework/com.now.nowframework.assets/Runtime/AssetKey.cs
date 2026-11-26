@@ -11,6 +11,7 @@ namespace NowFrameWork.Assets
     /// </summary>
     public readonly struct AssetKey : IEquatable<AssetKey>
     {
+        /// <summary>组合地址、子对象与变体。</summary>
         public AssetKey(string address, string subObject = null, string variant = null)
         {
             Address = address;
@@ -27,12 +28,15 @@ namespace NowFrameWork.Assets
         /// <summary>池变体维度（不同父节点/初始状态），可空。不参与相等性。</summary>
         public string Variant { get; }
 
+        /// <summary>地址非空即有效。</summary>
         public bool IsValid => !string.IsNullOrEmpty(Address);
 
+        /// <summary>由地址创建资源键。</summary>
         public static AssetKey From(string address, string subObject = null) => new AssetKey(address, subObject);
 
         public static implicit operator AssetKey(string address) => new AssetKey(address);
 
+        /// <summary>返回带指定变体的新键。</summary>
         public AssetKey WithVariant(string variant) => new AssetKey(Address, SubObject, variant);
 
         public bool Equals(AssetKey other)

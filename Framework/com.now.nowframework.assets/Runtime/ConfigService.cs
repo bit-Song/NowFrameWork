@@ -30,12 +30,14 @@ namespace NowFrameWork.Assets
 
         bool _disposed, _disposing;
 
+        /// <summary>创建配置服务，依赖资源服务。</summary>
         public ConfigService(IAssetService assets)
         {
             MainThreadGuard.Assert("ConfigService.ConfigService");
             _assets = Guard.NotNull(assets, nameof(assets));
         }
 
+        /// <summary>已加载的配置数量。</summary>
         public int Count
         {
             get
@@ -125,6 +127,7 @@ namespace NowFrameWork.Assets
             return UniTask.CompletedTask;
         }
 
+        /// <summary>即发即忘地释放。</summary>
         public void Dispose() => DisposeAsync().Forget();
 
         static AssetKey KeyOf(object key)

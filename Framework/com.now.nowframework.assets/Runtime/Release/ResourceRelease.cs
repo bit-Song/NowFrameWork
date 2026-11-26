@@ -8,25 +8,40 @@ namespace NowFrameWork.Assets
     [Serializable]
     public sealed class ReleaseFile
     {
+        /// <summary>相对发布目录的文件路径。</summary>
         public string Path;
+        /// <summary>文件字节数。</summary>
         public long Length;
+        /// <summary>文件 SHA-256，用于完整性校验。</summary>
         public string Sha256;
     }
 
     [Serializable]
     public sealed class ResourceRelease
     {
+        /// <summary>发布集 ID。</summary>
         public string Id;
+        /// <summary>目标平台。</summary>
         public string Platform;
+        /// <summary>目标架构。</summary>
         public string Architecture;
+        /// <summary>客户端构建标识，必须匹配。</summary>
         public string ClientBuildId;
+        /// <summary>框架契约版本。</summary>
         public string FrameworkContractVersion;
+        /// <summary>Catalog 标识。</summary>
         public string ResourceCatalogId;
+        /// <summary>代码集标识（普通 AOT 为 builtin）。</summary>
         public string CodeSetId;
+        /// <summary>可读存档 schema 最小值。</summary>
         public int SaveSchemaReadMin;
+        /// <summary>可读存档 schema 最大值。</summary>
         public int SaveSchemaReadMax;
+        /// <summary>写存档使用的 schema 版本。</summary>
         public int SaveSchemaWriteVersion;
+        /// <summary>Catalog 相对路径。</summary>
         public string CatalogPath;
+        /// <summary>发布集包含的文件清单。</summary>
         public ReleaseFile[] Files;
 
         internal void Validate()
@@ -74,6 +89,7 @@ namespace NowFrameWork.Assets
         readonly string _platform, _architecture, _client, _contract, _code;
         readonly int _minSchema, _maxSchema, _writeSchema;
 
+        /// <summary>发布兼容性约束（平台/架构/契约/存档版本）。</summary>
         public ReleaseCompatibility(string platform, string architecture, string clientBuildId, string contractVersion,
             string codeSetId, int minSchema, int maxSchema, int writeSchema)
         {

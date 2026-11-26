@@ -18,13 +18,17 @@ namespace NowFrameWork.Assets
     /// <summary>准备完成后的资源计划。DownloadBytes 基于已经激活的 Catalog 和当前缓存计算。</summary>
     public readonly struct HotUpdatePlan
     {
+        /// <summary>描述一次更新检查的结果。</summary>
         public HotUpdatePlan(bool hasUpdate, long downloadBytes)
         {
             HasUpdate = hasUpdate;
             DownloadBytes = downloadBytes;
         }
+        /// <summary>是否有新 Catalog。</summary>
         public bool HasUpdate { get; }
+        /// <summary>需要下载的字节数。</summary>
         public long DownloadBytes { get; }
+        /// <summary>便于日志输出的摘要。</summary>
         public override string ToString() => "Catalog更新=" + HasUpdate + "，待下载=" + DownloadBytes + " bytes";
     }
 
@@ -40,6 +44,7 @@ namespace NowFrameWork.Assets
         HotUpdateState _state;
         object _preparedKey;
 
+        /// <summary>创建热更服务；提供者负责远端查询与下载。</summary>
         public HotUpdateService(IAssetUpdateProvider provider, ILog log = null)
         {
             MainThreadGuard.Assert("HotUpdateService.HotUpdateService");
@@ -47,6 +52,7 @@ namespace NowFrameWork.Assets
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>当前热更阶段。</summary>
         public HotUpdateState State
         {
             get
@@ -55,6 +61,7 @@ namespace NowFrameWork.Assets
                 return _state;
             }
         }
+        /// <summary>是否正在检查或下载。</summary>
         public bool IsBusy
         {
             get
@@ -75,6 +82,7 @@ namespace NowFrameWork.Assets
             finally { _state = HotUpdateState.Idle; }
         }
 
+        /// <summary>准备启动所需资源，返回是否仍需下载。</summary>
         public async UniTask<HotUpdatePlan> PrepareAsync(object key, CancellationToken ct = default)
         {
             MainThreadGuard.Assert("HotUpdateService.PrepareAsync");
@@ -100,6 +108,7 @@ namespace NowFrameWork.Assets
             finally { _state = HotUpdateState.Idle; }
         }
 
+        /// <summary>下载资源并报告进度。</summary>
         public async UniTask DownloadAsync(object key, IProgress<float> progress = null, CancellationToken ct = default)
         {
             MainThreadGuard.Assert("HotUpdateService.DownloadAsync");

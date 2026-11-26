@@ -38,6 +38,7 @@ namespace NowFrameWork.Assets
             Kind = kind;
         }
 
+        /// <summary>租约持有的资源。</summary>
         public T Asset
         {
             get
@@ -50,17 +51,22 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>申请时的资源键。</summary>
         public AssetKey Key { get; }
 
         /// <summary>Provider 规范化后的键（地址与 GUID 指向同一资源时相同）。</summary>
         public string CanonicalKey { get; }
 
+        /// <summary>资源版本。</summary>
         public long Version { get; }
 
+        /// <summary>租约类型（普通/常驻）。</summary>
         public AssetLeaseKind Kind { get; }
 
+        /// <summary>是否已释放。</summary>
         public bool IsReleased { get; private set; }
 
+        /// <summary>归还租约；重复释放无副作用。</summary>
         public void Dispose()
         {
             MainThreadGuard.Assert("AssetLease.Dispose");
@@ -75,6 +81,7 @@ namespace NowFrameWork.Assets
             finally { _releasing = false; }
         }
 
+        /// <summary>诊断用的租约描述。</summary>
         public override string ToString()
             => "Lease(" + CanonicalKey + "#" + Version + (IsReleased ? ", released" : "") + ")";
     }

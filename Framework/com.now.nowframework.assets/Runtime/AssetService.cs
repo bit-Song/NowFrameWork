@@ -25,13 +25,21 @@ namespace NowFrameWork.Assets
 
         sealed class Entry
         {
+            /// <summary>规范化后的资源键。</summary>
             public string Canonical;
+            /// <summary>调用方传入的原始键。</summary>
             public AssetKey Key;
+            /// <summary>底层提供者句柄。</summary>
             public ProviderHandle Handle;
+            /// <summary>并发请求共享的加载任务。</summary>
             public UniTaskCompletionSource<ProviderHandle> Pending;
+            /// <summary>当前租约数量。</summary>
             public int Leases;
+            /// <summary>等待同一资源的调用方数量。</summary>
             public int Waiters;
+            /// <summary>条目版本，用于失效重载。</summary>
             public long Version;
+            /// <summary>发布集归属状态。</summary>
             public ReleaseState Release;
         }
 
@@ -46,6 +54,7 @@ namespace NowFrameWork.Assets
         int _resolving;
         bool _updatingCatalog;
 
+        /// <summary>创建资源服务；提供者决定实际加载方式。</summary>
         public AssetService(IAssetProvider provider, ILog log = null)
         {
             MainThreadGuard.Assert("AssetService.AssetService");
@@ -53,6 +62,7 @@ namespace NowFrameWork.Assets
             _log = log ?? Logs.Null;
         }
 
+        /// <summary>正在进行的加载请求数。</summary>
         public int PendingRequests
         {
             get
@@ -62,6 +72,7 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>当前未归还的租约数。</summary>
         public int ActiveLeases
         {
             get
@@ -71,6 +82,7 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>初始化底层提供者。</summary>
         public UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetService.InitializeAsync");
@@ -80,12 +92,14 @@ namespace NowFrameWork.Assets
                 : UniTask.CompletedTask;
         }
 
+        /// <summary>申请资源租约；同一地址并发请求共享加载。</summary>
         public UniTask<AssetLease<T>> AcquireAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object
         {
             MainThreadGuard.Assert("AssetService.AcquireAsync");
             return AcquireCoreAsync<T>(ToKey(key), AssetLeaseKind.Business, ct);
         }
 
+        /// <summary>申请常驻资源租约（不随使用归还而卸载）。</summary>
         public UniTask<AssetLease<T>> AcquireCacheAsync<T>(object key, CancellationToken ct) where T : UnityEngine.Object
         {
             MainThreadGuard.Assert("AssetService.AcquireCacheAsync");
@@ -296,8 +310,10 @@ namespace NowFrameWork.Assets
                ?? throw new NotSupportedException("当前 Provider 不支持热更: " + _provider.GetType().Name);
         }
 
+        /// <summary>检查远端 Catalog 是否有更新。</summary>
         public UniTask<bool> CheckForUpdatesAsync(CancellationToken ct) => UpdateProvider().CheckForUpdatesAsync(ct);
 
+        /// <summary>更新 Catalog，返回受影响数量。</summary>
         public async UniTask<int> UpdateCatalogsAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("AssetService.UpdateCatalogsAsync");
@@ -313,12 +329,15 @@ namespace NowFrameWork.Assets
             finally { _updatingCatalog = false; }
         }
 
+        /// <summary>查询资源需要的下载字节数。</summary>
         public UniTask<long> GetDownloadSizeAsync(object key, CancellationToken ct)
             => UpdateProvider().GetDownloadSizeAsync(key, ct);
 
+        /// <summary>下载资源并报告进度。</summary>
         public UniTask DownloadAsync(object key, IProgress<float> progress, CancellationToken ct)
             => UpdateProvider().DownloadAsync(key, progress, ct);
 
+        /// <summary>把当前租约明细写入缓冲，供诊断面板使用。</summary>
         public void DumpLeases(List<LeaseInfo> buffer)
         {
             MainThreadGuard.Assert("AssetService.DumpLeases");

@@ -9,9 +9,11 @@ namespace NowFrameWork.Assets
     /// <summary>仅主线程。帧数是等待预算，只有对象实际销毁才返回 true；超时不释放任何资源。</summary>
     public static class UnityObjectLifecycle
     {
+        /// <summary>等待实例真正销毁；超时返回 false。</summary>
         public static UniTask<bool> WaitDestroyedAsync(UnityEngine.Object instance, int maxFrames = 60, Func<UniTask> frameWaiter = null)
             => WaitDestroyedAsync(() => instance == null, maxFrames, frameWaiter);
 
+        /// <summary>等待一组实例全部销毁；超时返回 false。</summary>
         public static UniTask<bool> WaitAllDestroyedAsync<T>(IReadOnlyList<T> instances, int maxFrames = 60,
             Func<UniTask> frameWaiter = null) where T : UnityEngine.Object
         {
@@ -23,6 +25,7 @@ namespace NowFrameWork.Assets
             }, maxFrames, frameWaiter);
         }
 
+        /// <summary>按自定义判定等待销毁。</summary>
         public static async UniTask<bool> WaitDestroyedAsync(Func<bool> isDestroyed, int maxFrames,
             Func<UniTask> frameWaiter = null)
         {

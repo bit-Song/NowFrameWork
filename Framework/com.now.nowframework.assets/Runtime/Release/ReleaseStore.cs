@@ -13,10 +13,14 @@ namespace NowFrameWork.Assets
     public sealed class ReleaseState
     {
         // Unity's inline JSON serialization can materialize a default DTO for a null reference.
+        /// <summary>已确认可用的发布清单。</summary>
         public ResourceRelease ConfirmedManifest;
+        /// <summary>已暂存、待下次启动试用的清单。</summary>
         public ResourceRelease PendingManifest;
+        /// <summary>本次启动正在试用的清单。</summary>
         public ResourceRelease TrialManifest;
 
+        /// <summary>已确认版本（持久化用）。</summary>
         public ResourceRelease KnownGood { get => Present(ConfirmedManifest); set => ConfirmedManifest = value; }
         public ResourceRelease Pending { get => Present(PendingManifest); set => PendingManifest = value; }
         public ResourceRelease Trial { get => Present(TrialManifest); set => TrialManifest = value; }
@@ -26,9 +30,13 @@ namespace NowFrameWork.Assets
 
     public sealed class ReleaseSelection
     {
+        /// <summary>发布集 ID。</summary>
         public string Id { get; }
+        /// <summary>发布集落盘目录。</summary>
         public string Directory { get; }
+        /// <summary>Catalog 文件路径。</summary>
         public string CatalogPath { get; }
+        /// <summary>本次选择是否为试用。</summary>
         public bool IsTrial { get; }
         readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -41,6 +49,7 @@ namespace NowFrameWork.Assets
             foreach (ReleaseFile file in release.Files) _files.Add(Path.GetFullPath(Path.Combine(directory, file.Path)));
         }
 
+        /// <summary>路径是否属于本发布集（防目录穿越）。</summary>
         public bool ContainsFile(string path) => Path.IsPathRooted(path) && _files.Contains(Path.GetFullPath(path));
     }
 
@@ -54,6 +63,7 @@ namespace NowFrameWork.Assets
         bool _busy;
         ReleaseSelection _trial;
 
+        /// <summary>创建发布存储；root 下按发布 ID 分目录。</summary>
         public ReleaseStore(string root, ReleaseCompatibility compatibility, ISettingsCodec<ReleaseState> codec)
         {
             _root = Path.GetFullPath(root);
@@ -146,6 +156,7 @@ namespace NowFrameWork.Assets
             finally { _busy = false; }
         }
 
+        /// <summary>Boot 进入 Running 后确认试用版本。</summary>
         public void ConfirmRunning(ReleaseSelection selection)
         {
             CheckIdle();
