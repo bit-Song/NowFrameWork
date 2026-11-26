@@ -32,6 +32,7 @@ namespace NowFrameWork.UI
         public CancellationToken VisibleToken => _visible == null ? new CancellationToken(true) : _visible.Token;
         public CanvasGroup VisualGroup { get { Capture(); return _group; } }
         public bool InputBlocked => _inputBlocked;
+        internal bool OwnsNavigationFocus { get; set; }
         public Selectable DefaultFocus { get => _defaultFocus; set => _defaultFocus = value; }
 
         /// <summary>用 UGUI 原生显式导航连接本面板可用控件。控件显隐或顺序变化后重新调用。</summary>
@@ -50,7 +51,8 @@ namespace NowFrameWork.UI
 
             EventSystem system = EventSystem.current;
             GameObject previousSelected = system != null ? system.currentSelectedGameObject : null;
-            Selectable previousControl = previousSelected != null ? previousSelected.GetComponent<Selectable>() : null;
+            GameObject lastSelected = previousSelected != null ? previousSelected : _lastFocus;
+            Selectable previousControl = lastSelected != null ? lastSelected.GetComponent<Selectable>() : null;
             int previousIndex = previousControl != null ? System.Array.IndexOf(controls, previousControl) : -1;
 
             _defaultFocus = null;
@@ -89,24 +91,25 @@ namespace NowFrameWork.UI
                 previous = control;
             }
 
-            if (previousSelected == null || !previousSelected.transform.IsChildOf(transform)) return;
+            if (system == null || !_shown || _inputBlocked || !_group.interactable) return;
+            if (previousSelected == null ? !OwnsNavigationFocus : !previousSelected.transform.IsChildOf(transform)) return;
 
             // 原焦点仍可导航：保持；已不可用（禁用/隐藏/祖先 CanvasGroup 关闭）则移到最近可用项，
             // 而不是清空焦点——否则禁用当前按钮后重建导航会丢失焦点。
-            if (previousControl != null && navigable.Contains(previousControl)) return;
+            if (previousSelected != null && previousControl != null && navigable.Contains(previousControl))
+            {
+                _lastFocus = previousSelected;
+                return;
+            }
 
-            Selectable replacement = FindNearestNavigable(controls, navigable, previousIndex);
-
-            Capture();
-            if (replacement == null || system == null || !_group.interactable) return;
-
-            system.SetSelectedGameObject(replacement.gameObject);
-
-            if (!_shown) _lastFocus = replacement.gameObject;
+            Selectable replacement = previousSelected == null && navigable.Contains(previousControl)
+                ? previousControl : FindNearestNavigable(controls, navigable, previousIndex);
+            _lastFocus = replacement != null ? replacement.gameObject : null;
+            system.SetSelectedGameObject(_lastFocus);
         }
 
         /// <summary>
-        /// 控件是否可成为导航目标：自身启用且 interactable，祖先子级的 CanvasGroup 允许交互与射线。
+        /// 控件是否可成为导航目标：自身启用且 interactable，面板内部的 CanvasGroup 允许交互。
         /// 面板根的 CanvasGroup 由显示/输入控制，不在此判断。
         /// </summary>
         bool CanNavigate(Selectable control)
@@ -123,7 +126,7 @@ namespace NowFrameWork.UI
 
                 // CanvasGroup 的 interactable 依赖 OnCanvasGroupChanged 刷新，运行时修改后可能滞后；直接查父链。
                 CanvasGroup group = current.GetComponent<CanvasGroup>();
-                if (group != null && (!group.interactable || !group.blocksRaycasts)) return false;
+                if (group != null && !group.interactable) return false;
             }
 
             return true;
@@ -296,12 +299,12 @@ namespace NowFrameWork.UI
         internal void RestoreFocus()
         {
             var system = EventSystem.current;
-            if (system == null || !_shown || _inputBlocked) return;
+            if (system == null || !_shown || _inputBlocked || !_group.interactable) return;
             var selected = system.currentSelectedGameObject;
             if (selected != null && selected.transform.IsChildOf(transform))
             {
                 var selectedControl = selected.GetComponent<Selectable>();
-                if (selectedControl == null || CanNavigate(selectedControl))
+                if (selected.activeInHierarchy && (selectedControl == null || CanNavigate(selectedControl)))
                 {
                     _lastFocus = selected;
                     return;

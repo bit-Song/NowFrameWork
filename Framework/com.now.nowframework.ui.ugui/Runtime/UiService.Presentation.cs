@@ -14,6 +14,7 @@ namespace NowFrameWork.UI
         readonly List<UiSession> _presentationSnapshot = new List<UiSession>();
         long _presentationOrder;
         UiRoot _root;
+        UiView _navigationFocusOwner;
         UiHandle _topPopup, _topModal;
         bool _navigationBusy, _refreshing, _refreshAgain;
         UniTaskCompletionSource<bool> _back;
@@ -95,6 +96,12 @@ namespace NowFrameWork.UI
                         if (i == modal) maskOrder = order - 1;
                     }
                     if (_root != null) _root.PresentBackdrop(modal >= 0, maskOrder, _navigationBusy || _shuttingDown);
+                    if (!ReferenceEquals(focus, _navigationFocusOwner))
+                    {
+                        if (_navigationFocusOwner != null) _navigationFocusOwner.OwnsNavigationFocus = false;
+                        _navigationFocusOwner = focus;
+                        if (focus != null) focus.OwnsNavigationFocus = true;
+                    }
                     if (focus != null) focus.RestoreFocus();
                 } while (_refreshAgain);
             }

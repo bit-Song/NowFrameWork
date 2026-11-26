@@ -1,12 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
 using NowFrameWork.Audio;
+using NowFrameWork.Boot;
 using NowFrameWork.Core;
+using NowFrameWork.Core.Storage;
 using NowFrameWork.Core.Platform;
+using NowFrameWork.Unity;
+using NowFrameWork.Unity.Storage;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -49,6 +54,50 @@ namespace NowFrameWork.Tests
             {
                 foreach (var clip in _clips) Object.Destroy(clip);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator BootStopsLoopingMusicAndRetriesFailedAudioRelease() => UniTask.ToCoroutine(async () =>
+        {
+            using var provider = new Provider();
+            var assets = new AssetService(provider);
+            string directory = Path.Combine(Path.GetTempPath(), "nwf-boot-audio-" + Guid.NewGuid().ToString("N"));
+            var settings = new FileSettingsStore<BootPreferences>(directory, "prefs", new JsonSettingsCodec<BootPreferences>());
+            var context = new BootContext(new App(new NowFrameWork.Core.Logging.Logger()), assets, settings);
+            var session = new BootSession(() => context, new BootOptions(), new EmptyEntry());
+            try
+            {
+                await session.StartAsync();
+                Assert.That(await context.Audio.PlayMusicAsync("music"), Is.True);
+                Assert.That(assets.ActiveLeases, Is.EqualTo(1));
+
+                provider.FailRelease = true;
+                try
+                {
+                    await session.StopAsync();
+                    Assert.Fail("释放失败应使 Boot 停止失败。");
+                }
+                catch (AggregateException) { }
+                Assert.That(session.State, Is.EqualTo(BootState.CleanupFailed));
+                Assert.That(session.Context, Is.SameAs(context));
+
+                provider.FailRelease = false;
+                await session.StopAsync();
+                Assert.That(session.State, Is.EqualTo(BootState.Stopped));
+                Assert.That(assets.ActiveLeases, Is.Zero);
+            }
+            finally
+            {
+                provider.FailRelease = false;
+                if (session.Context != null) await session.StopAsync();
+                if (Directory.Exists(directory)) Directory.Delete(directory);
+            }
+        });
+
+        sealed class EmptyEntry : IBootEntry
+        {
+            public UniTask EnterAsync(BootContext context, CancellationToken ct) => UniTask.CompletedTask;
+            public UniTask ExitAsync() => UniTask.CompletedTask;
         }
 
         [UnityTest]

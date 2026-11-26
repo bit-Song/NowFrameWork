@@ -191,6 +191,7 @@ namespace NowFrameWork.Boot
             if (Context.Scene != null) { await Context.Scene.UnloadAsync(); Context.Scene = null; }
             Context.App.Pools.Dispose(); // 只关闭空注册表，不以强制销毁来证明项目实例已安全退出。
             await Context.Configs.DisposeAsync(); Context.Configuration = null;
+            await Context.Audio.DisposeAsync(); // 音频持有自己的租约，先停止声音，再检查资源是否归零。
             var clock = Stopwatch.StartNew();
             while (Context.Assets.PendingRequests != 0)
             {

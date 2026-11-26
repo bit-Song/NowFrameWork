@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Framework Template Local
+  m_EditorClassIdentifier:
+  m_GroupName: Framework Template Local
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 9089482976e819644a1a4605f3187103
+  m_SerializeEntries:
+  - m_GUID: 179dcd2f1ce15c741903e8ed1f59e7a0
+    m_Address: FrameworkTemplate/Prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 68e59dc096302b64ebc25e437bb12c53
+    m_Address: FrameworkTemplate/UI/Modules
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 980a7a45845382a4c91d9d9bd1aabc66
+    m_Address: FrameworkTemplate/Scene
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9cb9c850e56043841845a5c99b3bc2bb
+    m_Address: FrameworkTemplate/UI/Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9d6fe666694c7a74ca606b343ff39cf2
+    m_Address: FrameworkTemplate/UI/Home
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dc62207aad8a00f439f6914b6267eee6
+    m_Address: FrameworkTemplate/UI/Toast
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f9f26c34ac3fc2c4796e9e09cd8e4f4a
+    m_Address: FrameworkTemplate/Config
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: e87353e72cb2aa34a84ba04388143dd3, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 5c19605ef832bfc4dbe2cd9082b00553, type: 2}
+    - {fileID: 11400000, guid: 1b5b9707b1ea7324c8b88ec7a0b743bd, type: 2}

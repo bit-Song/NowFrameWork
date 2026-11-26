@@ -1,0 +1,11 @@
+{
+    "name": "NowFrameWork.FrameworkTemplate",
+    "rootNamespace": "Game.FrameworkTemplate",
+    "references": [
+        "Game", "NowFrameWork.Core", "NowFrameWork.Unity", "NowFrameWork.Assets",
+        "NowFrameWork.Boot", "NowFrameWork.Audio", "NowFrameWork.Input",
+        "NowFrameWork.Input.InputSystem", "NowFrameWork.UI.UGUI",
+        "NowFrameWork.Localization.Sample", "Unity.Localization", "UnityEngine.UI", "Unity.InputSystem", "UniTask"
+    ],
+    "autoReferenced": false
+}

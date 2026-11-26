@@ -8,6 +8,8 @@
     "Unity.ResourceManager",
     "NowFrameWork.AssetTest",
     "Game",
+    "NowFrameWork.FrameworkTemplate",
+    "NowFrameWork.Localization.Sample",
     "Cinemachine",
     "Unity.Addressables.Editor",
     "HybridCLR.Editor",
