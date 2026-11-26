@@ -17,7 +17,9 @@ namespace NowFrameWork.UI.Tweening
             Channels = UiTweenChannels.Fade | UiTweenChannels.Scale, Duration = 0.15f, Ease = Ease.InCubic,
             Alpha = 0, Scale = new Vector3(0.95f, 0.95f, 1)
         };
+        /// <summary>显示动画参数。</summary>
         public UiTweenPhase Enter { get => _enter; set => _enter = value; }
+        /// <summary>隐藏动画参数。</summary>
         public UiTweenPhase Exit { get => _exit; set => _exit = value; }
     }
 }

@@ -16,8 +16,10 @@ namespace NowFrameWork.Unity.Storage
         static readonly Encoding Utf8 = new UTF8Encoding(false, true);
         readonly Func<string, int, T> _migrate;
         readonly Action<T> _validate;
+        /// <summary>当前数据版本。</summary>
         public int Version { get; }
 
+        /// <summary>创建 JSON 编解码器；可注入迁移与校验。</summary>
         public JsonSettingsCodec(int version = 1, Func<string, int, T> migrate = null, Action<T> validate = null)
         {
             MainThreadGuard.Assert("JsonSettingsCodec.ctor");
@@ -30,6 +32,7 @@ namespace NowFrameWork.Unity.Storage
             _validate = validate;
         }
 
+        /// <summary>序列化为 UTF-8 JSON。</summary>
         public byte[] Encode(T value)
         {
             MainThreadGuard.Assert("JsonSettingsCodec.Encode");
@@ -38,6 +41,7 @@ namespace NowFrameWork.Unity.Storage
             return Utf8.GetBytes(JsonUtility.ToJson(value));
         }
 
+        /// <summary>反序列化并按需迁移。</summary>
         public T Decode(byte[] payload, int storedVersion)
         {
             MainThreadGuard.Assert("JsonSettingsCodec.Decode");

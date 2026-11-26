@@ -24,6 +24,7 @@ namespace NowFrameWork.Unity
 
         [SerializeField] bool _dontDestroyOnLoad = true;
 
+        /// <summary>应用宿主；初始化后可用。</summary>
         public App App { get; private set; }
 
         /// <summary>启动失败后为 true，此时不再驱动帧回调。</summary>

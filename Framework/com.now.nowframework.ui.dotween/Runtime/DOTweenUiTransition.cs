@@ -25,11 +25,15 @@ namespace NowFrameWork.UI.Tweening
         bool _captured, _hidden = true;
         Tween _active;
 
+        /// <summary>是否有动画进行中。</summary>
         public bool IsPlaying => _active != null && _active.IsActive();
+        /// <summary>使用的动画预设。</summary>
         public UiTweenPreset Preset => _preset;
+        /// <summary>位移/缩放的节点。</summary>
         public RectTransform MotionRoot => _motionRoot;
         protected virtual UpdateType TweenUpdateType => UpdateType.Normal;
 
+        /// <summary>配置预设、运动节点与淡入目标。</summary>
         public void Configure(UiTweenPreset preset, RectTransform motionRoot = null, CanvasGroup fadeTarget = null)
         {
             MainThreadGuard.Assert("DOTweenUiTransition.Configure");
@@ -37,7 +41,9 @@ namespace NowFrameWork.UI.Tweening
             _preset = preset; _motionRoot = motionRoot; _fadeTarget = fadeTarget;
         }
 
+        /// <summary>播放显示动画。</summary>
         public override UniTask ShowAsync(UiView view, CancellationToken ct) => PlayAsync(view, true, ct);
+        /// <summary>播放隐藏动画。</summary>
         public override UniTask HideAsync(UiView view, CancellationToken ct) => PlayAsync(view, false, ct);
 
         void Capture(UiView view)

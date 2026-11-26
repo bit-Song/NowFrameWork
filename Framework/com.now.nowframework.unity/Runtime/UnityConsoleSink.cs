@@ -14,8 +14,10 @@ namespace NowFrameWork.Unity
     /// </summary>
     public sealed class UnityConsoleSink : ILogSink
     {
+        /// <summary>除 Off 外都接收。</summary>
         public bool IsEnabled(LogLevel level) => level != LogLevel.Off;
 
+        /// <summary>输出到 Unity Console。</summary>
         public void Write(in LogEntry entry)
         {
             MainThreadGuard.Assert("UnityConsoleSink.Write");

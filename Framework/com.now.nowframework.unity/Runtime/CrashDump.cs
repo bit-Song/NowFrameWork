@@ -32,6 +32,7 @@ namespace NowFrameWork.Unity
         bool _installed;
         bool _dumpedOnError;
 
+        /// <summary>创建崩溃转储器；指定输出目录。</summary>
         public CrashDump(Logger log, string directory)
         {
             MainThreadGuard.Assert("CrashDump.CrashDump");
@@ -39,6 +40,7 @@ namespace NowFrameWork.Unity
             _directory = directory;
         }
 
+        /// <summary>注册未处理异常与崩溃回调。</summary>
         public void Install()
         {
             MainThreadGuard.Assert("CrashDump.Install");
@@ -49,6 +51,7 @@ namespace NowFrameWork.Unity
             _installed = true;
         }
 
+        /// <summary>注销回调。</summary>
         public void Dispose()
         {
             MainThreadGuard.Assert("CrashDump.Dispose");

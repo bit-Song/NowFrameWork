@@ -24,6 +24,7 @@ namespace NowFrameWork.Unity
     {
         readonly UnityClock _clock;
 
+        /// <summary>创建应用宿主；持有日志、时钟与各基础服务。</summary>
         public App(Logger log)
         {
             MainThreadGuard.Assert("App.App");
@@ -42,9 +43,13 @@ namespace NowFrameWork.Unity
             Lifecycle = new NowFrameWork.Core.Platform.AppLifecycle();
         }
 
+        /// <summary>时钟（可替换为测试时钟）。</summary>
         public IClock Clock => _clock;
+        /// <summary>日志器。</summary>
         public Logger Log { get; }
+        /// <summary>事件总线。</summary>
         public EventBus Events { get; }
+        /// <summary>计时器服务。</summary>
         public TimerService Timers { get; }
 
         /// <summary>对象池注册表；资源卸载时用它整池释放。</summary>
@@ -58,6 +63,7 @@ namespace NowFrameWork.Unity
 
         /// <summary>应用生命周期（前台/后台/退出），信号已去重。</summary>
         public NowFrameWork.Core.Platform.IAppLifecycle Lifecycle { get; }
+        /// <summary>模块容器。</summary>
         public ModuleHub Hub { get; }
 
         /// <summary>创建装配好的 App：控制台出口 + Unity 时钟。</summary>

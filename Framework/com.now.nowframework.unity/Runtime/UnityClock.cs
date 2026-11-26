@@ -11,6 +11,7 @@ namespace NowFrameWork.Unity
     /// </summary>
     public sealed class UnityClock : IClock
     {
+        /// <summary>游戏时间（受 TimeScale 影响）。</summary>
         public double Now
         {
             get
@@ -20,6 +21,7 @@ namespace NowFrameWork.Unity
             }
         }
 
+        /// <summary>真实时间。</summary>
         public double UnscaledNow
         {
             get
@@ -29,6 +31,7 @@ namespace NowFrameWork.Unity
             }
         }
 
+        /// <summary>游戏时间增量。</summary>
         public float DeltaTime
         {
             get
@@ -38,6 +41,7 @@ namespace NowFrameWork.Unity
             }
         }
 
+        /// <summary>真实时间增量。</summary>
         public float UnscaledDeltaTime
         {
             get

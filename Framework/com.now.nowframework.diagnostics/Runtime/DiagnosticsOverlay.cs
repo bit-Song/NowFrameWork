@@ -32,6 +32,7 @@ namespace NowFrameWork.Diagnostics
         readonly List<ErrorEntry> _errorBuffer = new List<ErrorEntry>(16);
         readonly StringBuilder _text = new StringBuilder(512);
 
+        /// <summary>是否显示。</summary>
         public bool Visible { get; set; } = true;
 
         /// <summary>创建（或复用）诊断面板。重复调用安全。</summary>

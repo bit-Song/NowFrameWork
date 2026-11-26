@@ -11,6 +11,7 @@ namespace NowFrameWork.Unity
     /// </summary>
     public sealed class UnityPlatformInfo : IPlatformInfo
     {
+        /// <summary>可写持久化目录。</summary>
         public string PersistentDataPath
         {
             get
@@ -20,6 +21,7 @@ namespace NowFrameWork.Unity
             }
         }
 
+        /// <summary>只读流式资源目录。</summary>
         public string StreamingAssetsPath
         {
             get
@@ -29,6 +31,7 @@ namespace NowFrameWork.Unity
             }
         }
 
+        /// <summary>临时缓存目录。</summary>
         public string CachePath
         {
             get
@@ -39,6 +42,7 @@ namespace NowFrameWork.Unity
         }
 
         // 注意：本类有同名属性 SystemLanguage，枚举必须写全名，否则会被属性遮蔽
+        /// <summary>系统语言代码。</summary>
         public string SystemLanguage
         {
             get

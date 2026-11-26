@@ -8,14 +8,20 @@ namespace NowFrameWork.UI.Tweening
     [Serializable]
     public struct UiTweenPhase
     {
+        /// <summary>参与动画的通道。</summary>
         public UiTweenChannels Channels;
         [Min(0)] public float Duration;
         [Min(0)] public float Delay;
+        /// <summary>缓动曲线。</summary>
         public Ease Ease;
+        /// <summary>是否使用自定义曲线。</summary>
         public bool UseCustomCurve;
+        /// <summary>自定义曲线。</summary>
         public AnimationCurve Curve;
         [Range(0, 1)] public float Alpha;
+        /// <summary>位移偏移。</summary>
         public Vector2 Offset;
+        /// <summary>目标缩放。</summary>
         public Vector3 Scale;
 
         internal UiTweenPhase Snapshot()
