@@ -47,6 +47,7 @@ namespace NowFrameWork.Assets
         UniTaskCompletionSource _startupFinished;
         UniTaskCompletionSource _disposeFinished;
 
+        /// <summary>创建作用域；父作用域可注入时钟、日志与帧等待器。</summary>
         public Scope(string name, Scope parent, IClock clock, ILog log = null, Func<UniTask> frameWaiter = null)
         {
             MainThreadGuard.Assert("Scope.Scope");
@@ -76,10 +77,13 @@ namespace NowFrameWork.Assets
             for (int i = 0; i < DefaultSettleFrames; i++) await UniTask.NextFrame();
         }
 
+        /// <summary>作用域名称（诊断用）。</summary>
         public string Name { get; }
 
+        /// <summary>父作用域；根为 null。</summary>
         public Scope Parent { get; }
 
+        /// <summary>当前生命周期状态。</summary>
         public ScopeState State
         {
             get
@@ -89,10 +93,13 @@ namespace NowFrameWork.Assets
             }
         }
 
+        /// <summary>本作用域的模块容器。</summary>
         public ModuleHub Modules { get; }
 
+        /// <summary>本作用域的对象池服务。</summary>
         public PoolService Pools { get; }
 
+        /// <summary>子作用域数量。</summary>
         public int ChildCount
         {
             get
@@ -114,6 +121,7 @@ namespace NowFrameWork.Assets
             return child;
         }
 
+        /// <summary>按依赖启动本作用域模块。</summary>
         public async UniTask StartupAsync(CancellationToken ct = default, IStartupProgress progress = null)
         {
             MainThreadGuard.Assert("Scope.StartupAsync");

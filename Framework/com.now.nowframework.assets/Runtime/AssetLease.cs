@@ -28,6 +28,7 @@ namespace NowFrameWork.Assets
         readonly T _asset;
         bool _releaseStarted, _releasing;
 
+        /// <summary>由资源服务创建，外部不应直接构造。</summary>
         internal AssetLease(ILeaseOwner owner, T asset, AssetKey key, string canonicalKey, long version, AssetLeaseKind kind)
         {
             _owner = owner;

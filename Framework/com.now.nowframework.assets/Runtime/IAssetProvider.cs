@@ -6,6 +6,7 @@ namespace NowFrameWork.Assets
     /// <summary>Provider 返回的底层句柄；`Release` 之后不得再使用其 Asset。</summary>
     public sealed class ProviderHandle
     {
+        /// <summary>底层提供者返回的资源句柄。</summary>
         public ProviderHandle(string canonicalKey, UnityEngine.Object asset, object tag = null)
         {
             CanonicalKey = canonicalKey;
@@ -13,8 +14,10 @@ namespace NowFrameWork.Assets
             Tag = tag;
         }
 
+        /// <summary>规范化资源键。</summary>
         public string CanonicalKey { get; }
 
+        /// <summary>已加载的资源。</summary>
         public UnityEngine.Object Asset { get; }
 
         /// <summary>Provider 私有载荷（如 Addressables 的 AsyncOperationHandle），Service 不解释它。</summary>

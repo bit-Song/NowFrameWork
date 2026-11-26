@@ -34,11 +34,13 @@ namespace NowFrameWork.Assets
         /// <summary>由地址创建资源键。</summary>
         public static AssetKey From(string address, string subObject = null) => new AssetKey(address, subObject);
 
+        /// <summary>字符串隐式转换为资源键。</summary>
         public static implicit operator AssetKey(string address) => new AssetKey(address);
 
         /// <summary>返回带指定变体的新键。</summary>
         public AssetKey WithVariant(string variant) => new AssetKey(Address, SubObject, variant);
 
+        /// <summary>地址、子对象与变体都相同才算相等。</summary>
         public bool Equals(AssetKey other)
             => string.Equals(Address, other.Address, StringComparison.Ordinal)
             && string.Equals(SubObject ?? string.Empty, other.SubObject ?? string.Empty, StringComparison.Ordinal);

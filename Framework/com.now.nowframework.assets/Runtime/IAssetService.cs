@@ -8,6 +8,7 @@ namespace NowFrameWork.Assets
     /// <summary>诊断用：一条聚合后的租约记录。</summary>
     public readonly struct LeaseInfo
     {
+        /// <summary>单个资源的租约统计。</summary>
         public LeaseInfo(string canonicalKey, int leases, long version)
         {
             CanonicalKey = canonicalKey;
@@ -15,8 +16,11 @@ namespace NowFrameWork.Assets
             Version = version;
         }
 
+        /// <summary>规范化资源键。</summary>
         public string CanonicalKey { get; }
+        /// <summary>当前租约数量。</summary>
         public int Leases { get; }
+        /// <summary>资源版本。</summary>
         public long Version { get; }
 
         public override string ToString() => CanonicalKey + " x" + Leases + " v" + Version;

@@ -16,14 +16,17 @@ namespace NowFrameWork.Assets
         readonly Func<UniTask> _unload;
         UniTaskCompletionSource _unloading;
 
+        /// <summary>场景租约；释放即卸载。</summary>
         internal SceneLease(string key, Func<UniTask> unload)
         {
             Key = key;
             _unload = unload;
         }
 
+        /// <summary>场景地址。</summary>
         public string Key { get; }
 
+        /// <summary>是否已卸载。</summary>
         public bool IsUnloaded { get; private set; }
 
         /// <summary>卸载场景；幂等。</summary>

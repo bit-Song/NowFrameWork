@@ -44,6 +44,7 @@ namespace NowFrameWork.Assets
         /// <summary>发布集包含的文件清单。</summary>
         public ReleaseFile[] Files;
 
+        /// <summary>校验清单字段与文件项。</summary>
         internal void Validate()
         {
             ValidateSegment(Id);
@@ -69,6 +70,7 @@ namespace NowFrameWork.Assets
                 throw new InvalidDataException("清单必须包含 JSON Catalog");
         }
 
+        /// <summary>校验平台/架构等单段字段。</summary>
         internal static void ValidateSegment(string value)
         {
             if (string.IsNullOrEmpty(value) || !Regex.IsMatch(value, @"\A[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}\z") ||
@@ -77,6 +79,7 @@ namespace NowFrameWork.Assets
                 throw new InvalidDataException("发布路径片段无效: " + value);
         }
 
+        /// <summary>校验相对路径，拒绝绝对路径与 ..。</summary>
         internal static void ValidatePath(string path)
         {
             if (path == null) throw new InvalidDataException("发布文件路径不能为空");
