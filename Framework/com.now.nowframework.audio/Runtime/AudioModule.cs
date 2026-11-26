@@ -16,15 +16,21 @@ namespace NowFrameWork.Audio
     {
         sealed class ClipUse
         {
+            /// <summary>Clip 的引用租约。</summary>
             public AssetLease<AudioClip> Lease;
+            /// <summary>引用该 Clip 的音源数量。</summary>
             public int Voices;
+            /// <summary>是否已报告过释放失败。</summary>
             public bool ReleaseReported;
         }
 
         sealed class Voice
         {
+            /// <summary>池化的音源。</summary>
             public AudioSource Source;
+            /// <summary>当前使用的 Clip 记录。</summary>
             public ClipUse Clip;
+            /// <summary>是否已开始播放。</summary>
             public bool Started;
         }
 
@@ -49,6 +55,7 @@ namespace NowFrameWork.Audio
         float _musicVolume = 1f;
         float _effectsVolume = 1f;
 
+        /// <summary>创建音频模块；生命周期用于前后台暂停。</summary>
         public AudioModule(IAssetService assets, IAppLifecycle lifecycle, Transform parent = null,
             int maxEffects = 16, ILog log = null)
         {
@@ -75,10 +82,14 @@ namespace NowFrameWork.Audio
             UnityEngine.Object.Destroy(target);
         }
 
+        /// <summary>模块 ID。</summary>
         public string Id => "audio";
+        /// <summary>不依赖其他模块。</summary>
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
+        /// <summary>是否因手动暂停或进入后台而暂停。</summary>
         public bool IsPaused => _paused || _background;
 
+        /// <summary>创建音源根节点与池。</summary>
         public UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert();
@@ -103,6 +114,7 @@ namespace NowFrameWork.Audio
             }
         }
 
+        /// <summary>开始接收生命周期通知。</summary>
         public UniTask StartAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert();
@@ -219,6 +231,7 @@ namespace NowFrameWork.Audio
             }
         }
 
+        /// <summary>停止 BGM 并释放 Clip。</summary>
         public void StopMusic()
         {
             CheckRunning();
@@ -227,6 +240,7 @@ namespace NowFrameWork.Audio
             ReleaseUnused(throwOnError: true);
         }
 
+        /// <summary>停止并回收全部音效。</summary>
         public void StopEffects()
         {
             CheckRunning();
@@ -236,6 +250,7 @@ namespace NowFrameWork.Audio
             ReleaseUnused(throwOnError: true);
         }
 
+        /// <summary>设置音乐与音效音量（0..1）。</summary>
         public void SetVolumes(float music, float effects)
         {
             MainThreadGuard.Assert();
@@ -248,6 +263,7 @@ namespace NowFrameWork.Audio
                 if (voice.Source != null) voice.Source.volume = _effectsVolume;
         }
 
+        /// <summary>手动暂停或恢复全部音源。</summary>
         public void SetPaused(bool paused)
         {
             CheckRunning();
@@ -280,6 +296,7 @@ namespace NowFrameWork.Audio
             else ResumeVoice(voice);
         }
 
+        /// <summary>驱动音效回收与播放状态。</summary>
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
             MainThreadGuard.Assert();
@@ -318,6 +335,7 @@ namespace NowFrameWork.Audio
             if (failures != null) throw new AggregateException("Audio lease cleanup failed; retry stopping.", failures);
         }
 
+        /// <summary>停止播放并释放音源与 Clip。</summary>
         public async UniTask ShutdownAsync(CancellationToken ct)
         {
             try { await DisposeAsync(); }

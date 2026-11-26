@@ -10,6 +10,7 @@ namespace NowFrameWork.Input
     /// </summary>
     public sealed class LegacyBackSource : IBackSource
     {
+        /// <summary>旧输入系统返回键是否按下（一帧一次）。</summary>
         public bool TryConsumeBack()
         {
 #if ENABLE_LEGACY_INPUT_MANAGER

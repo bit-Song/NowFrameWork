@@ -22,6 +22,7 @@ namespace NowFrameWork.Input
 
         float _deadline = float.NegativeInfinity;
 
+        /// <summary>创建双击退出兜底；可注入时间与退出动作。</summary>
         public DoubleBackQuitFallback(float windowSeconds = 2f, Action quit = null, Func<float> now = null)
         {
             if (windowSeconds <= 0f) throw new ArgumentOutOfRangeException(nameof(windowSeconds));
@@ -45,6 +46,7 @@ namespace NowFrameWork.Input
             }
         }
 
+        /// <summary>处理一次返回；窗口内再次返回则退出。</summary>
         public bool OnBack()
         {
             MainThreadGuard.Assert("DoubleBackQuitFallback.OnBack");

@@ -25,6 +25,7 @@ namespace NowFrameWork.Input
     {
         Action<InputDeviceKind> _changed;
 
+        /// <summary>当前设备类型。</summary>
         public InputDeviceKind Current { get; private set; } = InputDeviceKind.None;
 
         /// <summary>只在类型真正变化时触发。</summary>

@@ -37,6 +37,7 @@ namespace NowFrameWork.Input
         bool _allowFallback;
         long _session;
 
+        /// <summary>创建输入模块；UI 未消费时交给兜底处理。</summary>
         public InputModule(Func<CancellationToken, UniTask<bool>> tryUiBack, IBackFallback fallback = null,
             IAppLifecycle lifecycle = null, ILog log = null, params IBackSource[] sources)
         {
@@ -52,8 +53,10 @@ namespace NowFrameWork.Input
                 if (_sources[i] == null) throw new ArgumentException("输入源包含 null", nameof(sources));
         }
 
+        /// <summary>模块 ID。</summary>
         public string Id => "input";
 
+        /// <summary>不依赖其他模块。</summary>
         public IReadOnlyList<string> DependsOn => Array.Empty<string>();
 
         /// <summary>最近一次返回请求的去向。</summary>
@@ -62,8 +65,10 @@ namespace NowFrameWork.Input
         /// <summary>累计分发次数（诊断用）。</summary>
         public int BackCount { get; private set; }
 
+        /// <summary>是否暂停接收返回。</summary>
         public bool IsPaused => _paused;
 
+        /// <summary>初始化返回来源。</summary>
         public UniTask InitializeAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("InputModule.InitializeAsync");
@@ -81,6 +86,7 @@ namespace NowFrameWork.Input
             return UniTask.CompletedTask;
         }
 
+        /// <summary>开始接收返回事件。</summary>
         public UniTask StartAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("InputModule.StartAsync");
@@ -91,6 +97,7 @@ namespace NowFrameWork.Input
             return UniTask.CompletedTask;
         }
 
+        /// <summary>停止接收并释放来源。</summary>
         public UniTask ShutdownAsync(CancellationToken ct)
         {
             MainThreadGuard.Assert("InputModule.ShutdownAsync");
@@ -107,6 +114,7 @@ namespace NowFrameWork.Input
             return UniTask.CompletedTask;
         }
 
+        /// <summary>每帧最多分发一次返回。</summary>
         public void Tick(float deltaTime, float unscaledDeltaTime)
         {
             MainThreadGuard.Assert("InputModule.Tick");

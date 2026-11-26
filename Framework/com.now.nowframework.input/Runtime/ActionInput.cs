@@ -7,11 +7,13 @@ namespace NowFrameWork.Input
     /// <summary>一次动作采样：连续值 + 本帧按下 + 持续按住。</summary>
     public readonly struct ActionState
     {
+        /// <summary>构造动作状态。</summary>
         public ActionState(float value, bool pressed, bool held)
             : this(value, pressed, held, default)
         {
         }
 
+        /// <summary>构造带方向的动作状态。</summary>
         public ActionState(float value, bool pressed, bool held, UnityEngine.Vector2 vector)
         {
             Value = value;
@@ -32,8 +34,10 @@ namespace NowFrameWork.Input
         /// <summary>二维方向（摇杆/移动轴）；标量动作时为 default。</summary>
         public UnityEngine.Vector2 Vector { get; }
 
+        /// <summary>是否完全空闲。</summary>
         public bool IsIdle => Value == 0f && !Pressed && !Held && Vector.sqrMagnitude == 0f;
 
+        /// <summary>空闲状态。</summary>
         public static ActionState Idle => default;
 
         public override string ToString() => "v=" + Value + (Pressed ? " +pressed" : "") + (Held ? " +held" : "");
@@ -62,6 +66,7 @@ namespace NowFrameWork.Input
         readonly HashSet<string> _gates = new HashSet<string>(StringComparer.Ordinal);
         int _suppressionCount;
 
+        /// <summary>组合多个来源；同一动作取合并结果。</summary>
         public ActionInput(params IActionSource[] sources)
         {
             MainThreadGuard.Assert("ActionInput.ctor");
@@ -129,17 +134,22 @@ namespace NowFrameWork.Input
             return ActionState.Idle;
         }
 
+        /// <summary>本帧是否按下。</summary>
         public bool WasPressed(int actionId) => Read(actionId).Pressed;
 
+        /// <summary>读取动作强度。</summary>
         public float GetValue(int actionId) => Read(actionId).Value;
 
+        /// <summary>读取二维动作。</summary>
         public UnityEngine.Vector2 GetVector(int actionId) => Read(actionId).Vector;
 
         sealed class Gate : IDisposable
         {
             ActionInput _owner;
+            /// <summary>抑制令牌。</summary>
             public Gate(ActionInput owner) => _owner = owner;
 
+            /// <summary>解除抑制，幂等。</summary>
             public void Dispose()
             {
                 MainThreadGuard.Assert("ActionInput.Gate.Dispose");
