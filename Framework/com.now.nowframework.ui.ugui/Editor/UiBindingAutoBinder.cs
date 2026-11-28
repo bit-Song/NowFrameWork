@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -223,7 +222,7 @@ namespace NowFrameWork.UI.Editor
 
         static Type FindViewType(string fullName)
         {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type type = assembly.GetType(fullName);
                 if (type != null && typeof(UiView).IsAssignableFrom(type)) return type;
