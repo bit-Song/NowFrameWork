@@ -286,18 +286,19 @@ namespace NowFrameWork.UI.Editor
                 if (view == null) throw new InvalidOperationException("生成类型不是 UiView：" + type.FullName);
             }
 
-            if (options.BindAfterGenerate) Bind(root, view, result);
+            if (options.BindAfterGenerate) Bind(root, view, result, prefabPath);
             else result.Warnings.Add("已跳过引用绑定（选项关闭）。");
 
             return result;
         }
 
-        static void Bind(GameObject root, UiView view, Result result)
+        static void Bind(GameObject root, UiView view, Result result, string prefabPath)
         {
             Undo.RegisterCompleteObjectUndo(view, "Bind UI Fields");
 
             var serialized = new SerializedObject(view);
             bool dirty = false;
+            bool missing = false;
 
             foreach (Candidate candidate in result.Fields)
             {
@@ -305,7 +306,8 @@ namespace NowFrameWork.UI.Editor
 
                 if (property == null)
                 {
-                    result.Warnings.Add("字段不存在：" + candidate.FieldName + "（可能刚改名，重新生成一次）。");
+                    result.Warnings.Add("字段 " + candidate.FieldName + " 尚未编译，编译完成后会自动绑定。");
+                    missing = true;
                     continue;
                 }
 
@@ -319,7 +321,10 @@ namespace NowFrameWork.UI.Editor
 
             if (root.scene.IsValid()) UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
 
-            result.Bound = dirty;
+            if (missing)
+                UiBindingAutoBinder.Queue(prefabPath, root, view.GetType().FullName, result);
+
+            result.Bound = dirty || missing;
         }
 
         static string BuildBlock(List<Candidate> fields, UiBindingOptions options)

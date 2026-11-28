@@ -29,6 +29,7 @@ namespace NowFrameWork.UI.Editor
             public string ScenePath;
             public string RootPath;
             public string ViewType;
+            public int Attempts;
             public List<PendingField> Fields = new List<PendingField>();
         }
 
@@ -99,8 +100,16 @@ namespace NowFrameWork.UI.Editor
 
                 if (type == null)
                 {
-                    Debug.LogWarning("[UI 绑定] 找不到生成的类型：" + pending.ViewType + "，请手动执行一次生成。");
-                    return true;
+                    pending.Attempts++;
+
+                    if (pending.Attempts >= 5)
+                    {
+                        Debug.LogWarning("[UI 绑定] 多次找不到类型：" + pending.ViewType + "，已放弃自动绑定。");
+                        return true;
+                    }
+
+                    Debug.Log("[UI 绑定] 等待类型编译：" + pending.ViewType + "（第 " + pending.Attempts + " 次）。");
+                    return false;
                 }
 
                 if (!string.IsNullOrEmpty(pending.PrefabPath))
@@ -151,6 +160,7 @@ namespace NowFrameWork.UI.Editor
         static void ApplyScene(PendingBinding pending, Type type)
         {
             GameObject root = null;
+            string[] segments = pending.RootPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
             for (int i = 0; i < SceneManager.sceneCount && root == null; i++)
             {
@@ -159,7 +169,14 @@ namespace NowFrameWork.UI.Editor
 
                 foreach (GameObject candidate in scene.GetRootGameObjects())
                 {
-                    root = FindChild(candidate.transform, pending.RootPath);
+                    if (segments.Length == 0 || candidate.name != segments[0]) continue;
+
+                    Transform current = candidate.transform;
+
+                    for (int s = 1; s < segments.Length && current != null; s++)
+                        current = current.Find(segments[s]);
+
+                    if (current != null) root = current.gameObject;
                     if (root != null) break;
                 }
             }
