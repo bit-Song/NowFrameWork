@@ -133,7 +133,28 @@ _scene = null;
 
 面板骨架可直接拖到 Project 存成 Prefab，再通过 `UiDefinition` 注册地址。
 
-### 5.1 自动生成绑定脚本
+### 5.1 数据化注册与 GameEntry 入口
+
+不再手写 `UiDefinition` 数组：新建 **Create → NowFrameWork/UI/UI Catalog** 资产，在 Inspector 填面板 ID、名称、Address 与层级。
+
+项目入口只需一次装配：
+
+```csharp
+await GameEntry.EnableUIAsync(context, uiRootPrefab, uiCatalog, eventSystem, ct);
+// 之后全局直接使用：
+var opened = await GameEntry.OpenPanelAsync(10, new MyArgs { Title = "Hi" });
+```
+
+| API | 作用 |
+|---|---|
+| `GameEntry.EnableUIAsync(...)` | 创建并启动 `UiModule`，同时绑定 `GameEntry`（必须在 `Bind` 之前调用） |
+| `GameEntry.OpenPanelAsync(id, args)` | 按 Catalog 的 ID 打开面板，args 原样传给 `UiView.OnOpenAsync` |
+| `GameEntry.ShutdownUIAsync()` | 停止并释放 UI，重复调用无副作用 |
+| `GameEntry.UI` | 完整的 `IUiService`（导航、显隐、关闭、缓存） |
+
+退出时顺序：先停业务在途操作 → `GameEntry.ShutdownUIAsync()` → `binding.Dispose()`。
+
+### 5.2 自动生成绑定脚本
 
 菜单 **NowFrameWork → UI → Config** 打开配置窗口：输出目录（默认 `Assets/NowFrameWork/UI/Generated`）、命名空间、`public`/`[SerializeField] private`、首字母大小写、是否识别 TextMeshPro、是否自动推断未标记组件（默认关闭）、生成后是否写入引用。
 
