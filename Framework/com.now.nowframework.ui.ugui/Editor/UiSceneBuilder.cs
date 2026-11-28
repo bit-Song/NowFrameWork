@@ -1,4 +1,3 @@
-using System;
 using NowFrameWork.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -46,7 +45,7 @@ namespace NowFrameWork.UI.Editor
                 Selection.activeGameObject = panel.gameObject;
             }
 
-            if (panel != null && panel.scene.IsValid()) EditorSceneManager.MarkSceneDirty(panel.scene);
+            if (panel != null && panel.gameObject.scene.IsValid()) EditorSceneManager.MarkSceneDirty(panel.gameObject.scene);
 
             Debug.Log("[UI] 基础层级就绪：UiRoot + Panel（SafeArea / Layout / Header / Actions / Status）" +
                 (hasEventSystem ? " + EventSystem。" : "；EventSystem 未创建，请手动添加。"), root);
@@ -64,7 +63,7 @@ namespace NowFrameWork.UI.Editor
 
             UiView panel = CreatePanel(root.GetLayer(UiLayer.Page));
             Selection.activeGameObject = panel.gameObject;
-            EditorSceneManager.MarkSceneDirty(panel.scene);
+            EditorSceneManager.MarkSceneDirty(panel.gameObject.scene);
             Debug.Log("[UI] 已创建面板骨架，可拖到 Project 保存为 Prefab。", panel);
         }
 
@@ -174,7 +173,7 @@ namespace NowFrameWork.UI.Editor
 
         static bool CreateEventSystem()
         {
-            Type moduleType = Type.GetType(InputModuleType);
+            System.Type moduleType = System.Type.GetType(InputModuleType);
             if (moduleType == null)
             {
                 Debug.LogWarning("[UI] 未检测到 Input System 的 UI 输入模块；请手动添加 EventSystem + InputSystemUIInputModule。");
