@@ -8,13 +8,16 @@ namespace NowFrameWork.UI.Editor
     [Serializable]
     public sealed class UiBindingOptions
     {
-        const string Prefix = "NowFrameWork.UI.Binding.";
+        const string Prefix = "NowFrameWork.UI.Binding.v2.";
 
         /// <summary>生成脚本的输出目录。</summary>
-        public string Folder = "Assets/Game/UI/Generated";
+        public string Folder = "Assets/NowFrameWork/UI/Generated";
 
         /// <summary>新脚本使用的命名空间。</summary>
         public string Namespace = "Game.UI";
+
+        /// <summary>是否也推断没有标记的组件；关闭时只生成 [Button] 等标记节点。</summary>
+        public bool InferUnmarked;
 
         /// <summary>字段使用 public 还是 [SerializeField] private。</summary>
         public bool PublicFields;
@@ -32,8 +35,9 @@ namespace NowFrameWork.UI.Editor
         {
             return new UiBindingOptions
             {
-                Folder = EditorPrefs.GetString(Prefix + "Folder", "Assets/Game/UI/Generated"),
+                Folder = EditorPrefs.GetString(Prefix + "Folder", "Assets/NowFrameWork/UI/Generated"),
                 Namespace = EditorPrefs.GetString(Prefix + "Namespace", "Game.UI"),
+                InferUnmarked = EditorPrefs.GetBool(Prefix + "InferUnmarked", false),
                 PublicFields = EditorPrefs.GetBool(Prefix + "PublicFields", false),
                 LowerFirst = EditorPrefs.GetBool(Prefix + "LowerFirst", true),
                 UseTextMeshPro = EditorPrefs.GetBool(Prefix + "UseTMP", false),
@@ -45,6 +49,7 @@ namespace NowFrameWork.UI.Editor
         {
             EditorPrefs.SetString(Prefix + "Folder", Folder);
             EditorPrefs.SetString(Prefix + "Namespace", Namespace);
+            EditorPrefs.SetBool(Prefix + "InferUnmarked", InferUnmarked);
             EditorPrefs.SetBool(Prefix + "PublicFields", PublicFields);
             EditorPrefs.SetBool(Prefix + "LowerFirst", LowerFirst);
             EditorPrefs.SetBool(Prefix + "UseTMP", UseTextMeshPro);

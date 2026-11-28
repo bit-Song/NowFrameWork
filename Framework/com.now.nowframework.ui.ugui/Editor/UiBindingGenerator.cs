@@ -157,6 +157,7 @@ namespace NowFrameWork.UI.Editor
                 }
                 else
                 {
+                    if (!options.InferUnmarked) continue;
                     component = InferComponent(go, options.UseTextMeshPro);
                     rest = go.name;
                     if (component == null) continue;
@@ -190,13 +191,13 @@ namespace NowFrameWork.UI.Editor
             string assetPath = AssetDatabase.GetAssetPath(target);
             bool prefabAsset = !string.IsNullOrEmpty(assetPath) && assetPath.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase);
 
-            if (!prefabAsset) return GenerateInternal(target, options);
+            if (!prefabAsset) return GenerateInternal(target, options, null);
 
             GameObject contents = PrefabUtility.LoadPrefabContents(assetPath);
 
             try
             {
-                Result result = GenerateInternal(contents, options);
+                Result result = GenerateInternal(contents, options, assetPath);
                 PrefabUtility.SaveAsPrefabAsset(contents, assetPath);
                 return result;
             }
@@ -206,7 +207,7 @@ namespace NowFrameWork.UI.Editor
             }
         }
 
-        static Result GenerateInternal(GameObject root, UiBindingOptions options)
+        static Result GenerateInternal(GameObject root, UiBindingOptions options, string prefabPath)
         {
             Result result = Scan(root, options);
 
@@ -256,7 +257,8 @@ namespace NowFrameWork.UI.Editor
 
                 if (type == null)
                 {
-                    result.Warnings.Add("脚本已生成，但尚未编译完成；编译后再执行一次即可自动绑定引用。");
+                    result.Warnings.Add("脚本已生成，正在等待编译；完成后会自动挂载并写入引用。");
+                    UiBindingAutoBinder.Queue(prefabPath, root, options.Namespace + "." + result.ClassName, result);
                     return result;
                 }
 

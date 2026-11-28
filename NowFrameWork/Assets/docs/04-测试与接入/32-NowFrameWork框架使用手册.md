@@ -135,13 +135,14 @@ _scene = null;
 
 ### 5.1 自动生成绑定脚本
 
-菜单 **NowFrameWork → UI → Config** 打开配置窗口：输出目录、命名空间、`public`/`[SerializeField] private`、首字母大小写、是否识别 TextMeshPro、生成后是否写入引用。
+菜单 **NowFrameWork → UI → Config** 打开配置窗口：输出目录（默认 `Assets/NowFrameWork/UI/Generated`）、命名空间、`public`/`[SerializeField] private`、首字母大小写、是否识别 TextMeshPro、是否自动推断未标记组件（默认关闭）、生成后是否写入引用。
 
 在 Hierarchy 或 Project 中右键 UI 根节点，选择 **NowFrameWork → UI → 生成 UI 绑定脚本**；也可以在 `UiView` 组件右键。
 
 | 规则 | 说明 |
 |---|---|
-| 默认按组件推断 | 节点上有 `Button` 就生成 `Button` 字段，`Text`/`Image`/`Slider`/`Toggle`/`ScrollRect`/`InputField` 同理 |
+| **只生成标记节点** | 只有 `[Button]test1` 这类名字才生成字段；未标记节点默认忽略，避免把装饰 UI 全部生成出来 |
+| 可选推断 | 勾选"自动推断未标记组件"后，才按节点上的 `Button`/`Text`/`Image` 等组件生成 |
 | 标记覆盖 | `[Button]test1` → `Button test1`；支持 `[Text] [Image] [Slider] [Toggle] [Scroll] [Input] [Rect] [TMP] [TMPInput]` |
 | 命名 | 去标记、非法字符转 `_`、可选首字母小写、重名自动加序号 |
 | 生成位置 | 已有 `UiView` 脚本就地更新；没有则在配置目录新建 `XxxView : UiView` |
@@ -149,7 +150,7 @@ _scene = null;
 | 免拖拽 | 生成时用 `SerializedObject` 直接写入引用；运行时不调用 `GetComponent`、不做查找 |
 | Prefab | 选中 Prefab 资产时通过 `LoadPrefabContents` 修改并保存，不产生场景覆盖 |
 
-新建脚本第一次生成时可能尚未编译完成，按提示**再执行一次**即可写入引用；之后每次生成都会即时更新。
+新建脚本第一次生成后需要编译：编译完成时框架会自动挂载脚本并写入引用，无需再点一次；已存在的脚本则即时更新。
 
 ### 5.1 接入一个面板
 

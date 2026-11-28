@@ -102,6 +102,7 @@ namespace NowFrameWork.UI.Editor
             }
 
             _options.Namespace = EditorGUILayout.TextField("命名空间", _options.Namespace);
+            _options.InferUnmarked = EditorGUILayout.Toggle("自动推断未标记组件", _options.InferUnmarked);
             _options.PublicFields = EditorGUILayout.Toggle("public 字段", _options.PublicFields);
             _options.LowerFirst = EditorGUILayout.Toggle("首字母小写", _options.LowerFirst);
             _options.UseTextMeshPro = EditorGUILayout.Toggle("识别 TextMeshPro", _options.UseTextMeshPro);
@@ -109,9 +110,10 @@ namespace NowFrameWork.UI.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(
-                "命名规则：默认按组件类型推断（Button/Text/Image/Slider/Toggle/ScrollRect/InputField）。" +
-                "需要强制类型时在节点名前加标记，例如 [Button]test1 → public Button test1;" +
-                "支持 [Text] [Image] [Slider] [Toggle] [Scroll] [Input] [Rect] [TMP] [TMPInput]。",
+                "默认只生成带标记的节点：节点名写成 [Button]test1 / [Text]Title / [Image]Bg，" +
+                "生成对应字段并自动绑定；未标记的节点不会生成字段。" +
+                "支持 [Button] [Text] [Image] [Slider] [Toggle] [Scroll] [Input] [Rect] [TMP] [TMPInput]。" +
+                "勾选“自动推断未标记组件”才会扫描所有组件。",
                 MessageType.Info);
 
             EditorGUILayout.Space();
