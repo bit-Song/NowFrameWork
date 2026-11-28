@@ -238,6 +238,8 @@ namespace NowFrameWork.UI.Editor
 
             if (string.IsNullOrEmpty(scriptPath))
             {
+                EnsureAssemblyDefinition(options.Folder, options.UseTextMeshPro);
+
                 string baseName = Sanitize(root.name, false);
 
                 if (!baseName.EndsWith("View", StringComparison.OrdinalIgnoreCase)) baseName += "View";
@@ -373,6 +375,48 @@ namespace NowFrameWork.UI.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, content);
             return true;
+        }
+
+        /// <summary>输出目录不在任何 asmdef 内时，创建引用框架 UI 的程序集定义。</summary>
+        static void EnsureAssemblyDefinition(string folder, bool useTmp)
+        {
+            string directory = folder.TrimEnd('/');
+
+            for (string current = directory; current.StartsWith("Assets", StringComparison.Ordinal);)
+            {
+                if (Directory.GetFiles(current, "*.asmdef").Length > 0) return;
+
+                string parent = Path.GetDirectoryName(current);
+                if (string.IsNullOrEmpty(parent)) break;
+
+                current = parent.Replace('\\', '/');
+            }
+
+            string path = directory + "/NowFrameWork.UI.Generated.asmdef";
+            if (File.Exists(path)) return;
+
+            string references = "\"NowFrameWork.UI.UGUI\", \"UnityEngine.UI\", \"UniTask\"";
+            if (useTmp) references += ", \"Unity.TextMeshPro\"";
+
+            string json = "{\n" +
+                "  \"name\": \"NowFrameWork.UI.Generated\",\n" +
+                "  \"rootNamespace\": \"\",\n" +
+                "  \"references\": [" + references + "],\n" +
+                "  \"includePlatforms\": [],\n" +
+                "  \"excludePlatforms\": [],\n" +
+                "  \"allowUnsafeCode\": false,\n" +
+                "  \"overrideReferences\": false,\n" +
+                "  \"precompiledReferences\": [],\n" +
+                "  \"autoReferenced\": false,\n" +
+                "  \"defineConstraints\": [],\n" +
+                "  \"versionDefines\": [],\n" +
+                "  \"noEngineReferences\": false\n" +
+                "}\n";
+
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(path, json);
+            AssetDatabase.ImportAsset(path);
+            Debug.Log("[UI 绑定] 已创建程序集定义：" + path);
         }
 
         static bool FileHasClass(string path, string className)
