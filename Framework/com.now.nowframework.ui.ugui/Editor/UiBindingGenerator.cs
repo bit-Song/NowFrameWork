@@ -442,7 +442,7 @@ namespace NowFrameWork.UI.Editor
             foreach (Candidate button in buttons)
             {
                 builder.AppendLine("            if (" + button.FieldName + " != null) " + button.FieldName +
-                    ".onClick.AddListener(On" + Capitalize(button.FieldName) + "Clicked);");
+                    ".onClick.AddListener(() => On" + Capitalize(button.FieldName) + "Clicked());");
             }
 
             builder.AppendLine("        }");
