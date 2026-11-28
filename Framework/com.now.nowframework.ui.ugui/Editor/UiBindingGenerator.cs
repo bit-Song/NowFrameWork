@@ -238,8 +238,20 @@ namespace NowFrameWork.UI.Editor
 
             if (string.IsNullOrEmpty(scriptPath))
             {
-                result.ClassName = Sanitize(root.name, false) + "View";
+                string baseName = Sanitize(root.name, false);
+
+                if (!baseName.EndsWith("View", StringComparison.OrdinalIgnoreCase)) baseName += "View";
+
+                result.ClassName = baseName;
                 scriptPath = options.Folder.TrimEnd('/') + "/" + result.ClassName + ".cs";
+
+                int suffix = 2;
+
+                while (File.Exists(scriptPath) && !FileHasClass(scriptPath, result.ClassName))
+                {
+                    result.ClassName = baseName + suffix++;
+                    scriptPath = options.Folder.TrimEnd('/') + "/" + result.ClassName + ".cs";
+                }
             }
 
             result.ScriptPath = scriptPath;
@@ -361,6 +373,18 @@ namespace NowFrameWork.UI.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, content);
             return true;
+        }
+
+        static bool FileHasClass(string path, string className)
+        {
+            try
+            {
+                return File.ReadAllText(path).Contains("class " + className, StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         static bool IsFrameworkScript(string path)
