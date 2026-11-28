@@ -1,6 +1,6 @@
 {
   "name": "NowFrameWork.UI.UGUI.Editor",
-  "references": ["NowFrameWork.UI.UGUI", "UnityEngine.UI"],
+  "references": ["NowFrameWork.UI.UGUI", "UnityEngine.UI", "Unity.Addressables", "Unity.Addressables.Editor"],
   "includePlatforms": ["Editor"],
   "autoReferenced": false
 }
