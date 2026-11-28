@@ -4,6 +4,7 @@ using NowFrameWork.Assets;
 using NowFrameWork.Audio;
 using NowFrameWork.Core.Storage;
 using NowFrameWork.Unity;
+using NowFrameWork.UI;
 
 namespace NowFrameWork.Boot
 {
@@ -16,6 +17,7 @@ namespace NowFrameWork.Boot
         public ConfigService Configs { get; }
         public FileSettingsStore<BootPreferences> Settings { get; }
         public ISceneService Scenes { get; }
+        public UiModule UI { get; internal set; }
         public SettingsLoadResult SettingsResult { get; internal set; }
         public UnityEngine.Object Configuration { get; internal set; }
         public SceneLease Scene { get; internal set; }

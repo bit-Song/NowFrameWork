@@ -6,6 +6,8 @@
     "NowFrameWork.Unity",
     "NowFrameWork.Assets",
     "NowFrameWork.Audio",
+    "NowFrameWork.UI.UGUI",
+    "UnityEngine.UI",
     "UniTask"
   ],
   "includePlatforms": [],

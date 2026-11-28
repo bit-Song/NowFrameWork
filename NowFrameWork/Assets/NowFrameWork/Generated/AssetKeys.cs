@@ -30,7 +30,7 @@ namespace NowFrameWork.Generated
                 {
                     public static class UI
                     {
-                        public static readonly global::NowFrameWork.Assets.AssetKey PanelTest_prefab = global::NowFrameWork.Assets.AssetKey.From("Assets/Test/Prefabs/PanelTest.prefab");
+                        public static readonly global::NowFrameWork.Assets.AssetKey PanelTest_prefab = global::NowFrameWork.Assets.AssetKey.From("Assets/Game/Test/Prefabs/UI/PanelTest.prefab");
                     }
                 }
             }

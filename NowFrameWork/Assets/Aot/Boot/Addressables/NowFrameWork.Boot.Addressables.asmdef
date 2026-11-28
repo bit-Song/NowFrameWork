@@ -2,6 +2,7 @@
   "name": "NowFrameWork.Boot.Addressables",
   "references": [
     "NowFrameWork.Boot",
+    "NowFrameWork.UI.UGUI",
     "NowFrameWork.Core",
     "NowFrameWork.Unity",
     "NowFrameWork.Assets",

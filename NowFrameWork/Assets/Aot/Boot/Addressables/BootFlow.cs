@@ -24,6 +24,7 @@ namespace NowFrameWork.Boot
         [SerializeField] bool _loadCode;
         [SerializeField] MonoBehaviour _codeLoader;
         [SerializeField] MonoBehaviour _projectEntry;
+        [SerializeField] NowFrameWork.UI.UiCatalog _uiCatalog;
         [SerializeField] WindowsResourceReleases _resourceReleases;
         readonly StringBuilder _messages = new StringBuilder();
         BootSession _session;
@@ -76,7 +77,7 @@ namespace NowFrameWork.Boot
                         Write(_selectedRelease == null ? "使用随包发布集" :
                             "选中发布集 " + _selectedRelease.Id + (_selectedRelease.IsTrial ? "（试用）" : "（已确认）"));
                     }
-                    _session = new BootSession(CreateContext, options, entry, loader);
+                    _session = new BootSession(CreateContext, options, entry, loader, uiCatalog: _uiCatalog);
                     if (transform.parent == null) DontDestroyOnLoad(gameObject);
                 }
                 await _session.StartAsync(destroyCancellationToken);

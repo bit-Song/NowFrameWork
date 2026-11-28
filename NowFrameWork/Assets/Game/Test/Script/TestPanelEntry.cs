@@ -7,30 +7,52 @@ using UnityEngine;
 
 public sealed class TestPanelEntry : MonoBehaviour, IBootEntry
 {
-    [SerializeField] UiCatalog _catalog;
     [SerializeField] int _panelId = 10;
     [SerializeField] bool _openOnStart = true;
+
+    GameEntry.Binding _binding;
     UiOpenResult opened;
 
     public async UniTask EnterAsync(BootContext context, CancellationToken ct)
     {
-        await GameEntry.EnableUIAsync(context, _catalog, ct: ct);
+        // UI 由 BootFlow 的 UiCatalog 自动初始化，这里只绑定入口。
+        _binding = GameEntry.Bind(context);
 
-        if (_openOnStart)
-             opened = await GameEntry.OpenPanelAsync(_panelId, null, ct);
+        if (!_openOnStart) return;
+
+        if (!GameEntry.HasUI)
+        {
+            Debug.LogWarning("BootFlow 没有配置 UiCatalog，UI 未启用。");
+            return;
+        }
+
+        opened = await GameEntry.OpenPanelAsync(_panelId, null, ct);
     }
 
-    public async UniTask ExitAsync() => await GameEntry.ShutdownUIAsync();
+    public UniTask ExitAsync()
+    {
+        _binding?.BeginStopping();
+        _binding?.Dispose();
+        _binding = null;
+        return UniTask.CompletedTask;
+    }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (UnityEngine.InputSystem.Keyboard.current != null &&
+            UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame)
             Close();
     }
 
-    async void  Close()
+    public async void Close()
     {
-        await GameEntry.ClosePanelAsync(_panelId);
-
+        try
+        {
+            await GameEntry.ClosePanelAsync(_panelId);
+        }
+        catch (System.Exception error)
+        {
+            Debug.LogException(error);
+        }
     }
 }

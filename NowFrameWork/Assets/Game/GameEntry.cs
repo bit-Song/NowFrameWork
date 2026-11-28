@@ -73,7 +73,8 @@ static EventSystem _ownedEventSystem;
             MainThreadGuard.Assert("GameEntry.Bind");
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (_current != null) throw new InvalidOperationException("GameEntry 已绑定或尚未完成停止；禁止覆盖服务，请先由原所有者完成清理。");
-            var binding = new Binding(context, ui, actions);
+            ui = ui ?? context.UI?.Service;
+        var binding = new Binding(context, ui, actions);
             _current = binding;
             return binding;
         }
@@ -97,6 +98,7 @@ MainThreadGuard.Assert("GameEntry.EnableUIAsync");
 
 if (context == null) throw new ArgumentNullException(nameof(context));
 if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+if (context.UI != null) throw new InvalidOperationException("UI 已由 Boot 启用，无需再次 EnableUIAsync。");
 if (_uiModule != null) throw new InvalidOperationException("UI 已启用，请先 ShutdownUIAsync。");
 if (_current != null) throw new InvalidOperationException("UI 必须在 GameEntry.Bind 之前启用。");
 

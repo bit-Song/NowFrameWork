@@ -3,6 +3,7 @@
   "rootNamespace": "NowFrameWork.Boot.Tests",
   "references": [
     "NowFrameWork.Boot",
+    "NowFrameWork.UI.UGUI",
     "NowFrameWork.Core",
     "NowFrameWork.Unity",
     "NowFrameWork.Assets",

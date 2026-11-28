@@ -1,7 +1,0 @@
-{
-  "name": "NowFrameWork.Generated.AssetKeys",
-  "rootNamespace": "NowFrameWork.Generated",
-  "references": ["NowFrameWork.Assets"],
-  "autoReferenced": false,
-  "noEngineReferences": true
-}

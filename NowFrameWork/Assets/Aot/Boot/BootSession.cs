@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using NowFrameWork.Assets;
 using NowFrameWork.Core.Logging;
 using NowFrameWork.Core.Threading;
+using NowFrameWork.UI;
 
 namespace NowFrameWork.Boot
 {
@@ -19,6 +20,7 @@ namespace NowFrameWork.Boot
         readonly IBootEntry _entry;
         readonly IBootCodeLoader _codeLoader;
         readonly Func<UniTask> _cleanupWait;
+        readonly UiCatalog _uiCatalog;
         readonly double _cleanupSeconds;
         CancellationTokenSource _startupCancellation;
         UniTaskCompletionSource _startupFinished;
@@ -37,13 +39,14 @@ namespace NowFrameWork.Boot
         public bool CanStart => !_starting && !_stopping && Context == null && !RequiresRestart;
 
         public BootSession(Func<BootContext> factory, BootOptions options, IBootEntry entry, IBootCodeLoader codeLoader = null,
-            double cleanupSeconds = 10, Func<UniTask> cleanupWait = null)
+            double cleanupSeconds = 10, Func<UniTask> cleanupWait = null, UiCatalog uiCatalog = null)
         {
             MainThreadGuard.Assert("BootSession.ctor");
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _entry = entry ?? throw new ArgumentNullException(nameof(entry));
             if (options.LoadCode && codeLoader == null) throw new ArgumentException("启用代码热更必须提供 IBootCodeLoader");
+            _uiCatalog = uiCatalog;
             if (cleanupSeconds <= 0 || double.IsNaN(cleanupSeconds) || double.IsInfinity(cleanupSeconds))
                 throw new ArgumentOutOfRangeException(nameof(cleanupSeconds));
             _codeLoader = codeLoader;
@@ -89,6 +92,12 @@ namespace NowFrameWork.Boot
                     Context.App.Log.Write(LogLevel.Warn, "BOOT", "设置从备份恢复: " + Context.SettingsResult.PrimaryError.Message);
                 ct.ThrowIfCancellationRequested();
                 SetStage("Modules", 0.2f); await Context.App.StartupAsync(ct);
+
+            if (_uiCatalog != null)
+            {
+                SetStage("UI", 0.45f);
+                Context.UI = await UiBootstrap.CreateAsync(Context.Assets, _uiCatalog, log: Context.App.Log, ct: ct);
+            }
                 SetStage("Resources", 0.35f);
                 if (_options.CheckResourceUpdates)
                 {
@@ -183,7 +192,13 @@ namespace NowFrameWork.Boot
             Stage = "Cleanup";
             if (_entryAttempted)
             {
-                await _entry.ExitAsync(); // 入口尚未停止时，不继续卸载它仍可能使用的依赖。
+                await _entry.ExitAsync();
+            }
+
+            if (Context.UI != null)
+            {
+                await Context.UI.ShutdownAsync(CancellationToken.None);
+                Context.UI = null; // 入口尚未停止时，不继续卸载它仍可能使用的依赖。
                 // 直到整段清理完成才清除此标志；后续依赖收尾失败时，允许幂等入口再次补做清理。
             }
             if (Context.App.Pools.PoolCount != 0)
