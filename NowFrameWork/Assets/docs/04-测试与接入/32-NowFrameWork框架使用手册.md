@@ -123,7 +123,15 @@ _scene = null;
 
 ## 5. UI 面板、导航、动画与缓存
 
-手动搭 UI 根：菜单 **NowFrameWork → UI → 在场景中创建 UiRoot**，自动生成 Canvas、SafeArea 与 Page / Popup / Toast 三层，并在缺少 EventSystem 时提示。已有 UiRoot 的场景会直接选中，不会重复创建。
+手动搭 UI：菜单 **NowFrameWork → UI** 下三个入口。
+
+| 菜单 | 生成内容 |
+|---|---|
+| 在场景中创建 UiRoot | Canvas、SafeArea 与 Page / Popup / Toast 三层；已有则只选中 |
+| 在场景中创建基础 UI 层级 | UiRoot + EventSystem（检测到 Input System 时自动挂模块）+ 一个面板骨架 |
+| 在场景中创建面板 | 面板骨架：Canvas / CanvasGroup / GraphicRaycaster / UiView + SafeArea / Layout / Header / Actions / Status |
+
+面板骨架可直接拖到 Project 存成 Prefab，再通过 `UiDefinition` 注册地址。
 
 ### 5.1 接入一个面板
 
