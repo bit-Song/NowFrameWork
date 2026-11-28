@@ -123,6 +123,8 @@ _scene = null;
 
 ## 5. UI 面板、导航、动画与缓存
 
+手动搭 UI 根：菜单 **NowFrameWork → UI → 在场景中创建 UiRoot**，自动生成 Canvas、SafeArea 与 Page / Popup / Toast 三层，并在缺少 EventSystem 时提示。已有 UiRoot 的场景会直接选中，不会重复创建。
+
 ### 5.1 接入一个面板
 
 1. 准备 `UiRoot` 和一个有效的 `EventSystem`。从现有样例复用 UI Root 的配置可减少层级错误，Root 下有 Page、Popup 和 Toast 容器。
