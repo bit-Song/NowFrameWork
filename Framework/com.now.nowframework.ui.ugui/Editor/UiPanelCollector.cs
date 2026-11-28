@@ -137,6 +137,9 @@ namespace NowFrameWork.UI.Editor
                 if (definition.Modal && definition.Layer != UiLayer.Popup)
                     errors.Add(path + "：Modal 只允许放在 Popup 层。");
 
+                if (definition.CloseOnBackdrop && !definition.Modal)
+                    errors.Add(path + "：CloseOnBackdrop 只对 Modal 面板有效。");
+
                 entries.Add(new UiCatalog.Entry
                 {
                     Id = definition.PanelId,
