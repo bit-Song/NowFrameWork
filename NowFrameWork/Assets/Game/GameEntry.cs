@@ -24,6 +24,7 @@ namespace Game
         static Binding _current;
 static UiModule _uiModule;
 static UiCatalog _uiCatalog;
+static EventSystem _ownedEventSystem;
 
         public static bool IsReady
         {
@@ -84,23 +85,33 @@ static UiCatalog _uiCatalog;
     _current = null;
     _uiModule = null;
     _uiCatalog = null;
+    _ownedEventSystem = null;
 }
 
         /// <summary>一次绑定的所有者凭据。清理失败时保留它，停止状态禁止重新绑定；重试成功后再 Dispose。</summary>
         /// <summary>装配并启动 UI 模块；未绑定时顺带绑定 GameEntry。只应在项目入口调用一次。</summary>
-public static async UniTask<UiModule> EnableUIAsync(BootContext context, UiRoot rootPrefab, UiCatalog catalog,
+public static async UniTask<UiModule> EnableUIAsync(BootContext context, UiCatalog catalog, UiRoot rootPrefab = null,
 EventSystem eventSystem = null, ActionInput actions = null, CancellationToken ct = default)
 {
 MainThreadGuard.Assert("GameEntry.EnableUIAsync");
 
 if (context == null) throw new ArgumentNullException(nameof(context));
-if (rootPrefab == null) throw new ArgumentNullException(nameof(rootPrefab));
 if (catalog == null) throw new ArgumentNullException(nameof(catalog));
 if (_uiModule != null) throw new InvalidOperationException("UI 已启用，请先 ShutdownUIAsync。");
 if (_current != null) throw new InvalidOperationException("UI 必须在 GameEntry.Bind 之前启用。");
 
+EventSystem events = eventSystem;
+
+if (events == null)
+{
+events = UiRootFactory.EnsureEventSystem();
+_ownedEventSystem = events;
+}
+
+UiRoot createdRoot = rootPrefab == null ? UiRootFactory.Create(null, events) : null;
+
 var module = new UiModule(context.Assets, rootPrefab, catalog.BuildDefinitions(),
-new CanvasGroupUiTransition(), eventSystem, log: context.App.Log);
+new CanvasGroupUiTransition(), events, log: context.App.Log, rootInstance: createdRoot);
 
 await module.InitializeAsync(ct);
 
@@ -129,6 +140,12 @@ _uiModule = null;
 _uiCatalog = null;
 
 if (module != null) await module.ShutdownAsync(CancellationToken.None);
+
+if (_ownedEventSystem != null)
+{
+UnityEngine.Object.Destroy(_ownedEventSystem.gameObject);
+_ownedEventSystem = null;
+}
 }
 
 /// <summary>按 Catalog 中的面板 ID 打开面板；args 原样传给 UiView.OnOpenAsync。</summary>

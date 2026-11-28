@@ -14,6 +14,7 @@ namespace NowFrameWork.UI
     public sealed class UiModule : IAppModule
     {
         readonly UiRoot _prefab;
+        readonly UiRoot _rootInstance;
         readonly Transform _parent;
         readonly UnityEngine.EventSystems.EventSystem _eventSystem;
         readonly UnityUiViewFactory _factory;
@@ -32,10 +33,12 @@ namespace NowFrameWork.UI
         public UiModule(IAssetService assets, UiRoot rootPrefab, IEnumerable<UiDefinition> definitions,
             IUiTransition transition = null, UnityEngine.EventSystems.EventSystem eventSystem = null,
             Transform parent = null, ILog log = null, Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null,
-            UiCacheOptions cacheOptions = null)
+            UiCacheOptions cacheOptions = null, UiRoot rootInstance = null)
         {
             MainThreadGuard.Assert("UiModule.ctor");
-            _prefab = rootPrefab != null ? rootPrefab : throw new ArgumentNullException(nameof(rootPrefab));
+            if (rootPrefab == null && rootInstance == null) throw new ArgumentNullException(nameof(rootPrefab));
+            _prefab = rootPrefab;
+            _rootInstance = rootInstance;
             _parent = parent; _eventSystem = eventSystem; _log = log ?? Logs.Null;
             _destroy = destroy ?? (go => UnityEngine.Object.Destroy(go));
             _frameWaiter = frameWaiter;
@@ -60,12 +63,19 @@ namespace NowFrameWork.UI
             try
             {
                 ct.ThrowIfCancellationRequested();
-                _staging = new GameObject("UI Root Staging"); _staging.SetActive(false);
-                _root = UnityEngine.Object.Instantiate(_prefab, _staging.transform, false);
+                if (_rootInstance != null)
+                {
+                    _root = _rootInstance;
+                }
+                else
+                {
+                    _staging = new GameObject("UI Root Staging"); _staging.SetActive(false);
+                    _root = UnityEngine.Object.Instantiate(_prefab, _staging.transform, false);
+                }
                 if (_eventSystem != null) _root.SetEventSystem(_eventSystem);
                 _root.Validate();
                 ct.ThrowIfCancellationRequested();
-                _root.transform.SetParent(_parent, false);
+                if (_root.transform.parent != _parent) _root.transform.SetParent(_parent, false);
                 _root.gameObject.SetActive(true);
                 _factory.AttachRoot(_root);
                 Service.AttachPresentation(_root, _log);
