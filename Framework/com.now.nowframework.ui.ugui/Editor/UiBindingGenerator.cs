@@ -212,12 +212,27 @@ namespace NowFrameWork.UI.Editor
 
             UiView view = root.GetComponent<UiView>();
             string scriptPath = null;
+            bool replaceBaseView = false;
 
             if (view != null)
             {
                 MonoScript script = MonoScript.FromMonoBehaviour(view);
                 scriptPath = script != null ? AssetDatabase.GetAssetPath(script) : null;
                 result.ClassName = view.GetType().Name;
+            }
+
+            if (scriptPath != null && IsFrameworkScript(scriptPath))
+            {
+                result.Warnings.Add("选中的对象使用框架脚本 " + scriptPath + "，不会改写包内文件。" +
+                    "请先给该面板挂一个项目自己的 UiView 派生脚本，再执行生成。");
+                return result;
+            }
+
+            if (view != null && view.GetType() == typeof(UiView))
+            {
+                replaceBaseView = true;
+                view = null;
+                scriptPath = null;
             }
 
             if (string.IsNullOrEmpty(scriptPath))
@@ -243,6 +258,12 @@ namespace NowFrameWork.UI.Editor
                 {
                     result.Warnings.Add("脚本已生成，但尚未编译完成；编译后再执行一次即可自动绑定引用。");
                     return result;
+                }
+
+                if (replaceBaseView)
+                {
+                    UiView baseView = root.GetComponent<UiView>();
+                    if (baseView != null) UnityEngine.Object.DestroyImmediate(baseView, true);
                 }
 
                 view = root.AddComponent(type) as UiView;
@@ -312,8 +333,12 @@ namespace NowFrameWork.UI.Editor
                     return false;
                 }
 
-                int insert = existing.LastIndexOf('}');
-                if (insert < 0) throw new InvalidOperationException("脚本结构异常，找不到类结束位置：" + path);
+                int insert = FindClassEnd(existing, className);
+                if (insert < 0)
+                {
+                    warnings.Add("脚本缺少 auto-generated 标记且无法定位类结尾，已跳过更新：" + path);
+                    return false;
+                }
 
                 string injected = existing.Insert(insert, block + "\n");
                 File.WriteAllText(path, injected);
@@ -334,6 +359,36 @@ namespace NowFrameWork.UI.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, content);
             return true;
+        }
+
+        static bool IsFrameworkScript(string path)
+        {
+            return !string.IsNullOrEmpty(path) &&
+                (path.StartsWith("Packages/", StringComparison.Ordinal) ||
+                 path.Contains("com.now.nowframework."));
+        }
+
+        static int FindClassEnd(string text, string className)
+        {
+            int start = text.IndexOf("class " + className, StringComparison.Ordinal);
+            if (start < 0) return -1;
+
+            int open = text.IndexOf('{', start);
+            if (open < 0) return -1;
+
+            int depth = 0;
+
+            for (int i = open; i < text.Length; i++)
+            {
+                if (text[i] == '{') depth++;
+                else if (text[i] == '}')
+                {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+
+            return -1;
         }
 
         static string PathOf(Transform root, Transform target)
