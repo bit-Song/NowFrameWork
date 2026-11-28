@@ -160,6 +160,7 @@ var opened = await GameEntry.OpenPanelAsync(10, new MyArgs { Title = "Hi" });
 |---|---|
 | `GameEntry.EnableUIAsync(context, catalog, rootPrefab?, eventSystem?, actions?, ct)` | 创建并启动 `UiModule`，同时绑定 `GameEntry`（必须在 `Bind` 之前调用）；`rootPrefab`/`eventSystem` 省略时运行时自动创建 |
 | `GameEntry.OpenPanelAsync(id, args)` | 按 Catalog 的 ID 打开面板，args 原样传给 `UiView.OnOpenAsync` |
+| `GameEntry.ClosePanelAsync(id, all)` | 按 ID 关闭；默认关最上层一个，`all: true` 关全部；返回关闭数量 |
 | `GameEntry.ShutdownUIAsync()` | 停止并释放 UI，重复调用无副作用 |
 | `GameEntry.UI` | 完整的 `IUiService`（导航、显隐、关闭、缓存） |
 

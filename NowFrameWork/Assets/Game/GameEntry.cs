@@ -148,6 +148,16 @@ _ownedEventSystem = null;
 }
 }
 
+/// <summary>按面板 ID 关闭：默认关闭最上层一个，all 为 true 时关闭全部。返回关闭数量。</summary>
+public static UniTask<int> ClosePanelAsync(int id, bool all = false, CancellationToken ct = default)
+{
+MainThreadGuard.Assert("GameEntry.ClosePanelAsync");
+
+if (_uiModule == null) throw new InvalidOperationException("UI 尚未启用，请先在项目入口调用 EnableUIAsync。");
+
+return _uiModule.Service.CloseAsync(id, all, ct);
+}
+
 /// <summary>按 Catalog 中的面板 ID 打开面板；args 原样传给 UiView.OnOpenAsync。</summary>
 public static UniTask<UiOpenResult> OpenPanelAsync(int id, object args = null, CancellationToken ct = default)
 {

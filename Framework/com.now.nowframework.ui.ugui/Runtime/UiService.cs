@@ -348,6 +348,43 @@ namespace NowFrameWork.UI
             return session.Closing.Task.AttachExternalCancellation(ct);
         }
 
+        /// <summary>按面板 ID 关闭：默认关闭最上层一个；all 为 true 时关闭全部。返回关闭数量。</summary>
+        public async UniTask<int> CloseAsync(int panelId, bool all = false, CancellationToken ct = default)
+        {
+            MainThreadGuard.Assert("UiService.CloseAsync");
+            ct.ThrowIfCancellationRequested();
+
+            var targets = new List<UiSession>();
+
+            foreach (UiSession session in _sessions.Values)
+                if (session.Definition != null && session.Definition.Id == panelId) targets.Add(session);
+
+            if (targets.Count == 0) return 0;
+
+            if (!all)
+            {
+                targets.Sort((left, right) => right.Order.CompareTo(left.Order));
+                targets.RemoveRange(1, targets.Count - 1);
+            }
+
+            int closed = 0;
+
+            foreach (UiSession session in targets)
+            {
+                if (session.Closing == null)
+                {
+                    await CloseAsync(session.Handle, ct);
+                    closed++;
+                }
+                else
+                {
+                    await session.Closing.Task.AttachExternalCancellation(ct);
+                }
+            }
+
+            return closed;
+        }
+
         async UniTask CloseCoreAsync(UiSession session, UniTaskCompletionSource completion)
         {
             try
