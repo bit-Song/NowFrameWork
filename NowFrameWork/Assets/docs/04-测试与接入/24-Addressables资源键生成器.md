@@ -11,7 +11,7 @@
 
 扫描会跳过没有打包 Schema 的内置 Group，以及未勾选 Include In Build 的 Group。登记为文件夹的 Addressables 条目会展开其可寻址子资源，不逐项生成 Sprite/FBX 等文件内部子对象。
 
-输出固定为 `Assets/Generated/AssetKeys/AssetKeys.g.cs`，同时建立专用程序集 `NowFrameWork.Generated.AssetKeys`。这两个文件只有在确认后才创建。业务 asmdef 需要显式引用 `NowFrameWork.Generated.AssetKeys`，调用加载 API 时还须引用 `NowFrameWork.Assets`、`UniTask` 等实际使用的程序集。
+输出固定为 `Assets/NowFrameWork/Generated/AssetKeys.cs`，同时建立专用程序集 `NowFrameWork.Generated.AssetKeys`。这两个文件只有在确认后才创建。业务 asmdef 需要显式引用 `NowFrameWork.Generated.AssetKeys`，调用加载 API 时还须引用 `NowFrameWork.Assets`、`UniTask` 等实际使用的程序集。
 
 ## 生成规则
 

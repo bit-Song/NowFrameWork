@@ -89,7 +89,7 @@ using (var lease = await context.Assets.AcquireAsync<TextAsset>("PCProbe/Config"
 
 ### 3.2 生成资源键和读取常驻配置
 
-在 **NowFrameWork → Assets → 资源键生成器** 中选择资源根目录，先扫描并处理冲突，再预览并确认生成。生成文件是 `Assets/Generated/AssetKeys/AssetKeys.g.cs`，调用方可以引用 `NowFrameWork.Generated.AssetKeys`。本仓库当前的测试配置键为 `NowFrameWork.Generated.AssetKeys.Tests.PCRegression.Config_txt`。重新选择扫描根目录会影响生成的类层级。 [资源键生成器](24-Addressables资源键生成器.md)
+在 **NowFrameWork → Assets → 资源键生成器** 中选择资源根目录，先扫描并处理冲突，再预览并确认生成。生成文件是 `Assets/NowFrameWork/Generated/AssetKeys.cs`，调用方可以引用 `NowFrameWork.Generated.AssetKeys`。本仓库当前的测试配置键为 `NowFrameWork.Generated.AssetKeys.Tests.PCRegression.Config_txt`。重新选择扫描根目录会影响生成的类层级。 [资源键生成器](24-Addressables资源键生成器.md)
 
 配置通常使用 `context.Configs.LoadAsync<T>()`，由 `ConfigService` 持有缓存租约，Boot 停止时统一清理。将配置作为只读数据使用。若把地址填进 BootFlow 的 **Config Address**，该项改为启动所必需，缺失会使 Boot 在 `Config` 阶段失败。
 

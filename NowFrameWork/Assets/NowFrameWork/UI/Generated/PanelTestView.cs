@@ -19,6 +19,15 @@ namespace Game.UI
         // </auto-generated-events>
         // <user-code>
         partial void OnPrimaryClicked();
+
         // </user-code>
-}
+
+        // <user-code>
+        partial void OnPrimaryClicked()
+        {
+            Debug.Log("Primary button clicked!");
+        }
+
+        // </user-code>
+    }
 }

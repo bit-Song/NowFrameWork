@@ -12,8 +12,8 @@ namespace NowFrameWork.EditorTools.AssetKeys
 {
     internal sealed class AssetKeyGeneratorWindow : EditorWindow
     {
-        const string OutputDirectory = "Assets/Generated/AssetKeys";
-        const string OutputFile = OutputDirectory + "/AssetKeys.g.cs";
+        const string OutputDirectory = "Assets/NowFrameWork/Generated";
+        const string OutputFile = OutputDirectory + "/AssetKeys.cs";
         const string AssemblyFile = OutputDirectory + "/NowFrameWork.Generated.AssetKeys.asmdef";
         const string AssemblyContent = "{\n  \"name\": \"NowFrameWork.Generated.AssetKeys\",\n  \"rootNamespace\": \"NowFrameWork.Generated\",\n  \"references\": [\"NowFrameWork.Assets\"],\n  \"autoReferenced\": false,\n  \"noEngineReferences\": true\n}\n";
         [SerializeField] string _root = "Assets";
