@@ -232,7 +232,6 @@ namespace NowFrameWork.UI.Editor
         static Result GenerateInternal(GameObject root, UiBindingOptions options, string prefabPath)
         {
             Result result = Scan(root, options);
-            EnsurePanelDefinition(root);
 
             UiView view = root.GetComponent<UiView>();
             string scriptPath = null;
@@ -251,6 +250,8 @@ namespace NowFrameWork.UI.Editor
                     "请先给该面板挂一个项目自己的 UiView 派生脚本，再执行生成。");
                 return result;
             }
+
+            EnsurePanelDefinition(root);
 
             if (view != null && view.GetType() == typeof(UiView))
             {
@@ -612,7 +613,7 @@ namespace NowFrameWork.UI.Editor
 
             for (string current = directory; current.StartsWith("Assets", StringComparison.Ordinal);)
             {
-                if (Directory.GetFiles(current, "*.asmdef").Length > 0) return;
+                if (Directory.Exists(current) && Directory.GetFiles(current, "*.asmdef").Length > 0) return;
 
                 string parent = Path.GetDirectoryName(current);
                 if (string.IsNullOrEmpty(parent)) break;

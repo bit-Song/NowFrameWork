@@ -38,10 +38,23 @@ namespace NowFrameWork.UI
 
         /// <summary>场景已有 EventSystem 则复用，否则创建并挂可用的输入模块。</summary>
         public static EventSystem EnsureEventSystem(Transform parent = null)
+            => EnsureEventSystem(parent, out _);
+
+        /// <summary>同上，并通过 created 告知是否由本次调用创建。</summary>
+        public static EventSystem EnsureEventSystem(Transform parent, out bool created)
         {
             EventSystem existing = UnityEngine.Object.FindObjectOfType<EventSystem>();
+            created = false;
 
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                if (existing.GetComponents<BaseInputModule>().Length == 0)
+                    Debug.LogWarning("[UI] 场景中的 EventSystem 没有输入模块，UI 点击与焦点导航不可用。", existing);
+
+                return existing;
+            }
+
+            created = true;
 
             var go = new GameObject("EventSystem", typeof(EventSystem));
 

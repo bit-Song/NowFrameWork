@@ -18,11 +18,28 @@ namespace NowFrameWork.UI
             if (assets == null) throw new ArgumentNullException(nameof(assets));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
 
-            EventSystem events = eventSystem != null ? eventSystem : UiRootFactory.EnsureEventSystem(parent);
+            EventSystem events = eventSystem;
+
+            bool eventsCreated = false;
+
+            if (events == null) events = UiRootFactory.EnsureEventSystem(parent, out eventsCreated);
+
             UiRoot createdRoot = rootPrefab == null ? UiRootFactory.Create(parent, events) : null;
 
+            // Boot 场景通常常驻；场景切换或 Boot 重启时根节点仍需存在。
+            if (createdRoot != null && createdRoot.transform.parent == null)
+                UnityEngine.Object.DontDestroyOnLoad(createdRoot.gameObject);
+
+            if (eventsCreated && events.transform.parent == null)
+                UnityEngine.Object.DontDestroyOnLoad(events.gameObject);
+
+            Action onDispose = eventsCreated
+                ? (Action)(() => { if (events != null) UnityEngine.Object.Destroy(events.gameObject); })
+                : null;
+
             var module = new UiModule(assets, rootPrefab, catalog.BuildDefinitions(),
-                new CanvasGroupUiTransition(), events, parent, log, frameWaiter, destroy, rootInstance: createdRoot);
+                new CanvasGroupUiTransition(), events, parent, log, frameWaiter, destroy,
+                rootInstance: createdRoot, onDispose: onDispose);
 
             try
             {

@@ -115,16 +115,22 @@ UiRoot createdRoot = rootPrefab == null ? UiRootFactory.Create(null, events) : n
 var module = new UiModule(context.Assets, rootPrefab, catalog.BuildDefinitions(),
 new CanvasGroupUiTransition(), events, log: context.App.Log, rootInstance: createdRoot);
 
-await module.InitializeAsync(ct);
-
 try
 {
-await module.StartAsync(ct);
+    await module.InitializeAsync(ct);
+    await module.StartAsync(ct);
 }
 catch
 {
-await module.DisposeAsync();
-throw;
+    await module.DisposeAsync();
+
+    if (_ownedEventSystem != null)
+    {
+        UnityEngine.Object.Destroy(_ownedEventSystem.gameObject);
+        _ownedEventSystem = null;
+    }
+
+    throw;
 }
 
 _uiModule = module;

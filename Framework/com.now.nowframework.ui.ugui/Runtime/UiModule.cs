@@ -15,6 +15,7 @@ namespace NowFrameWork.UI
     {
         readonly UiRoot _prefab;
         readonly UiRoot _rootInstance;
+        Action _onDispose;
         readonly Transform _parent;
         readonly UnityEngine.EventSystems.EventSystem _eventSystem;
         readonly UnityUiViewFactory _factory;
@@ -33,12 +34,13 @@ namespace NowFrameWork.UI
         public UiModule(IAssetService assets, UiRoot rootPrefab, IEnumerable<UiDefinition> definitions,
             IUiTransition transition = null, UnityEngine.EventSystems.EventSystem eventSystem = null,
             Transform parent = null, ILog log = null, Func<UniTask> frameWaiter = null, Action<GameObject> destroy = null,
-            UiCacheOptions cacheOptions = null, UiRoot rootInstance = null)
+            UiCacheOptions cacheOptions = null, UiRoot rootInstance = null, Action onDispose = null)
         {
             MainThreadGuard.Assert("UiModule.ctor");
             if (rootPrefab == null && rootInstance == null) throw new ArgumentNullException(nameof(rootPrefab));
             _prefab = rootPrefab;
             _rootInstance = rootInstance;
+            _onDispose = onDispose;
             _parent = parent; _eventSystem = eventSystem; _log = log ?? Logs.Null;
             _destroy = destroy ?? (go => UnityEngine.Object.Destroy(go));
             _frameWaiter = frameWaiter;
@@ -186,6 +188,11 @@ namespace NowFrameWork.UI
                 if (_staging != null) _destroy(_staging);
                 if (!await UnityObjectLifecycle.WaitDestroyedAsync(_staging, frameWaiter: _frameWaiter)) throw new TimeoutException("UI root staging 未销毁");
                 _staging = null;
+
+                Action onDispose = _onDispose;
+                _onDispose = null;
+                onDispose?.Invoke();
+
                 completion.TrySetResult();
             }
             catch (Exception error) { _disposing = null; completion.TrySetException(error); }
