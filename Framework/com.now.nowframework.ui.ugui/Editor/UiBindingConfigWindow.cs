@@ -106,6 +106,9 @@ namespace NowFrameWork.UI.Editor
             _options.PublicFields = EditorGUILayout.Toggle("public 字段", _options.PublicFields);
             _options.LowerFirst = EditorGUILayout.Toggle("首字母小写", _options.LowerFirst);
             _options.UseTextMeshPro = EditorGUILayout.Toggle("识别 TextMeshPro", _options.UseTextMeshPro);
+            _options.GenerateEvents = EditorGUILayout.Toggle("生成按钮事件骨架", _options.GenerateEvents);
+            _options.GenerateLifecycle = EditorGUILayout.Toggle("生成生命周期骨架", _options.GenerateLifecycle);
+            _options.GroupByHierarchy = EditorGUILayout.Toggle("按层级分组字段", _options.GroupByHierarchy);
             _options.BindAfterGenerate = EditorGUILayout.Toggle("生成后写入引用", _options.BindAfterGenerate);
 
             EditorGUILayout.Space();
@@ -136,6 +139,11 @@ namespace NowFrameWork.UI.Editor
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("将生成 " + _preview.Fields.Count + " 个字段", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("已绑定 " + _preview.BoundCount + "，未绑定 " + _preview.UnboundCount +
+                    "，将移除 " + _preview.Removed.Count, EditorStyles.miniLabel);
+
+                if (_preview.Removed.Count > 0)
+                    EditorGUILayout.HelpBox("以下字段将被移除：" + string.Join(", ", _preview.Removed), MessageType.Warning);
 
                 _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.MinHeight(180f));
 

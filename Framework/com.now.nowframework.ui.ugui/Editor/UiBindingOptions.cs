@@ -28,6 +28,15 @@ namespace NowFrameWork.UI.Editor
         /// <summary>是否识别 TextMeshPro 组件（需要目标程序集引用 TMP）。</summary>
         public bool UseTextMeshPro;
 
+        /// <summary>是否为按钮生成 onClick 监听骨架。</summary>
+        public bool GenerateEvents = true;
+
+        /// <summary>是否生成 OnOpenAsync/OnCloseAsync 生命周期骨架。</summary>
+        public bool GenerateLifecycle;
+
+        /// <summary>是否按层级分组显示字段。</summary>
+        public bool GroupByHierarchy = true;
+
         /// <summary>生成后是否立即写入引用。</summary>
         public bool BindAfterGenerate = true;
 
@@ -41,6 +50,9 @@ namespace NowFrameWork.UI.Editor
                 PublicFields = EditorPrefs.GetBool(Prefix + "PublicFields", false),
                 LowerFirst = EditorPrefs.GetBool(Prefix + "LowerFirst", true),
                 UseTextMeshPro = EditorPrefs.GetBool(Prefix + "UseTMP", false),
+                GenerateEvents = EditorPrefs.GetBool(Prefix + "Events", true),
+                GenerateLifecycle = EditorPrefs.GetBool(Prefix + "Lifecycle", false),
+                GroupByHierarchy = EditorPrefs.GetBool(Prefix + "Groups", true),
                 BindAfterGenerate = EditorPrefs.GetBool(Prefix + "Bind", true),
             };
         }
@@ -53,6 +65,9 @@ namespace NowFrameWork.UI.Editor
             EditorPrefs.SetBool(Prefix + "PublicFields", PublicFields);
             EditorPrefs.SetBool(Prefix + "LowerFirst", LowerFirst);
             EditorPrefs.SetBool(Prefix + "UseTMP", UseTextMeshPro);
+            EditorPrefs.SetBool(Prefix + "Events", GenerateEvents);
+            EditorPrefs.SetBool(Prefix + "Lifecycle", GenerateLifecycle);
+            EditorPrefs.SetBool(Prefix + "Groups", GroupByHierarchy);
             EditorPrefs.SetBool(Prefix + "Bind", BindAfterGenerate);
         }
 
