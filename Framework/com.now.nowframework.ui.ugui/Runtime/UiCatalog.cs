@@ -57,6 +57,10 @@ namespace NowFrameWork.UI
                 if (string.IsNullOrWhiteSpace(entry.Address)) throw new InvalidOperationException("面板缺少 Address：" + entry.Name);
                 if (!ids.Add(entry.Id)) throw new InvalidOperationException("面板 ID 重复：" + entry.Id);
                 if (!names.Add(entry.Name)) throw new InvalidOperationException("面板名称重复：" + entry.Name);
+                if (entry.Modal && entry.Layer != UiLayer.Popup)
+                    throw new InvalidOperationException("Modal 面板必须放在 Popup 层：" + entry.Name);
+                if (entry.CloseOnBackdrop && !entry.Modal)
+                    throw new InvalidOperationException("CloseOnBackdrop 只对 Modal 面板有效：" + entry.Name);
 
                 definitions.Add(new UiDefinition(entry.Id, entry.Name, AssetKey.From(entry.Address))
                 {

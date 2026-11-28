@@ -11,6 +11,9 @@ namespace NowFrameWork.UI
         /// <summary>创建标准 UiRoot：Canvas + SafeArea + Page / Popup / Toast。</summary>
         public static UiRoot Create(Transform parent = null, EventSystem eventSystem = null, int sortingOrder = 0)
         {
+            if (sortingOrder < -32768 || sortingOrder > 8191)
+                throw new ArgumentOutOfRangeException(nameof(sortingOrder), "UiRoot sortingOrder 必须在 -32768–8191。");
+
             var root = new GameObject("UiRoot", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler),
                 typeof(GraphicRaycaster), typeof(UiRoot));
 
@@ -60,8 +63,21 @@ namespace NowFrameWork.UI
 
             Type inputSystemModule = Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
 
-            if (inputSystemModule != null) go.AddComponent(inputSystemModule);
-            else go.AddComponent<StandaloneInputModule>();
+            if (inputSystemModule != null)
+            {
+                go.AddComponent(inputSystemModule);
+            }
+#if ENABLE_LEGACY_INPUT_MANAGER
+            else
+            {
+                go.AddComponent<StandaloneInputModule>();
+            }
+#else
+            else
+            {
+                Debug.LogWarning("[UI] 未安装 Input System 且未启用旧输入，EventSystem 没有输入模块；UI 点击与焦点导航不可用。", go);
+            }
+#endif
 
             if (parent != null) go.transform.SetParent(parent, false);
 

@@ -367,22 +367,14 @@ namespace NowFrameWork.UI
                 targets.RemoveRange(1, targets.Count - 1);
             }
 
-            int closed = 0;
+            var tasks = new List<UniTask>(targets.Count);
 
             foreach (UiSession session in targets)
-            {
-                if (session.Closing == null)
-                {
-                    await CloseAsync(session.Handle, ct);
-                    closed++;
-                }
-                else
-                {
-                    await session.Closing.Task.AttachExternalCancellation(ct);
-                }
-            }
+                tasks.Add(CloseAsync(session.Handle, CancellationToken.None));
 
-            return closed;
+            if (tasks.Count > 0) await UniTask.WhenAll(tasks.ToArray()).AttachExternalCancellation(ct);
+
+            return targets.Count;
         }
 
         async UniTask CloseCoreAsync(UiSession session, UniTaskCompletionSource completion)

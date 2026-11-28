@@ -354,7 +354,7 @@ namespace NowFrameWork.UI.Editor
             if (missing)
                 UiBindingAutoBinder.Queue(prefabPath, root, view.GetType().FullName, result);
 
-            result.Bound = dirty || missing;
+            result.Bound = dirty;
         }
 
         /// <summary>生成 View 时顺带保证根节点有 UiPanelDefinition，ID 由人工填写。</summary>

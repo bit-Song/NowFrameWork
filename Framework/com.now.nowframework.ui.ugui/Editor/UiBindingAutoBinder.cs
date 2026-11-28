@@ -71,7 +71,22 @@ namespace NowFrameWork.UI.Editor
                 });
             }
 
-            list.Items.Add(pending);
+            PendingBinding existing = list.Items.Find(item =>
+                item.PrefabPath == pending.PrefabPath &&
+                item.ScenePath == pending.ScenePath &&
+                item.RootPath == pending.RootPath &&
+                item.ViewType == pending.ViewType);
+
+            if (existing != null)
+            {
+                existing.Fields = pending.Fields;
+                existing.Attempts = 0;
+            }
+            else
+            {
+                list.Items.Add(pending);
+            }
+
             Save(list);
 
             Debug.Log("[UI 绑定] 已登记自动绑定：" + viewType + "（编译完成后挂载并写入 " + pending.Fields.Count + " 个引用）。");

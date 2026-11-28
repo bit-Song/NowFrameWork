@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NowFrameWork.UI
 {
-    /// <summary>挂在面板 Prefab 根节点：声明逻辑面板的 ID 与行为，供编辑器收集进 UiCatalog。</summary>
+    /// <summary>必须挂在面板 Prefab 的根节点：声明逻辑面板的 ID 与行为，供编辑器收集进 UiCatalog；子节点上的会被忽略。</summary>
     [DisallowMultipleComponent]
     public sealed class UiPanelDefinition : MonoBehaviour
     {
