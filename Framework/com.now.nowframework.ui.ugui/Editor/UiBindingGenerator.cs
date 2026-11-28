@@ -232,6 +232,7 @@ namespace NowFrameWork.UI.Editor
         static Result GenerateInternal(GameObject root, UiBindingOptions options, string prefabPath)
         {
             Result result = Scan(root, options);
+            EnsurePanelDefinition(root);
 
             UiView view = root.GetComponent<UiView>();
             string scriptPath = null;
@@ -353,6 +354,15 @@ namespace NowFrameWork.UI.Editor
                 UiBindingAutoBinder.Queue(prefabPath, root, view.GetType().FullName, result);
 
             result.Bound = dirty || missing;
+        }
+
+        /// <summary>生成 View 时顺带保证根节点有 UiPanelDefinition，ID 由人工填写。</summary>
+        static void EnsurePanelDefinition(GameObject root)
+        {
+            if (root.GetComponent<UiPanelDefinition>() != null) return;
+
+            Undo.RegisterCompleteObjectUndo(root, "Add UiPanelDefinition");
+            Undo.AddComponent<UiPanelDefinition>(root);
         }
 
         static void CollectRemoved(string path, Result result)

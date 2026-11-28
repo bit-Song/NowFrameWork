@@ -139,7 +139,7 @@ _scene = null;
 
 **方式一：Prefab 组件 + 自动收集（推荐）**
 
-1. 面板 Prefab 根节点挂 `UiPanelDefinition`，填 `PanelId` 与行为（Layer/Modal/Back/Cache）；
+1. 面板 Prefab 根节点挂 `UiPanelDefinition`（运行"生成 UI 绑定脚本"时会自动添加），填 `PanelId` 与行为（Layer/Modal/Back/Cache）；
 2. 面板登记为 Addressable；
 3. 菜单 **NowFrameWork → UI → 收集面板定义**：扫描全工程，校验 ID 重复、缺 ID、未登记 Addressable、缺 `UiView`、Modal 层级非法，通过后写入 `Assets/NowFrameWork/UI/UiCatalog.asset`；
 4. 菜单 **NowFrameWork → UI → 校验面板定义** 可只校验不写文件。
